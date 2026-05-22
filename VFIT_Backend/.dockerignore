@@ -1,0 +1,14 @@
+.git
+.idea
+.vscode
+target
+uploads
+*.iml
+*.log
+.env
+.env.*
+!.env.example
+!.env.production.example
+docs
+deploy
+README.md

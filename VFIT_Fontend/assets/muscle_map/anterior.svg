@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 360">
+  <defs>
+    <linearGradient id="muscleRed" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ff9a72"/>
+      <stop offset="0.42" stop-color="#d6422d"/>
+      <stop offset="1" stop-color="#681616"/>
+    </linearGradient>
+    <linearGradient id="muscleOrange" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffc178"/>
+      <stop offset="0.5" stop-color="#e5743a"/>
+      <stop offset="1" stop-color="#7a1b16"/>
+    </linearGradient>
+  </defs>
+
+  <path fill="#421717" opacity=".24" stroke="#d8b89b" stroke-width="1.2" d="M112 55 C88 57 63 62 51 74 C42 84 37 111 31 142 C27 161 17 206 19 219 C21 228 29 232 35 224 C45 209 50 181 55 154 C58 136 60 113 68 99 C75 122 75 153 76 183 C76 198 80 211 88 222 L76 310 C73 327 80 344 93 346 C105 346 111 333 108 315 L116 240 L124 240 L132 315 C129 333 135 346 147 346 C160 344 167 327 164 310 L152 222 C160 211 164 198 164 183 C165 153 165 122 172 99 C180 113 182 136 185 154 C190 181 195 209 205 224 C211 232 219 228 221 219 C223 206 213 161 209 142 C203 111 198 84 189 74 C177 62 152 57 128 55 Z"/>
+  <path fill="url(#muscleOrange)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M97 33 C97 18 106 8 120 8 C134 8 143 18 143 33 C143 47 134 58 120 58 C106 58 97 47 97 33 Z"/>
+  <path fill="#ead1b5" opacity=".9" stroke="#8b6753" stroke-width="1" d="M111 57 L129 57 L132 70 L108 70 Z"/>
+
+  <path id="shoulders" data-label="Vai" data-badge-x="172" data-badge-y="82" fill="url(#muscleOrange)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M70 72 C55 75 45 83 41 96 C45 107 61 112 77 104 C85 96 84 81 70 72 Z M170 72 C185 75 195 83 199 96 C195 107 179 112 163 104 C155 96 156 81 170 72 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.35" stroke-linecap="round" opacity=".58" d="M49 92 C56 86 65 81 76 78 M48 99 C58 95 69 92 80 91 M160 91 C171 92 182 95 192 99 M164 78 C175 81 184 86 191 92"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width="1.05" stroke-linecap="round" opacity=".86" d="M51 95 C60 90 70 87 79 86 M161 86 C170 87 180 90 189 95"/>
+
+  <path id="chest" data-label="Ngực" data-badge-x="120" data-badge-y="103" fill="url(#muscleRed)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M120 76 C101 71 83 77 75 91 C71 104 80 119 101 122 C113 118 119 101 120 76 Z M120 76 C139 71 157 77 165 91 C169 104 160 119 139 122 C127 118 121 101 120 76 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.45" stroke-linecap="round" opacity=".62" d="M80 89 C94 91 106 98 117 112 M78 98 C93 100 106 106 116 118 M86 112 C96 112 105 115 112 120 M160 89 C146 91 134 98 123 112 M162 98 C147 100 134 106 124 118 M154 112 C144 112 135 115 128 120"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width="1.08" stroke-linecap="round" opacity=".9" d="M84 88 C97 91 108 99 118 113 M82 101 C96 103 106 109 115 119 M156 88 C143 91 132 99 122 113 M158 101 C144 103 134 109 125 119 M120 79 L120 121"/>
+
+  <path id="biceps" data-label="Tay trước" data-badge-x="54" data-badge-y="149" fill="url(#muscleRed)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M54 107 C42 122 38 153 35 183 C41 191 51 187 56 173 C63 148 68 122 54 107 Z M186 107 C198 122 202 153 205 183 C199 191 189 187 184 173 C177 148 172 122 186 107 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.35" stroke-linecap="round" opacity=".58" d="M49 119 C43 137 41 160 43 181 M55 118 C50 139 47 160 48 184 M60 122 C57 143 54 161 53 176 M191 119 C197 137 199 160 197 181 M185 118 C190 139 193 160 192 184 M180 122 C183 143 186 161 187 176"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width="1.0" stroke-linecap="round" opacity=".86" d="M52 120 C47 139 45 160 45 179 M58 124 C54 145 51 162 51 178 M188 120 C193 139 195 160 195 179 M182 124 C186 145 189 162 189 178"/>
+
+  <path fill="url(#muscleOrange)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M108 129 C116 127 124 127 132 129 L134 197 C127 202 113 202 106 197 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.25" stroke-linecap="round" opacity=".58" d="M112 141 L128 141 M110 156 L130 156 M110 172 L130 172 M113 188 L127 188 M120 132 L120 198 M114 132 C111 150 112 177 116 198 M126 132 C129 150 128 177 124 198"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width=".95" stroke-linecap="round" opacity=".82" d="M113 145 L127 145 M112 160 L128 160 M113 176 L127 176 M116 136 C115 154 115 178 118 195 M124 136 C125 154 125 178 122 195"/>
+  <path fill="url(#muscleRed)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M93 125 C82 141 82 181 89 209 C96 215 105 210 108 193 C109 169 107 139 93 125 Z M147 125 C158 141 158 181 151 209 C144 215 135 210 132 193 C131 169 133 139 147 125 Z"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width=".95" stroke-linecap="round" opacity=".78" d="M92 136 C88 157 90 184 99 207 M100 135 C98 158 99 181 104 198 M148 136 C152 157 150 184 141 207 M140 135 C142 158 141 181 136 198"/>
+
+  <path id="legs" data-label="Đùi trước" data-badge-x="148" data-badge-y="259" fill="url(#muscleRed)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M91 221 C77 238 73 290 82 319 C91 330 105 320 105 298 C104 267 105 237 91 221 Z M149 221 C163 238 167 290 158 319 C149 330 135 320 135 298 C136 267 135 237 149 221 Z M108 224 C118 244 116 287 107 310 C98 299 95 254 100 232 Z M132 224 C122 244 124 287 133 310 C142 299 145 254 140 232 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.45" stroke-linecap="round" opacity=".62" d="M88 236 C83 260 83 292 90 317 M96 232 C92 258 93 288 99 311 M104 236 C102 262 101 288 104 306 M152 236 C157 260 157 292 150 317 M144 232 C148 258 147 288 141 311 M136 236 C138 262 139 288 136 306"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width="1.08" stroke-linecap="round" opacity=".88" d="M91 239 C87 263 88 289 93 311 M100 239 C98 263 98 287 102 306 M149 239 C153 263 152 289 147 311 M140 239 C142 263 142 287 138 306 M82 254 C92 260 99 270 104 286 M158 254 C148 260 141 270 136 286"/>
+
+  <!-- High-detail anatomy layer: non-interactive muscle subdivisions. -->
+  <path fill="#b73328" opacity=".76" stroke="#551411" stroke-width=".8" d="M104 57 C106 70 111 78 118 84 C111 84 103 77 99 63 Z M136 57 C134 70 129 78 122 84 C129 84 137 77 141 63 Z"/>
+  <path fill="#e5743a" opacity=".78" stroke="#551411" stroke-width=".7" d="M78 92 C86 86 96 83 108 84 C99 88 89 94 80 103 Z M162 92 C154 86 144 83 132 84 C141 88 151 94 160 103 Z"/>
+  <path fill="#9d251f" opacity=".64" stroke="#551411" stroke-width=".7" d="M78 123 C88 130 95 143 99 158 C88 153 80 141 76 128 Z M162 123 C152 130 145 143 141 158 C152 153 160 141 164 128 Z"/>
+  <path fill="#d44b2f" opacity=".76" stroke="#551411" stroke-width=".75" d="M75 137 C83 139 91 146 96 158 C88 158 78 151 72 142 Z M165 137 C157 139 149 146 144 158 C152 158 162 151 168 142 Z"/>
+  <path fill="#f08b55" opacity=".78" stroke="#551411" stroke-width=".8" d="M108 132 C116 130 124 130 132 132 L130 148 C124 145 116 145 110 148 Z"/>
+  <path fill="#c73728" opacity=".88" stroke="#551411" stroke-width=".8" d="M110 150 L119 150 L119 166 L109 166 Z M121 150 L130 150 L131 166 L121 166 Z M109 169 L119 169 L119 185 L110 185 Z M121 169 L131 169 L130 185 L121 185 Z M111 188 L119 188 L118 202 L113 202 Z M121 188 L129 188 L127 202 L122 202 Z"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width=".85" stroke-linecap="round" opacity=".78" d="M111 136 C114 141 117 145 120 148 M129 136 C126 141 123 145 120 148 M112 154 L118 154 M122 154 L128 154 M111 173 L118 173 M122 173 L129 173 M113 192 L118 192 M122 192 L127 192"/>
+  <path fill="#8f211d" opacity=".70" stroke="#551411" stroke-width=".8" d="M70 162 C78 172 83 190 84 211 C76 205 70 184 68 166 Z M170 162 C162 172 157 190 156 211 C164 205 170 184 172 166 Z"/>
+  <path fill="#ef7f45" opacity=".82" stroke="#551411" stroke-width=".8" d="M39 183 C47 188 53 201 52 218 C44 217 35 207 36 195 Z M201 183 C193 188 187 201 188 218 C196 217 205 207 204 195 Z"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width=".85" stroke-linecap="round" opacity=".78" d="M40 192 C45 199 48 207 48 216 M47 189 C51 198 53 207 52 216 M200 192 C195 199 192 207 192 216 M193 189 C189 198 187 207 188 216"/>
+  <path fill="#e36d39" opacity=".84" stroke="#551411" stroke-width=".85" d="M90 226 C83 246 82 278 88 307 C94 284 96 251 94 228 Z M150 226 C157 246 158 278 152 307 C146 284 144 251 146 228 Z"/>
+  <path fill="#b72f25" opacity=".82" stroke="#551411" stroke-width=".85" d="M99 230 C107 252 106 286 101 311 C94 291 94 255 99 230 Z M141 230 C133 252 134 286 139 311 C146 291 146 255 141 230 Z"/>
+  <path fill="#f09555" opacity=".82" stroke="#551411" stroke-width=".8" d="M106 226 C116 244 115 276 107 304 C104 280 103 250 106 226 Z M134 226 C124 244 125 276 133 304 C136 280 137 250 134 226 Z"/>
+  <path fill="#8e211d" opacity=".78" stroke="#551411" stroke-width=".8" d="M88 312 C80 326 83 344 94 346 C102 344 106 329 101 315 Z M152 312 C160 326 157 344 146 346 C138 344 134 329 139 315 Z"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width=".9" stroke-linecap="round" opacity=".86" d="M86 239 C90 251 91 270 89 302 M95 236 C98 254 97 284 94 313 M104 234 C109 253 109 280 105 306 M154 239 C150 251 149 270 151 302 M145 236 C142 254 143 284 146 313 M136 234 C131 253 131 280 135 306 M89 322 C91 330 92 337 92 344 M151 322 C149 330 148 337 148 344"/>
+</svg>

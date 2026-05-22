@@ -1,0 +1,53 @@
+{
+  "checkin_logs": {
+    "indexes": [
+      {
+        "name": "ux_checkin_user_date",
+        "key": { "user_id": 1, "checkin_date": 1 },
+        "unique": true
+      },
+      {
+        "name": "idx_checkin_user_month",
+        "key": { "user_id": 1, "month_key": 1 }
+      }
+    ],
+    "sample_document": {
+      "_id": "66505b80e1f42d13a6a9c001",
+      "user_id": "664f9e245a6cb11ff9012345",
+      "checkin_date": "2026-05-22",
+      "month_key": "2026-05",
+      "created_at": "2026-05-21T17:05:00Z"
+    }
+  },
+  "user_vouchers": {
+    "indexes": [
+      {
+        "name": "ux_user_voucher_code",
+        "key": { "code": 1 },
+        "unique": true
+      },
+      {
+        "name": "idx_user_voucher_status_expiry",
+        "key": { "user_id": 1, "status": 1, "expired_at": 1 }
+      },
+      {
+        "name": "ux_user_voucher_month_milestone",
+        "key": { "user_id": 1, "month_key": 1, "reward_milestone": 1 },
+        "unique": true
+      }
+    ],
+    "sample_document": {
+      "_id": "66505bf4e1f42d13a6a9c030",
+      "user_id": "664f9e245a6cb11ff9012345",
+      "code": "VFIT-8D7F23A91B4C09EF",
+      "amount": 10000.0,
+      "status": "AVAILABLE",
+      "issued_at": "2026-05-21T17:05:00Z",
+      "expired_at": "2026-06-05T17:05:00Z",
+      "month_key": "2026-05",
+      "reward_milestone": 15,
+      "used_at": null,
+      "used_order_id": null
+    }
+  }
+}

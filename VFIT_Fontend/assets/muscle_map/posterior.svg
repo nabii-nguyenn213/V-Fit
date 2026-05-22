@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 360">
+  <defs>
+    <linearGradient id="muscleRed" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ff9a72"/>
+      <stop offset="0.42" stop-color="#d6422d"/>
+      <stop offset="1" stop-color="#681616"/>
+    </linearGradient>
+    <linearGradient id="muscleOrange" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffc178"/>
+      <stop offset="0.5" stop-color="#e5743a"/>
+      <stop offset="1" stop-color="#7a1b16"/>
+    </linearGradient>
+  </defs>
+
+  <path fill="#421717" opacity=".24" stroke="#d8b89b" stroke-width="1.2" d="M112 55 C88 57 63 62 51 74 C42 84 37 111 31 142 C27 161 17 206 19 219 C21 228 29 232 35 224 C45 209 50 181 55 154 C58 136 60 113 68 99 C75 122 75 153 76 183 C76 198 80 211 88 222 L76 310 C73 327 80 344 93 346 C105 346 111 333 108 315 L116 240 L124 240 L132 315 C129 333 135 346 147 346 C160 344 167 327 164 310 L152 222 C160 211 164 198 164 183 C165 153 165 122 172 99 C180 113 182 136 185 154 C190 181 195 209 205 224 C211 232 219 228 221 219 C223 206 213 161 209 142 C203 111 198 84 189 74 C177 62 152 57 128 55 Z"/>
+  <path fill="url(#muscleOrange)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M97 33 C97 18 106 8 120 8 C134 8 143 18 143 33 C143 47 134 58 120 58 C106 58 97 47 97 33 Z"/>
+
+  <path id="shoulders" data-label="Vai sau" data-badge-x="172" data-badge-y="82" fill="url(#muscleOrange)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M70 72 C55 75 45 83 41 96 C45 107 61 112 77 104 C85 96 84 81 70 72 Z M170 72 C185 75 195 83 199 96 C195 107 179 112 163 104 C155 96 156 81 170 72 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.35" stroke-linecap="round" opacity=".58" d="M49 92 C56 86 65 81 76 78 M48 99 C58 95 69 92 80 91 M160 91 C171 92 182 95 192 99 M164 78 C175 81 184 86 191 92"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width="1.05" stroke-linecap="round" opacity=".86" d="M51 95 C60 90 70 87 79 86 M161 86 C170 87 180 90 189 95"/>
+
+  <path id="back" data-label="Lưng" data-badge-x="120" data-badge-y="118" fill="url(#muscleRed)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M120 62 L163 92 C153 118 139 133 120 145 C101 133 87 118 77 92 Z M80 93 C94 102 108 121 116 151 L113 206 C94 198 78 169 76 132 C75 116 76 102 80 93 Z M160 93 C146 102 132 121 124 151 L127 206 C146 198 162 169 164 132 C165 116 164 102 160 93 Z"/>
+  <path fill="#ead1b5" opacity=".9" stroke="#8b6753" stroke-width="1" d="M114 84 L126 84 C129 130 129 177 123 218 L117 218 C111 177 111 130 114 84 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.45" stroke-linecap="round" opacity=".62" d="M84 101 C96 117 105 145 112 191 M95 96 C104 120 111 150 116 203 M108 91 C112 120 116 160 118 211 M156 101 C144 117 135 145 128 191 M145 96 C136 120 129 150 124 203 M132 91 C128 120 124 160 122 211"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width="1.08" stroke-linecap="round" opacity=".88" d="M88 104 C99 122 106 148 112 185 M101 100 C108 126 113 154 117 198 M152 104 C141 122 134 148 128 185 M139 100 C132 126 127 154 123 198 M120 72 L120 216"/>
+
+  <path id="triceps" data-label="Tay sau" data-badge-x="186" data-badge-y="149" fill="url(#muscleRed)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M54 107 C42 122 38 153 35 183 C41 191 51 187 56 173 C63 148 68 122 54 107 Z M186 107 C198 122 202 153 205 183 C199 191 189 187 184 173 C177 148 172 122 186 107 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.35" stroke-linecap="round" opacity=".58" d="M49 119 C43 137 41 160 43 181 M55 118 C50 139 47 160 48 184 M60 122 C57 143 54 161 53 176 M191 119 C197 137 199 160 197 181 M185 118 C190 139 193 160 192 184 M180 122 C183 143 186 161 187 176"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width="1.0" stroke-linecap="round" opacity=".86" d="M52 120 C47 139 45 160 45 179 M58 124 C54 145 51 162 51 178 M188 120 C193 139 195 160 195 179 M182 124 C186 145 189 162 189 178"/>
+
+  <path id="legs" data-label="Đùi sau" data-badge-x="146" data-badge-y="264" fill="url(#muscleRed)" stroke="#5d1515" stroke-width="1.5" stroke-linejoin="round" d="M91 221 C78 241 75 288 83 320 C94 331 105 318 105 297 C104 266 105 238 91 221 Z M149 221 C162 241 165 288 157 320 C146 331 135 318 135 297 C136 266 135 238 149 221 Z M120 204 C99 200 84 209 82 230 C87 248 108 252 119 237 Z M120 204 C141 200 156 209 158 230 C153 248 132 252 121 237 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.45" stroke-linecap="round" opacity=".62" d="M92 232 C91 262 91 292 95 314 M104 232 C102 260 102 288 104 308 M148 232 C149 262 149 292 145 314 M136 232 C138 260 138 288 136 308 M90 221 C101 230 110 235 119 238 M150 221 C139 230 130 235 121 238"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width="1.08" stroke-linecap="round" opacity=".88" d="M96 235 C94 260 95 286 99 308 M106 238 C106 262 106 284 105 302 M144 235 C146 260 145 286 141 308 M134 238 C134 262 134 284 135 302 M91 226 C101 232 110 236 118 238 M149 226 C139 232 130 236 122 238"/>
+
+  <!-- High-detail anatomy layer: non-interactive posterior subdivisions. -->
+  <path fill="#e5743a" opacity=".82" stroke="#551411" stroke-width=".8" d="M120 60 C109 78 101 96 96 116 C108 110 116 96 120 78 C124 96 132 110 144 116 C139 96 131 78 120 60 Z"/>
+  <path fill="#b73328" opacity=".78" stroke="#551411" stroke-width=".8" d="M96 92 C105 99 113 108 120 120 C108 120 98 113 91 101 Z M144 92 C135 99 127 108 120 120 C132 120 142 113 149 101 Z"/>
+  <path fill="#8f211d" opacity=".70" stroke="#551411" stroke-width=".75" d="M82 116 C94 128 102 149 106 178 C93 165 84 143 80 122 Z M158 116 C146 128 138 149 134 178 C147 165 156 143 160 122 Z"/>
+  <path fill="#d44b2f" opacity=".80" stroke="#551411" stroke-width=".75" d="M82 146 C94 157 101 176 104 199 C91 193 81 171 78 151 Z M158 146 C146 157 139 176 136 199 C149 193 159 171 162 151 Z"/>
+  <path fill="#ead1b5" opacity=".92" stroke="#8b6753" stroke-width=".8" d="M116 86 L124 86 C126 127 126 176 122 215 L118 215 C114 176 114 127 116 86 Z"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width=".9" stroke-linecap="round" opacity=".82" d="M101 96 C108 111 114 129 118 151 M139 96 C132 111 126 129 122 151 M92 119 C103 135 110 159 114 191 M148 119 C137 135 130 159 126 191 M120 84 L120 216"/>
+  <path fill="#e36d39" opacity=".80" stroke="#551411" stroke-width=".8" d="M91 206 C104 202 114 211 118 232 C107 241 92 236 85 224 C85 216 87 210 91 206 Z M149 206 C136 202 126 211 122 232 C133 241 148 236 155 224 C155 216 153 210 149 206 Z"/>
+  <path fill="none" stroke="#5b1713" stroke-width="1.25" stroke-linecap="round" opacity=".62" d="M89 216 C98 223 108 228 118 232 M151 216 C142 223 132 228 122 232 M120 204 L120 239"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width=".95" stroke-linecap="round" opacity=".84" d="M91 212 C101 217 110 222 118 231 M149 212 C139 217 130 222 122 231"/>
+  <path fill="#b72f25" opacity=".82" stroke="#551411" stroke-width=".85" d="M92 236 C83 258 84 292 92 317 C101 298 103 260 100 238 Z M148 236 C157 258 156 292 148 317 C139 298 137 260 140 238 Z"/>
+  <path fill="#ef7f45" opacity=".78" stroke="#551411" stroke-width=".85" d="M104 238 C112 262 111 292 104 310 C99 286 99 258 104 238 Z M136 238 C128 262 129 292 136 310 C141 286 141 258 136 238 Z"/>
+  <path fill="#8e211d" opacity=".78" stroke="#551411" stroke-width=".8" d="M88 312 C80 326 83 344 94 346 C102 344 106 329 101 315 Z M152 312 C160 326 157 344 146 346 C138 344 134 329 139 315 Z"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width=".9" stroke-linecap="round" opacity=".84" d="M92 242 C89 264 91 292 96 313 M102 242 C103 264 103 288 102 306 M148 242 C151 264 149 292 144 313 M138 242 C137 264 137 288 138 306 M89 322 C91 330 92 337 92 344 M151 322 C149 330 148 337 148 344"/>
+</svg>

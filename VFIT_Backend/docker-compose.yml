@@ -1,0 +1,78 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: vfit-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-root_password_change_me}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-vfit}
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME:-vfit_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-vfit_app_password_change_me}
+    volumes:
+      - mongodb_data:/data/db
+      - ./docker/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: vfit-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: vfit-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME:-root}:${MONGO_INITDB_ROOT_PASSWORD:-root_password_change_me}@mongodb:27017/?authSource=admin
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_CONFIG_BASICAUTH_USERNAME:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_CONFIG_BASICAUTH_PASSWORD:-admin}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  vfit-backend:
+    build: .
+    container_name: vfit-backend
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      MONGODB_URI: "${MONGODB_URI:-mongodb://vfit_app:vfit_app_password_change_me@mongodb:27017/vfit?authSource=vfit&maxPoolSize=100&minPoolSize=10&maxIdleTimeMS=60000&serverSelectionTimeoutMS=5000}"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_REQUIRED: "true"
+      REDIS_HEALTH_ENABLED: "true"
+      AI_RATE_LIMIT_FAIL_OPEN: "false"
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  mongodb_data:
+  redis_data:

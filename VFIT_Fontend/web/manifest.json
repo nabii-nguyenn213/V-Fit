@@ -1,0 +1,11 @@
+{
+  "name": "V-FIT",
+  "short_name": "V-FIT",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0F1513",
+  "theme_color": "#18C37E",
+  "description": "V-FIT fitness app",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
+}

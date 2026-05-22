@@ -1,0 +1,13 @@
+target/
+.idea/
+.vscode/
+*.iml
+.env
+.env.*
+!.env.example
+!.env.production.example
+secrets.local.*
+*.local.secret
+.secrets/
+uploads/
+*.log
