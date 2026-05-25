@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../presentation/theme/app_colors.dart';
 import '../../presentation/theme/app_radius.dart';
 import '../../presentation/theme/app_spacing.dart';
+import '../utils/responsive.dart';
 
 enum AppButtonVariant {
   primary,
@@ -150,6 +151,7 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !loading;
     final style = _styleFor(context);
+    final height = AppResponsive.buttonHeight(context);
 
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
@@ -157,7 +159,7 @@ class AppButton extends StatelessWidget {
         enabled: enabled,
         child: SizedBox(
           width: fullWidth ? double.infinity : null,
-          height: 52,
+          height: height,
           child: TextButton(
             style: style,
             onPressed: enabled ? () => _handlePressed(context) : null,
@@ -212,9 +214,10 @@ class AppButton extends StatelessWidget {
 
     return ButtonStyle(
       minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
-      padding: const WidgetStatePropertyAll(
+      padding: WidgetStatePropertyAll(
         EdgeInsets.symmetric(
-          horizontal: AppSpacing.x6,
+          horizontal:
+              AppResponsive.isCompact(context) ? AppSpacing.x4 : AppSpacing.x6,
           vertical: AppSpacing.x3,
         ),
       ),

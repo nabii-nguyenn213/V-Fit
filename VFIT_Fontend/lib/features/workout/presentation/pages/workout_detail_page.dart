@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/coming_soon_view.dart';
 import '../../../../core/widgets/state_views.dart';
@@ -25,7 +26,7 @@ class WorkoutDetailPage extends ConsumerWidget {
       ),
       body: program.when(
         data: (item) => ListView(
-          padding: const EdgeInsets.all(20),
+          padding: AppResponsive.pagePadding(context),
           children: [
             Text(
               item.title,

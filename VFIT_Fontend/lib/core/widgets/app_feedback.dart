@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/responsive.dart';
+
 final appScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 enum AppFeedbackType { success, error, warning, info }
@@ -90,75 +92,89 @@ class AppFeedbackPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = _AppFeedbackStyle.resolve(context, type);
+    final compactWidth = MediaQuery.sizeOf(context).width < 340;
+    final iconBox = compact ? 34.0 : 40.0;
+    final icon = Container(
+      width: iconBox,
+      height: iconBox,
+      decoration: BoxDecoration(
+        color: style.accent.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        this.icon ?? style.icon,
+        color: style.accent,
+        size: compact ? 19 : 22,
+      ),
+    );
+    final text = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title ?? AppFeedback._defaultTitle(type),
+          style: TextStyle(
+            color: style.foreground,
+            fontSize: compact ? 13 : 15,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          message,
+          style: TextStyle(
+            color: style.foreground.withValues(alpha: 0.82),
+            fontSize: compact ? 12 : 13,
+            height: 1.35,
+          ),
+        ),
+        if (actionLabel != null && onAction != null) ...[
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: onAction,
+              icon: const Icon(Icons.refresh, size: 17),
+              label: Text(actionLabel!),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: style.accent,
+                side: BorderSide(
+                  color: style.accent.withValues(alpha: 0.55),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(compact ? 12 : 16),
+      padding: EdgeInsets.all(
+        compact ? 12 : AppResponsive.cardPadding(context).horizontal / 2,
+      ),
       decoration: BoxDecoration(
         color: style.background,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: style.border),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: compact ? 34 : 40,
-            height: compact ? 34 : 40,
-            decoration: BoxDecoration(
-              color: style.accent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon ?? style.icon,
-              color: style.accent,
-              size: compact ? 19 : 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+      child: compactWidth
+          ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  title ?? AppFeedback._defaultTitle(type),
-                  style: TextStyle(
-                    color: style.foreground,
-                    fontSize: compact ? 13 : 15,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  message,
-                  style: TextStyle(
-                    color: style.foreground.withValues(alpha: 0.82),
-                    fontSize: compact ? 12 : 13,
-                    height: 1.35,
-                  ),
-                ),
-                if (actionLabel != null && onAction != null) ...[
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: OutlinedButton.icon(
-                      onPressed: onAction,
-                      icon: const Icon(Icons.refresh, size: 17),
-                      label: Text(actionLabel!),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: style.accent,
-                        side: BorderSide(
-                          color: style.accent.withValues(alpha: 0.55),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                icon,
+                const SizedBox(height: 10),
+                text,
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                icon,
+                const SizedBox(width: 12),
+                Expanded(child: text),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/v1/auth/**",
                                 "/api/app/config",
+                                "/api/payments/sepay/webhook",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",

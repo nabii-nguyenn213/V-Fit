@@ -2,8 +2,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/utils/enum_parsers.dart';
+import '../../../../core/utils/responsive.dart';
+import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_feedback.dart';
@@ -40,7 +41,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
         title: const Text('Bài tập'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: AppResponsive.pagePadding(context),
         children: [
           TextField(
             controller: _searchController,

@@ -1,10 +1,16 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/error/app_error_mapper.dart';
+import '../../../../core/error/crash_reporter.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../core/utils/enum_parsers.dart';
 import '../../../../core/utils/media_url_resolver.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_feedback.dart';
@@ -14,6 +20,8 @@ import '../../../../presentation/theme/app_radius.dart';
 import '../../../../presentation/theme/app_spacing.dart';
 import '../../../../presentation/theme/app_typography.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../payment/data/models/payment_models.dart';
+import '../../../payment/data/repositories/payment_repository.dart';
 import '../../data/repositories/profile_repository.dart';
 
 class ProfilePage extends ConsumerWidget {
@@ -28,7 +36,7 @@ class ProfilePage extends ConsumerWidget {
 
     if (user == null) {
       return ListView(
-        padding: const EdgeInsets.all(20),
+        padding: AppResponsive.pagePadding(context),
         children: [
           AppCard(
             child: Column(
@@ -82,7 +90,7 @@ class ProfilePage extends ConsumerWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: AppResponsive.pagePadding(context),
       children: [
         Row(
           children: [
@@ -260,8 +268,15 @@ class ProfilePage extends ConsumerWidget {
   }
 }
 
-class _VipPricingCard extends StatelessWidget {
+class _VipPricingCard extends ConsumerStatefulWidget {
   const _VipPricingCard();
+
+  @override
+  ConsumerState<_VipPricingCard> createState() => _VipPricingCardState();
+}
+
+class _VipPricingCardState extends ConsumerState<_VipPricingCard> {
+  bool _creating = false;
 
   @override
   Widget build(BuildContext context) {
@@ -323,16 +338,434 @@ class _VipPricingCard extends StatelessWidget {
           AppButton.add(
             label: 'Nạp VIP',
             fullWidth: true,
-            onPressed: () {
-              AppFeedback.info(
-                'Thanh toán VIP đang được kết nối. Giá: 150K/tháng hoặc 1M/năm.',
-                title: 'Tính năng đang phát triển',
-              );
-            },
+            loading: _creating,
+            onPressed: _creating ? null : _startVipPayment,
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _startVipPayment() async {
+    final user = ref.read(authControllerProvider).user;
+    if (user == null) {
+      AppFeedback.info('Vui long dang nhap de nap VIP.');
+      if (mounted) {
+        context.go('/login');
+      }
+      return;
+    }
+
+    final selection = await showDialog<_PremiumPlanSelection>(
+      context: context,
+      builder: (context) => const _PremiumPlanDialog(),
+    );
+    if (selection == null || !mounted) {
+      return;
+    }
+
+    setState(() => _creating = true);
+    try {
+      final payment =
+          await ref.read(paymentRepositoryProvider).createPremiumPayment(
+                plan: selection.plan,
+                voucherCode: selection.voucherCode,
+              );
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => _PremiumPaymentDialog(payment: payment),
+      );
+    } catch (error, stackTrace) {
+      await CrashReporter.record(error, stackTrace);
+      if (mounted) {
+        AppFeedback.error(AppErrorMapper.friendlyMessage(error));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _creating = false);
+      }
+    }
+  }
+}
+
+class _PremiumPlanSelection {
+  const _PremiumPlanSelection({
+    required this.plan,
+    this.voucherCode,
+  });
+
+  final PremiumPlan plan;
+  final String? voucherCode;
+}
+
+class _PremiumPlanDialog extends StatefulWidget {
+  const _PremiumPlanDialog();
+
+  @override
+  State<_PremiumPlanDialog> createState() => _PremiumPlanDialogState();
+}
+
+class _PremiumPlanDialogState extends State<_PremiumPlanDialog> {
+  PremiumPlan _selected = PremiumPlan.monthly;
+  final TextEditingController _voucherController = TextEditingController();
+
+  @override
+  void dispose() {
+    _voucherController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Chon goi VIP'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _planTile(PremiumPlan.monthly, 'VIP 1 thang', '150K'),
+            _planTile(PremiumPlan.yearly, 'VIP 1 nam', '1M'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _voucherController,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(
+                labelText: 'Ma voucher neu co',
+                prefixIcon: Icon(Icons.confirmation_number_outlined),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Huy'),
+        ),
+        FilledButton.icon(
+          onPressed: _confirm,
+          icon: const Icon(Icons.qr_code_rounded),
+          label: const Text('Tao QR'),
+        ),
+      ],
+    );
+  }
+
+  Widget _planTile(PremiumPlan plan, String title, String price) {
+    return RadioListTile<PremiumPlan>(
+      value: plan,
+      groupValue: _selected,
+      onChanged: (value) {
+        if (value == null) return;
+        setState(() => _selected = value);
+      },
+      title: Text(title),
+      subtitle: Text(price),
+      contentPadding: EdgeInsets.zero,
+    );
+  }
+
+  void _confirm() {
+    final voucher = _voucherController.text.trim().toUpperCase();
+    Navigator.of(context).pop(
+      _PremiumPlanSelection(
+        plan: _selected,
+        voucherCode: voucher.isEmpty ? null : voucher,
+      ),
+    );
+  }
+}
+
+class _PremiumPaymentDialog extends ConsumerStatefulWidget {
+  const _PremiumPaymentDialog({required this.payment});
+
+  final PremiumPayment payment;
+
+  @override
+  ConsumerState<_PremiumPaymentDialog> createState() =>
+      _PremiumPaymentDialogState();
+}
+
+class _PremiumPaymentDialogState extends ConsumerState<_PremiumPaymentDialog> {
+  Timer? _timer;
+  StreamSubscription<PremiumPaymentRealtimeEvent>? _paymentEvents;
+  PremiumPaymentStatus? _status = PremiumPaymentStatus.pending;
+  bool _checking = false;
+  bool _completed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _listenPaymentRealtime();
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _pollStatus());
+    unawaited(_pollStatus());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    unawaited(_paymentEvents?.cancel());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final payment = widget.payment;
+    final media = MediaQuery.of(context);
+    final size = media.size;
+    final compact = size.width < 390 || size.height < 700;
+    final horizontalInset = compact ? 8.0 : 24.0;
+    final verticalInset = compact ? 8.0 : 24.0;
+    final maxWidth = math.min(size.width - horizontalInset * 2, 420.0);
+    final maxHeight = size.height -
+        media.padding.vertical -
+        media.viewInsets.vertical -
+        verticalInset * 2;
+    final qrSize = math
+        .min(
+          maxWidth - 48,
+          math.max(140.0, maxHeight * (compact ? 0.34 : 0.38)),
+        )
+        .clamp(140.0, compact ? 200.0 : 260.0);
+
+    return Dialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: horizontalInset,
+        vertical: verticalInset,
+      ),
+      child: SafeArea(
+        minimum: EdgeInsets.zero,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: maxWidth,
+            maxHeight: maxHeight,
+          ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              compact ? 14 : 20,
+              compact ? 14 : 18,
+              compact ? 14 : 20,
+              compact ? 10 : 14,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.qr_code_rounded),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Quet QR chuyen khoan',
+                        style: Theme.of(context).textTheme.titleLarge,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: qrSize,
+                            height: qrSize,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.black.withValues(alpha: 0.08),
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                payment.vietQrUrl,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.none,
+                                errorBuilder: (_, __, ___) => const Center(
+                                  child: Icon(Icons.broken_image_outlined),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _paymentLine(
+                          'Gia goc',
+                          '${payment.baseAmount.toStringAsFixed(0)} VND',
+                        ),
+                        if (payment.discountAmount > 0)
+                          _paymentLine(
+                            'Giam gia',
+                            '${payment.discountAmount.toStringAsFixed(0)} VND',
+                          ),
+                        _paymentLine(
+                          'Can chuyen',
+                          '${payment.finalAmount.toStringAsFixed(0)} VND',
+                        ),
+                        _paymentLine('Noi dung', payment.paymentCode),
+                        _paymentLine('Ngan hang', payment.bankCode),
+                        _paymentLine('So TK', payment.accountNumber),
+                        _paymentLine('Chu TK', payment.accountName),
+                        if (payment.expiredAt != null)
+                          _paymentLine(
+                            'Han thanh toan',
+                            payment.expiredAt!.toLocal().toString(),
+                          ),
+                        const SizedBox(height: 12),
+                        AppFeedbackPanel(
+                          compact: true,
+                          type: _status == PremiumPaymentStatus.paid
+                              ? AppFeedbackType.success
+                              : AppFeedbackType.info,
+                          title: _status == PremiumPaymentStatus.paid
+                              ? 'Da mo VIP'
+                              : 'Dang cho thanh toan',
+                          message: _status == PremiumPaymentStatus.paid
+                              ? 'Goi VIP da duoc kich hoat.'
+                              : 'App se tu cap nhat sau khi SePay xac nhan giao dich.',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: _checking ? null : _pollStatus,
+                      child: const Text('Kiem tra'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        _status == PremiumPaymentStatus.paid ? 'Xong' : 'Dong',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _paymentLine(String label, String value) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final labelStyle = TextStyle(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontSize: 12,
+        );
+        const valueStyle = TextStyle(fontWeight: FontWeight.w800);
+        final valueWidget = SelectableText(
+          value,
+          style: valueStyle,
+        );
+
+        if (constraints.maxWidth >= 340) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 116, child: Text(label, style: labelStyle)),
+                const SizedBox(width: 10),
+                Expanded(child: valueWidget),
+              ],
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: labelStyle),
+              const SizedBox(height: 2),
+              valueWidget,
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _listenPaymentRealtime() {
+    _paymentEvents = ref
+        .read(paymentRepositoryProvider)
+        .watchPremiumPayments()
+        .listen((event) {
+      if (!mounted ||
+          event.paymentId != widget.payment.paymentId ||
+          !event.isPaid) {
+        return;
+      }
+      unawaited(_completePayment('Da nhan thanh toan. VIP da duoc kich hoat.'));
+    }, onError: (_) {
+      // WebSocket is best-effort; polling below remains the fallback.
+    });
+  }
+
+  Future<void> _pollStatus() async {
+    if (_checking || _status == PremiumPaymentStatus.paid) {
+      return;
+    }
+    setState(() => _checking = true);
+    try {
+      final result = await ref
+          .read(paymentRepositoryProvider)
+          .getPremiumPaymentStatus(widget.payment.paymentId);
+      if (!mounted) return;
+      setState(() => _status = result.status);
+      if (result.premiumUnlocked ||
+          result.status == PremiumPaymentStatus.paid) {
+        await _completePayment('VIP da duoc kich hoat.');
+      }
+    } catch (_) {
+      // Polling is best-effort; users can still press the manual check button.
+    } finally {
+      if (mounted) {
+        setState(() => _checking = false);
+      }
+    }
+  }
+
+  Future<void> _completePayment(String message) async {
+    if (_completed || !mounted) {
+      return;
+    }
+    _completed = true;
+    _timer?.cancel();
+    await _paymentEvents?.cancel();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _status = PremiumPaymentStatus.paid;
+      _checking = false;
+    });
+
+    await ref.read(authControllerProvider.notifier).reloadMe();
+    if (!mounted) {
+      return;
+    }
+    AppFeedback.success(message);
+    Navigator.of(context).pop(true);
   }
 }
 

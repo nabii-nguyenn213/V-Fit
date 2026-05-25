@@ -99,8 +99,6 @@ class AuthInterceptor extends Interceptor {
     ApiEndpoints.groupedExercises,
     ApiEndpoints.exercises,
     ApiEndpoints.workouts,
-    ApiEndpoints.badges,
-    ApiEndpoints.challenges,
     ApiEndpoints.foodSearch,
   };
 

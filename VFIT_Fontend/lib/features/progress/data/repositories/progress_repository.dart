@@ -47,6 +47,7 @@ class ProgressRepository {
           'page': 0,
           'size': AppConstants.defaultPageSize,
         },
+        options: await _authorizedOptions(),
       );
       return ApiResponseParser.unwrapPage(response, BadgeModel.fromJson);
     } on DioException catch (error) {
@@ -62,6 +63,7 @@ class ProgressRepository {
           'page': 0,
           'size': AppConstants.defaultPageSize,
         },
+        options: await _authorizedOptions(),
       );
       return ApiResponseParser.unwrapPage(response, ChallengeModel.fromJson);
     } on DioException catch (error) {
@@ -97,7 +99,9 @@ class ProgressRepository {
           local.day == todayDate.day;
     }).length;
     if (todaysCount >= 5) {
-      throw ApiException(message: 'Bạn đã chụp tối đa 5 ảnh trong ngày ($todaysCount/5).', statusCode: 400);
+      throw ApiException(
+          message: 'Bạn đã chụp tối đa 5 ảnh trong ngày ($todaysCount/5).',
+          statusCode: 400);
     }
     try {
       final formData = FormData.fromMap({

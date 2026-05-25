@@ -9,12 +9,20 @@ import com.vfit.modules.checkin.repository.UserVoucherAtomicRepository;
 import com.vfit.modules.checkin.repository.UserVoucherRepository;
 import com.vfit.modules.payment.dto.CheckoutRequestDto;
 import com.vfit.modules.payment.dto.CheckoutResponseDto;
+import com.vfit.modules.payment.dto.CreatePaymentRequest;
+import com.vfit.modules.payment.dto.PaymentResponse;
+import com.vfit.modules.payment.dto.PaymentStatusResponse;
 import com.vfit.modules.payment.dto.PaymentQuoteResponseDto;
+import com.vfit.modules.payment.config.PaymentProperties;
 import com.vfit.modules.payment.entity.PaymentOrder;
 import com.vfit.modules.payment.entity.PaymentOrderStatus;
+import com.vfit.modules.payment.enums.PaymentStatus;
+import com.vfit.modules.payment.enums.PremiumPlan;
 import com.vfit.modules.payment.exception.VoucherValidationException;
 import com.vfit.modules.payment.repository.PaymentOrderRepository;
 import com.vfit.modules.payment.service.PaymentService;
+import com.vfit.modules.payment.service.VietQrService;
+import com.vfit.modules.payment.service.VoucherService;
 import com.vfit.modules.subscription.SubscriptionPlanCatalog;
 import com.vfit.modules.subscription.document.PaymentTransaction;
 import com.vfit.modules.subscription.document.Subscription;
@@ -26,6 +34,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -45,6 +54,9 @@ public class PaymentServiceImpl implements PaymentService {
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
+    private final VietQrService vietQrService;
+    private final PaymentProperties paymentProperties;
+    private final VoucherService voucherService;
 
     @Override
     public PaymentQuoteResponseDto applyVoucher(String userId, CheckoutRequestDto request) {
@@ -112,6 +124,73 @@ public class PaymentServiceImpl implements PaymentService {
                     .premiumUntil(premiumUntil)
                     .build();
         });
+    }
+
+    @Override
+    public PaymentResponse createPremiumPayment(String userId, CreatePaymentRequest request) {
+        return withPaymentLock(userId, () -> {
+            validatePaymentConfig();
+            Instant now = Instant.now();
+            Instant expiredAt = now.plus(Duration.ofMinutes(paymentProperties.getExpiryMinutes()));
+            String paymentCode = generateUniquePaymentCode();
+            PremiumPlan plan = request.plan();
+            BigDecimal baseAmount = plan.basePrice();
+            VoucherService.AppliedVoucher voucher = voucherService
+                    .validateForPayment(userId, plan, request.voucherCode())
+                    .orElse(null);
+            BigDecimal discountAmount = voucher == null ? BigDecimal.ZERO : voucher.discountAmount();
+            BigDecimal finalAmount = calculateFinalAmount(baseAmount, discountAmount);
+            String qrUrl = vietQrService.buildQrUrl(finalAmount, paymentCode);
+
+            PaymentTransaction transaction = paymentTransactionRepository.save(PaymentTransaction.builder()
+                    .userId(userId)
+                    .plan(plan)
+                    .baseAmount(baseAmount)
+                    .discountAmount(discountAmount)
+                    .finalAmount(finalAmount)
+                    .amount(finalAmount)
+                    .currency(SubscriptionPlanCatalog.CURRENCY)
+                    .paymentCode(paymentCode)
+                    .voucherCode(voucher == null ? null : voucher.code())
+                    .paymentStatus(PaymentStatus.PENDING)
+                    .status(PaymentStatus.PENDING.name())
+                    .vietQrUrl(qrUrl)
+                    .expiredAt(expiredAt)
+                    .build());
+
+            return new PaymentResponse(
+                    transaction.getId(),
+                    transaction.getPlan(),
+                    transaction.getBaseAmount(),
+                    transaction.getDiscountAmount(),
+                    transaction.getFinalAmount(),
+                    paymentProperties.getBankCode(),
+                    paymentProperties.getAccountNumber(),
+                    paymentProperties.getAccountName(),
+                    transaction.getPaymentCode(),
+                    transaction.getVoucherCode(),
+                    transaction.getVietQrUrl(),
+                    transaction.getExpiredAt());
+        });
+    }
+
+    @Override
+    public PaymentStatusResponse getPaymentStatus(String userId, String paymentId) {
+        PaymentTransaction transaction = paymentTransactionRepository.findByIdAndUserId(paymentId, userId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Payment not found"));
+        PaymentStatus status = resolvePaymentStatus(transaction);
+        Instant premiumUntil = userRepository.findById(userId)
+                .map(User::getSubscription)
+                .map(User.SubscriptionSnapshot::getPremiumUntil)
+                .orElse(null);
+        boolean premiumUnlocked = status == PaymentStatus.PAID
+                && premiumUntil != null
+                && premiumUntil.isAfter(Instant.now());
+        return new PaymentStatusResponse(
+                transaction.getId(),
+                status,
+                premiumUnlocked,
+                premiumUntil);
     }
 
     private PaymentOrder getOrCreateDraftOrder(String userId) {
@@ -187,6 +266,41 @@ public class PaymentServiceImpl implements PaymentService {
                 .premiumUntil(premiumUntil)
                 .build());
         userRepository.save(user);
+    }
+
+    private String generateUniquePaymentCode() {
+        for (int attempt = 0; attempt < 5; attempt++) {
+            String candidate = "VFIT" + java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+                    .withZone(java.time.ZoneOffset.UTC)
+                    .format(Instant.now())
+                    + ThreadLocalRandom.current().nextInt(100, 999);
+            if (paymentTransactionRepository.findByPaymentCode(candidate).isEmpty()) {
+                return candidate;
+            }
+        }
+        throw new AppException(ErrorCode.CONFLICT, "Could not generate unique payment code");
+    }
+
+    private void validatePaymentConfig() {
+        if (paymentProperties.getBankCode().isBlank()
+                || paymentProperties.getAccountNumber().isBlank()
+                || paymentProperties.getAccountName().isBlank()) {
+            throw new AppException(ErrorCode.SERVICE_UNAVAILABLE, "Payment bank account is not configured");
+        }
+    }
+
+    private PaymentStatus resolvePaymentStatus(PaymentTransaction transaction) {
+        if (transaction.getPaymentStatus() != null) {
+            return transaction.getPaymentStatus();
+        }
+        if (transaction.getStatus() == null) {
+            return null;
+        }
+        try {
+            return PaymentStatus.valueOf(transaction.getStatus());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     private <T> T withPaymentLock(String userId, LockedOperation<T> operation) {

@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
@@ -27,7 +28,7 @@ class ExerciseDetailPage extends ConsumerWidget {
       ),
       body: exercise.when(
         data: (item) => ListView(
-          padding: const EdgeInsets.all(20),
+          padding: AppResponsive.pagePadding(context),
           children: [
             Text(
               item.name,

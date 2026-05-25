@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../data/repositories/exercise_library_repository_impl.dart';
 import '../bloc/exercise_library_bloc.dart';
@@ -63,7 +64,7 @@ class ExerciseLibraryViewState extends State<ExerciseLibraryView> {
           onRefresh: () => _refresh(context),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20),
+            padding: AppResponsive.pagePadding(context),
             children: [
               Text(
                 'Thư viện bài tập',

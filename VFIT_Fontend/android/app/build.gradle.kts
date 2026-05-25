@@ -53,7 +53,7 @@ android {
         debug {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
-        profile {
+        getByName("profile") {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
         release {

@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_response.dart';
 import '../../../../core/utils/media_url_resolver.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/state_views.dart';
@@ -214,7 +215,7 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
         },
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 88),
+          padding: AppResponsive.pagePadding(context).copyWith(bottom: 88),
           children: [
             _ProgressHeader(user: user),
             const SizedBox(height: 16),
@@ -927,8 +928,8 @@ class _JourneySnapDialogState extends State<_JourneySnapDialog> {
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 180),
                   curve: Curves.easeOutCubic,
-                  left: 20,
-                  right: 20,
+                  left: AppResponsive.horizontalPadding(context),
+                  right: AppResponsive.horizontalPadding(context),
                   bottom: keyboardVisible ? -120 : media.padding.bottom + 28,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
@@ -2032,7 +2033,12 @@ class _BadgesSection extends StatelessWidget {
                     .toList(),
               ),
         loading: () => const LoadingView(),
-        error: (error, _) => ErrorView(message: error.toString()),
+        error: (error, _) => AppFeedbackPanel(
+          compact: true,
+          type: AppFeedbackType.warning,
+          title: 'Chưa tải được huy hiệu',
+          message: 'Kéo xuống để thử tải lại dữ liệu.',
+        ),
       ),
     );
   }

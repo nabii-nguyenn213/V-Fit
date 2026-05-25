@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/enum_parsers.dart';
 import '../../../../core/utils/media_url_resolver.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -48,9 +49,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     ref.read(profileRepositoryProvider).bodyMetrics().then((metrics) {
       if (mounted) {
         setState(() {
-          _heightController.text = metrics.heightCm != null ? metrics.heightCm!.toStringAsFixed(0) : '';
-          _weightController.text = metrics.weightKg != null ? metrics.weightKg!.toStringAsFixed(1) : '';
-          _bodyFatController.text = metrics.bodyFatPercent != null ? metrics.bodyFatPercent!.toStringAsFixed(1) : '';
+          _heightController.text = metrics.heightCm != null
+              ? metrics.heightCm!.toStringAsFixed(0)
+              : '';
+          _weightController.text = metrics.weightKg != null
+              ? metrics.weightKg!.toStringAsFixed(1)
+              : '';
+          _bodyFatController.text = metrics.bodyFatPercent != null
+              ? metrics.bodyFatPercent!.toStringAsFixed(1)
+              : '';
         });
       }
     }).catchError((_) {});
@@ -181,7 +188,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: AppResponsive.pagePadding(context),
           children: [
             Center(
               child: Stack(
@@ -245,7 +252,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         labelText: 'Muc tieu',
                         suffixIcon: alreadySet
                             ? const Tooltip(
-                                message: 'Mục tiêu đã được chọn và không thể thay đổi',
+                                message:
+                                    'Mục tiêu đã được chọn và không thể thay đổi',
                                 child: Icon(Icons.lock_outline, size: 18),
                               )
                             : null,
@@ -269,7 +277,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                           'Mục tiêu đã được chọn và không thể thay đổi.',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),

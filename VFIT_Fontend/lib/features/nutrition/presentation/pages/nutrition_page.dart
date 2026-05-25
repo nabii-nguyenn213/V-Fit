@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
@@ -61,12 +62,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x4,
-                AppSpacing.x3,
-                AppSpacing.x4,
-                96,
-              ),
+              padding: AppResponsive.pagePadding(context).copyWith(bottom: 96),
               children: [
                 Text(
                   'Nutrition Hub',
@@ -252,7 +248,7 @@ class _FoodEstimateSheet extends StatelessWidget {
     final confidence = (estimate.confidence * 100).round();
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        padding: AppResponsive.pagePadding(context).copyWith(top: 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

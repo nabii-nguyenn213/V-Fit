@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../../presentation/theme/app_colors.dart';
 import '../../presentation/theme/app_radius.dart';
-import '../../presentation/theme/app_spacing.dart';
+import '../utils/responsive.dart';
 
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(AppSpacing.x4),
+    this.padding,
     this.onTap,
   });
 
   final Widget child;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
   @override
@@ -43,7 +43,7 @@ class AppCard extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: padding,
+            padding: padding ?? AppResponsive.cardPadding(context),
             child: child,
           ),
         ),

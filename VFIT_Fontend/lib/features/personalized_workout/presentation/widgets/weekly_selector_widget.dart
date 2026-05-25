@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/responsive.dart';
+
 class WeeklySelectorWidget extends StatefulWidget {
   const WeeklySelectorWidget({
     super.key,
@@ -31,7 +33,7 @@ class _WeeklySelectorWidgetState extends State<WeeklySelectorWidget> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    
+
     // Tự động cuộn đến ngày được chọn (hoặc ngày hôm nay) sau khi kết xuất xong
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -50,10 +52,11 @@ class _WeeklySelectorWidgetState extends State<WeeklySelectorWidget> {
     final index = _days.indexWhere((d) => d['day'] == widget.selectedDay);
     if (index != -1 && _scrollController.hasClients) {
       final position = index * 76.0; // 64 (card width) + 12 (spacing)
-      final centerPosition = position - (MediaQuery.of(context).size.width / 2) + 38.0;
+      final centerPosition =
+          position - (MediaQuery.of(context).size.width / 2) + 38.0;
       final maxScroll = _scrollController.position.maxScrollExtent;
       final targetScroll = centerPosition.clamp(0.0, maxScroll);
-      
+
       _scrollController.animateTo(
         targetScroll,
         duration: const Duration(milliseconds: 300),
@@ -72,7 +75,10 @@ class _WeeklySelectorWidgetState extends State<WeeklySelectorWidget> {
       child: ListView.separated(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppResponsive.horizontalPadding(context),
+          vertical: 8,
+        ),
         itemCount: _days.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {

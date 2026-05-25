@@ -1,9 +1,14 @@
 import 'package:dio/dio.dart';
 
+import '../network/api_exception.dart';
+
 class AppErrorMapper {
   const AppErrorMapper._();
 
   static String friendlyMessage(Object error) {
+    if (error is ApiException) {
+      return error.message;
+    }
     if (error is DioException) {
       final status = error.response?.statusCode;
       return switch (status) {

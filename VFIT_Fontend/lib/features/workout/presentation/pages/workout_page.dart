@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
@@ -65,12 +66,8 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                           children: [
                             // ── Header ──
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                AppSpacing.x5,
-                                AppSpacing.x5,
-                                AppSpacing.x5,
-                                AppSpacing.x2,
-                              ),
+                              padding: AppResponsive.pagePadding(context)
+                                  .copyWith(bottom: AppSpacing.x2),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -95,8 +92,9 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                             const SizedBox(height: 12),
                             // Thư viện bài tập header phân tách đại trà
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
+                              padding: EdgeInsets.symmetric(
+                                horizontal:
+                                    AppResponsive.horizontalPadding(context),
                                 vertical: 8,
                               ),
                               child: Text(
@@ -128,7 +126,8 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                 children: [
                   // ── Header Premium ──
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                    padding:
+                        AppResponsive.pagePadding(context).copyWith(bottom: 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -212,8 +211,8 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
 
   Widget _buildOnboardingGateway(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.x5,
+      margin: EdgeInsets.symmetric(
+        horizontal: AppResponsive.horizontalPadding(context),
         vertical: AppSpacing.x3,
       ),
       padding: const EdgeInsets.all(AppSpacing.x5),
@@ -399,7 +398,10 @@ class _PersonalPlanTab extends StatelessWidget {
           // Offline warning banner
           if (plan.isStale == true)
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              margin: EdgeInsets.symmetric(
+                horizontal: AppResponsive.horizontalPadding(context),
+                vertical: 8,
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: scheme.errorContainer.withValues(alpha: 0.15),
@@ -428,7 +430,10 @@ class _PersonalPlanTab extends StatelessWidget {
 
           if (planState.errorMessage != null)
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              margin: EdgeInsets.symmetric(
+                horizontal: AppResponsive.horizontalPadding(context),
+                vertical: 8,
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.orange.withValues(alpha: 0.15),

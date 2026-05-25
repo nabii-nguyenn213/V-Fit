@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -26,7 +27,7 @@ class AdminPage extends ConsumerWidget {
         title: const Text('Doanh thu'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: AppResponsive.pagePadding(context),
         children: [
           dashboard.when(
             data: (stats) => Column(

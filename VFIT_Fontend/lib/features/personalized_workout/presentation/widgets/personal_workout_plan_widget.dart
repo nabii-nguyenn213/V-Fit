@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../exercise_library/domain/entities/exercise_catalog.dart';
 import '../../../exercise_library/presentation/bloc/exercise_library_bloc.dart';
 import '../../../exercise_library/presentation/widgets/exercise_detail_sheet.dart';
@@ -16,7 +17,8 @@ class PersonalWorkoutPlanWidget extends StatefulWidget {
   final PersonalizedWorkout plan;
 
   @override
-  State<PersonalWorkoutPlanWidget> createState() => _PersonalWorkoutPlanWidgetState();
+  State<PersonalWorkoutPlanWidget> createState() =>
+      _PersonalWorkoutPlanWidgetState();
 }
 
 class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
@@ -53,9 +55,11 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
     // Trả về ExerciseItem có tên readable tương ứng từ catalog ID
     final name = exerciseId
         .split('-')
-        .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+        .map((word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1)}'
+            : '')
         .join(' ');
-    
+
     return ExerciseItem(
       id: exerciseId,
       name: name,
@@ -65,7 +69,8 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
   }
 
   void _showExerciseDetail(BuildContext context, String exerciseId) {
-    final resolvedExercise = _lookupExercise(context, exerciseId) ?? _getFallbackExercise(exerciseId);
+    final resolvedExercise = _lookupExercise(context, exerciseId) ??
+        _getFallbackExercise(exerciseId);
 
     showModalBottomSheet<void>(
       context: context,
@@ -92,9 +97,12 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
         const SizedBox(height: 8),
 
         if (daySchedule == null)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Text(
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppResponsive.horizontalPadding(context),
+              vertical: 24,
+            ),
+            child: const Text(
               'Không tìm thấy lịch trình cho ngày này.',
               textAlign: TextAlign.center,
             ),
@@ -102,7 +110,10 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
         else ...[
           // ── Header Lịch Tập Trong Ngày ──────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppResponsive.horizontalPadding(context),
+              vertical: 8,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -111,15 +122,17 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
                     children: [
                       Text(
                         daySchedule.dayType,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: scheme.primary,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: scheme.primary,
+                                ),
                       ),
                       if (daySchedule.restDay) ...[
                         const SizedBox(height: 4),
                         Text(
-                          daySchedule.cardioAfterWorkout ?? 'Nghỉ ngơi và phục hồi hoàn toàn',
+                          daySchedule.cardioAfterWorkout ??
+                              'Nghỉ ngơi và phục hồi hoàn toàn',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -132,11 +145,14 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
                 ),
                 if (daySchedule.restDay)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                      border: Border.all(
+                          color:
+                              const Color(0xFF10B981).withValues(alpha: 0.3)),
                     ),
                     child: const Text(
                       'NGHỈ PHỤC HỒI',
@@ -149,11 +165,13 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
                   )
                 else
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: scheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: scheme.primary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                          color: scheme.primary.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       '${daySchedule.exercises.length} BÀI TẬP',
@@ -181,7 +199,9 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
 
             // Exercise Drill-Down Cards
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppResponsive.horizontalPadding(context),
+              ),
               child: Text(
                 'DANH SÁCH BÀI TẬP',
                 style: TextStyle(
@@ -197,12 +217,17 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+              padding: EdgeInsets.only(
+                left: AppResponsive.horizontalPadding(context),
+                right: AppResponsive.horizontalPadding(context),
+                bottom: 20,
+              ),
               itemCount: daySchedule.exercises.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final exerciseMeta = daySchedule.exercises[index];
-                final exerciseDetails = _lookupExercise(context, exerciseMeta.exerciseId);
+                final exerciseDetails =
+                    _lookupExercise(context, exerciseMeta.exerciseId);
                 final displayName = exerciseDetails?.name ??
                     exerciseMeta.exerciseId
                         .split('-')
@@ -239,7 +264,10 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
   Widget _buildRestDaySection(BuildContext context, DaySchedule schedule) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      margin: EdgeInsets.symmetric(
+        horizontal: AppResponsive.horizontalPadding(context),
+        vertical: 12,
+      ),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
@@ -281,7 +309,9 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
   Widget _buildRulesSection(BuildContext context, WorkoutRules rules) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppResponsive.horizontalPadding(context),
+      ),
       child: Row(
         children: [
           Expanded(
@@ -387,7 +417,8 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
           decoration: BoxDecoration(
             color: scheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.3)),
+            border:
+                Border.all(color: scheme.outlineVariant.withValues(alpha: 0.3)),
             boxShadow: [
               BoxShadow(
                 color: scheme.shadow.withValues(alpha: 0.03),
@@ -488,7 +519,10 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
   Widget _buildCardioBanner(BuildContext context, String cardioText) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      margin: EdgeInsets.symmetric(
+        horizontal: AppResponsive.horizontalPadding(context),
+        vertical: 8,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: scheme.primary.withValues(alpha: 0.05),
@@ -514,10 +548,13 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
     );
   }
 
-  Widget _buildNutritionSection(BuildContext context, NutritionRecovery nutrition) {
+  Widget _buildNutritionSection(
+      BuildContext context, NutritionRecovery nutrition) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppResponsive.horizontalPadding(context),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -536,7 +573,8 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
             decoration: BoxDecoration(
               color: scheme.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.3)),
+              border: Border.all(
+                  color: scheme.outlineVariant.withValues(alpha: 0.3)),
             ),
             child: Column(
               children: [
@@ -567,7 +605,9 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
                     ),
                   ],
                 ),
-                Divider(height: 24, color: scheme.outlineVariant.withValues(alpha: 0.4)),
+                Divider(
+                    height: 24,
+                    color: scheme.outlineVariant.withValues(alpha: 0.4)),
                 Row(
                   children: [
                     Expanded(

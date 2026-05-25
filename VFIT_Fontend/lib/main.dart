@@ -7,6 +7,7 @@ import 'core/network/network_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
+import 'core/utils/responsive.dart';
 import 'core/widgets/app_feedback.dart';
 import 'features/auth/application/auth_controller.dart';
 
@@ -52,6 +53,33 @@ class _VFitAppState extends ConsumerState<VFitApp> {
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        return ScrollConfiguration(
+          behavior: const _VFitScrollBehavior(),
+          child: MediaQuery(
+            data: media.copyWith(
+              textScaler: TextScaler.linear(
+                AppResponsive.clampTextScale(
+                  media.textScaler.scale(1),
+                ),
+              ),
+            ),
+            child: child ?? const SizedBox.shrink(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _VFitScrollBehavior extends MaterialScrollBehavior {
+  const _VFitScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
     );
   }
 }

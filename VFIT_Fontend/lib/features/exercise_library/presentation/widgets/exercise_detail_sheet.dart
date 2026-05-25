@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../domain/entities/exercise_catalog.dart';
 
@@ -43,12 +44,15 @@ class ExerciseDetailSheet extends StatelessWidget {
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                  padding: AppResponsive.pagePadding(context)
+                      .copyWith(top: 8, bottom: 32),
                   children: [
                     // ── Header ───────────────────────────────────────
                     Text(
                       exercise.name,
-                      style: Theme.of(context).textTheme.headlineSmall
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 6),
@@ -174,9 +178,7 @@ class _VideoCard extends StatelessWidget {
                 canOpenVideo
                     ? Icons.play_circle_fill_rounded
                     : Icons.link_off_rounded,
-                color: canOpenVideo
-                    ? scheme.primary
-                    : scheme.onSurfaceVariant,
+                color: canOpenVideo ? scheme.primary : scheme.onSurfaceVariant,
                 size: 28,
               ),
             ),
@@ -271,7 +273,8 @@ class _DescriptionBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Split on sentence boundaries or keyword markers
-    final rawParts = description.split(RegExp(r'\. (?=[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐƠƯẠẶẦẤẢỀẾỘỐỔỖ])'));
+    final rawParts = description
+        .split(RegExp(r'\. (?=[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐƠƯẠẶẦẤẢỀẾỘỐỔỖ])'));
     final parts = rawParts.where((p) => p.trim().isNotEmpty).toList();
 
     if (parts.length <= 1) {
@@ -285,9 +288,13 @@ class _DescriptionBlock extends StatelessWidget {
 
     for (final part in parts) {
       final lower = part.toLowerCase();
-      if (lower.contains('lưu ý') || lower.contains('lỗi') || lower.contains('sai')) {
+      if (lower.contains('lưu ý') ||
+          lower.contains('lỗi') ||
+          lower.contains('sai')) {
         notes.add(part.endsWith('.') ? part : '$part.');
-      } else if (lower.contains('mẹo') || lower.contains('ưu điểm') || lower.contains('tác dụng')) {
+      } else if (lower.contains('mẹo') ||
+          lower.contains('ưu điểm') ||
+          lower.contains('tác dụng')) {
         tips.add(part.endsWith('.') ? part : '$part.');
       } else {
         howTo.add(part.endsWith('.') ? part : '$part.');

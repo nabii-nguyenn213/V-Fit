@@ -6,6 +6,7 @@ import '../../presentation/theme/app_radius.dart';
 import '../../presentation/theme/app_spacing.dart';
 import '../../presentation/theme/app_typography.dart';
 import '../constants/app_assets.dart';
+import '../utils/responsive.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.child});
@@ -33,41 +34,61 @@ class AppShell extends StatelessWidget {
       _ => 'Hồ sơ',
     };
     final isDark = AppColors.isDark(context);
+    final wide = AppResponsive.isWide(context);
+    final body = DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? const [
+                  AppColors.background,
+                  AppColors.surface1,
+                  Color(0xFF101328),
+                ]
+              : const [
+                  AppColors.lightBackground,
+                  AppColors.lightSurface1,
+                  Color(0xFFEAF1FF),
+                ],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _ShellHeader(title: title),
+            Expanded(
+              child: AppResponsive.centeredContent(
+                context: context,
+                maxWidth: wide ? 1080 : AppResponsive.maxContentWidth,
+                child: child,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? const [
-                    AppColors.background,
-                    AppColors.surface1,
-                    Color(0xFF101328),
-                  ]
-                : const [
-                    AppColors.lightBackground,
-                    AppColors.lightSurface1,
-                    Color(0xFFEAF1FF),
-                  ],
-          ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              _ShellHeader(title: title),
-              Expanded(child: child),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: _ShellNavigationBar(
-        selectedIndex: safeIndex,
-        onDestinationSelected: (value) => context.go(_routes[value]),
-      ),
+      body: wide
+          ? Row(
+              children: [
+                _ShellNavigationRail(
+                  selectedIndex: safeIndex,
+                  onDestinationSelected: (value) => context.go(_routes[value]),
+                ),
+                Expanded(child: body),
+              ],
+            )
+          : body,
+      bottomNavigationBar: wide
+          ? null
+          : _ShellNavigationBar(
+              selectedIndex: safeIndex,
+              onDestinationSelected: (value) => context.go(_routes[value]),
+            ),
     );
   }
 }
@@ -79,19 +100,20 @@ class _ShellHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = AppResponsive.isCompact(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.x4,
-        AppSpacing.x3,
-        AppSpacing.x4,
+      padding: EdgeInsets.fromLTRB(
+        AppResponsive.horizontalPadding(context),
+        compact ? AppSpacing.x2 : AppSpacing.x3,
+        AppResponsive.horizontalPadding(context),
         AppSpacing.x2,
       ),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
-            padding: const EdgeInsets.all(AppSpacing.x2),
+            width: compact ? 40 : 46,
+            height: compact ? 40 : 46,
+            padding: EdgeInsets.all(compact ? 6 : AppSpacing.x2),
             decoration: BoxDecoration(
               color: AppColors.surface2Of(context).withValues(alpha: 0.82),
               borderRadius: BorderRadius.circular(AppRadius.input),
@@ -131,7 +153,12 @@ class _ShellHeader extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.headerMediumFor(context),
+                  style: compact
+                      ? Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0,
+                          )
+                      : AppTypography.headerMediumFor(context),
                 ),
               ],
             ),
@@ -153,6 +180,7 @@ class _ShellNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = AppResponsive.isCompact(context);
     return NavigationBarTheme(
       data: NavigationBarThemeData(
         backgroundColor: AppColors.surface1Of(context),
@@ -165,7 +193,7 @@ class _ShellNavigationBar extends StatelessWidget {
             color: selected
                 ? AppColors.primaryOf(context)
                 : AppColors.textSecondaryOf(context),
-            size: 23,
+            size: compact ? 21 : 23,
           );
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -175,11 +203,11 @@ class _ShellNavigationBar extends StatelessWidget {
             color: selected
                 ? AppColors.primaryOf(context)
                 : AppColors.textSecondaryOf(context),
-          ).copyWith(fontSize: 11);
+          ).copyWith(fontSize: compact ? 10 : 11);
         }),
       ),
       child: NavigationBar(
-        height: 72,
+        height: compact ? 64 : 72,
         elevation: 0,
         selectedIndex: selectedIndex,
         onDestinationSelected: onDestinationSelected,
@@ -211,6 +239,65 @@ class _ShellNavigationBar extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ShellNavigationRail extends StatelessWidget {
+  const _ShellNavigationRail({
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationRail(
+      backgroundColor: AppColors.surface1Of(context),
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onDestinationSelected,
+      labelType: NavigationRailLabelType.all,
+      minWidth: 92,
+      selectedIconTheme: IconThemeData(color: AppColors.primaryOf(context)),
+      unselectedIconTheme:
+          IconThemeData(color: AppColors.textSecondaryOf(context)),
+      selectedLabelTextStyle: AppTypography.labelFor(
+        context,
+        color: AppColors.primaryOf(context),
+      ),
+      unselectedLabelTextStyle: AppTypography.labelFor(
+        context,
+        color: AppColors.textSecondaryOf(context),
+      ),
+      destinations: const [
+        NavigationRailDestination(
+          selectedIcon: Icon(Icons.dashboard_rounded),
+          icon: Icon(Icons.dashboard_outlined),
+          label: Text('Trang chủ'),
+        ),
+        NavigationRailDestination(
+          selectedIcon: Icon(Icons.fitness_center_rounded),
+          icon: Icon(Icons.fitness_center_outlined),
+          label: Text('Luyện tập'),
+        ),
+        NavigationRailDestination(
+          selectedIcon: Icon(Icons.restaurant_rounded),
+          icon: Icon(Icons.restaurant_outlined),
+          label: Text('Dinh dưỡng'),
+        ),
+        NavigationRailDestination(
+          selectedIcon: Icon(Icons.show_chart_rounded),
+          icon: Icon(Icons.show_chart_outlined),
+          label: Text('Tiến độ'),
+        ),
+        NavigationRailDestination(
+          selectedIcon: Icon(Icons.person_rounded),
+          icon: Icon(Icons.person_outline_rounded),
+          label: Text('Hồ sơ'),
+        ),
+      ],
     );
   }
 }

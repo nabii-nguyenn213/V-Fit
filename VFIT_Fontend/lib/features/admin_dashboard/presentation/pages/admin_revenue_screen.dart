@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../data/repositories/admin_dashboard_repository.dart';
@@ -121,8 +122,7 @@ class AdminRevenueScreen extends ConsumerWidget {
                 },
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: AppResponsive.pagePadding(context).copyWith(top: 12),
                   children: [
                     // 1. Lifetime Revenue Card (glowing Neon Emerald Green)
                     Container(
