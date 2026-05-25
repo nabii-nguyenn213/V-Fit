@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../presentation/theme/app_colors.dart';
+import '../../presentation/theme/app_radius.dart';
+import '../../presentation/theme/app_spacing.dart';
+
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(AppSpacing.x4),
     this.onTap,
   });
 
@@ -14,16 +18,42 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const radius = BorderRadius.all(Radius.circular(18));
-    return Card(
+    final borderRadius = BorderRadius.circular(AppRadius.card);
+    final isDark = AppColors.isDark(context);
+    final content = Material(
+      color: AppColors.surface1Of(context),
+      borderRadius: borderRadius,
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: radius,
-        child: Padding(
-          padding: padding,
-          child: child,
+        borderRadius: borderRadius,
+        splashColor: AppColors.primaryOf(context).withValues(alpha: 0.08),
+        highlightColor: AppColors.overlayPressedOf(context),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: borderRadius,
+            border: Border.all(color: AppColors.borderSubtleOf(context)),
+            boxShadow: [
+              BoxShadow(
+                color:
+                    isDark ? const Color(0x24000000) : const Color(0x1200235A),
+                blurRadius: isDark ? 18 : 14,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: padding,
+            child: child,
+          ),
         ),
       ),
+    );
+
+    return Semantics(
+      button: onTap != null,
+      container: true,
+      child: content,
     );
   }
 }

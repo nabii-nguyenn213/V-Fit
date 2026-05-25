@@ -4,7 +4,7 @@ import com.vfit.common.api.PageResponse;
 import com.vfit.common.exception.AppException;
 import com.vfit.common.exception.ErrorCode;
 import com.vfit.infrastructure.config.AppProperties;
-import com.vfit.bootstrap.storage.FileStorageService;
+import com.vfit.bootstrap.storage.CloudinaryService;
 import com.vfit.modules.progress.document.JourneySnap;
 import com.vfit.modules.progress.dto.response.JourneySnapResponse;
 import com.vfit.modules.progress.mapper.JourneySnapMapper;
@@ -23,7 +23,7 @@ public class JourneySnapServiceImpl implements JourneySnapService {
     private static final int MAX_NOTE_LENGTH = 60;
 
     private final JourneySnapRepository journeySnapRepository;
-    private final FileStorageService fileStorageService;
+    private final CloudinaryService cloudinaryService;
     private final JourneySnapMapper journeySnapMapper;
     private final AppProperties appProperties;
     private final UserRepository userRepository;
@@ -39,13 +39,13 @@ public class JourneySnapServiceImpl implements JourneySnapService {
             throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "User not found");
         }
 
-        String relativePath = fileStorageService.store(file, "snaps");
+        String photoUrl = cloudinaryService.upload(file, "snaps");
 
         String sanitizedNote = sanitizeNote(note);
 
         JourneySnap snap = JourneySnap.builder()
                 .userId(userId)
-                .photoUrl(relativePath)
+                .photoUrl(photoUrl)
                 .note(sanitizedNote)
                 .build();
         

@@ -1,11 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../data/repositories/admin_repository.dart';
+import 'package:go_router/go_router.dart';
 
 class AdminPage extends ConsumerWidget {
   const AdminPage({super.key});
@@ -53,6 +55,11 @@ class AdminPage extends ConsumerWidget {
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 24),
+                AppButton(
+                  label: 'Giám sát dòng tiền thời gian thực ⚡',
+                  onPressed: () => context.push('/admin/revenue'),
                 ),
               ],
             ),

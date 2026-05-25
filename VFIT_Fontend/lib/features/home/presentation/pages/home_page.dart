@@ -7,12 +7,16 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../../presentation/theme/app_colors.dart';
+import '../../../../presentation/theme/app_radius.dart';
+import '../../../../presentation/theme/app_spacing.dart';
+import '../../../../presentation/theme/app_typography.dart';
+import '../../../../presentation/widgets/common/metric_tile.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../challenges/presentation/widgets/force_camera_overlay.dart';
 import '../../../checkin/data/models/checkin_models.dart';
 import '../../../checkin/data/repositories/checkin_repository.dart';
 import '../../data/repositories/app_config_repository.dart';
-
-import '../../../challenges/presentation/widgets/force_camera_overlay.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -22,235 +26,450 @@ class HomePage extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).user;
     final auth = ref.watch(authControllerProvider);
     final appConfig = ref.watch(appConfigProvider);
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subscription = subscriptionLabel(
+      user?.subscriptionStatus ?? SubscriptionStatus.free,
+      user?.subscriptionPlanCode,
+    );
 
     return ForceCameraOverlay(
       child: RefreshIndicator(
+        color: AppColors.primaryOf(context),
+        backgroundColor: AppColors.surface1Of(context),
         onRefresh: () async {
           ref.invalidate(appConfigProvider);
           if (auth.isAuthenticated) {
             await ref.read(authControllerProvider.notifier).reloadMe();
           }
         },
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? const [
-                        Color(0xFF10112A),
-                        Color(0xFF2A0D3F),
-                        Color(0xFF061F2A),
-                      ]
-                    : const [
-                        Color(0xFFE5FBFF),
-                        Color(0xFFFFE7FB),
-                        Color(0xFFFFFFFF),
-                      ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= 720;
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.x4,
+                AppSpacing.x3,
+                AppSpacing.x4,
+                MediaQuery.paddingOf(context).bottom + AppSpacing.x8,
               ),
-              border: Border.all(color: scheme.primary.withValues(alpha: 0.5)),
-              boxShadow: [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: isDark ? 0.34 : 0.14),
-                  blurRadius: 34,
-                  offset: const Offset(-12, 18),
-                ),
-                BoxShadow(
-                  color:
-                      scheme.secondary.withValues(alpha: isDark ? 0.28 : 0.1),
-                  blurRadius: 30,
-                  offset: const Offset(14, 12),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    color:
-                        scheme.primary.withValues(alpha: isDark ? 0.16 : 0.22),
-                    borderRadius: BorderRadius.circular(999),
+                _HomeHero(
+                  name: user?.fullName ?? 'hội viên',
+                  slogan: appConfig.when(
+                    data: (config) =>
+                        config.slogan ??
+                        'Tập thông minh hơn, sống khỏe mạnh hơn.',
+                    loading: () => 'Đang đồng bộ dữ liệu V-FIT...',
+                    error: (_, __) => 'Tập thông minh hơn, sống khỏe mạnh hơn.',
                   ),
-                  child: Text(
-                    'GIAO THỨC TẬP LUYỆN V-FIT',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: isDark ? scheme.primary : scheme.primary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
+                  onStart: () => context.go('/workouts'),
+                  onProgress: () => context.go('/progress'),
                 ),
-                const SizedBox(height: 18),
-                Text(
-                  'Nâng cấp\ncơ thể của bạn.',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                      ),
+                const SizedBox(height: AppSpacing.x4),
+                _MetricGrid(
+                  wide: wide,
+                  level: user?.level ?? 1,
+                  xp: user?.xp ?? 0,
+                  subscription: subscription,
                 ),
-                const SizedBox(height: 12),
-                appConfig.when(
-                  data: (config) => Text(
-                    config.slogan ?? 'Tập thông minh hơn, sống khỏe mạnh hơn',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                const SizedBox(height: AppSpacing.x4),
+                const _CheckinVoucherCard(),
+                const SizedBox(height: AppSpacing.x4),
+                if (!auth.isAuthenticated) ...[
+                  _GuestUnlockCard(
+                    onRegister: () => context.go('/register'),
+                    onLogin: () => context.go('/login'),
                   ),
-                  loading: () => Text(
-                    'Đang tải V-FIT...',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                  error: (_, __) => Text(
-                    'Tập thông minh hơn, sống khỏe mạnh hơn',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () => context.go('/workouts'),
-                      icon: const Icon(Icons.bolt_rounded),
-                      label: const Text('Bắt đầu'),
+                  const SizedBox(height: AppSpacing.x4),
+                ],
+                _CommandGrid(
+                  wide: wide,
+                  actions: [
+                    _HomeCommand(
+                      title: 'Luyện tập',
+                      subtitle:
+                          'Giáo án, thư viện bài tập và kế hoạch cá nhân.',
+                      icon: Icons.fitness_center_rounded,
+                      onTap: () => context.go('/workouts'),
                     ),
-                    const SizedBox(width: 10),
-                    OutlinedButton.icon(
-                      onPressed: () => context.go('/progress'),
-                      icon: const Icon(Icons.show_chart),
-                      label: const Text('Tiến độ'),
+                    _HomeCommand(
+                      title: 'Dinh dưỡng',
+                      subtitle: 'Tra cứu món ăn, quét calo và tính macro.',
+                      icon: Icons.restaurant_rounded,
+                      onTap: () => context.go('/nutrition'),
+                    ),
+                    _HomeCommand(
+                      title: 'Tiến độ',
+                      subtitle: 'Theo dõi chỉ số, ảnh hành trình và thử thách.',
+                      icon: Icons.show_chart_rounded,
+                      onTap: () => context.go('/progress'),
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.x4),
+                appConfig.when(
+                  data: (config) => config.maintenanceMode
+                      ? ErrorView(
+                          message: config.maintenanceMessage ??
+                              'V-FIT đang được bảo trì.',
+                        )
+                      : const SizedBox.shrink(),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
               ],
-            ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeHero extends StatelessWidget {
+  const _HomeHero({
+    required this.name,
+    required this.slogan,
+    required this.onStart,
+    required this.onProgress,
+  });
+
+  final String name;
+  final String slogan;
+  final VoidCallback onStart;
+  final VoidCallback onProgress;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: EdgeInsets.zero,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.x5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.surface2Of(context),
+              AppColors.surface1Of(context),
+              Color(0xFF0D1C28),
+            ],
           ),
-          const SizedBox(height: 20),
-          AppCard(
-            child: Row(
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Expanded(
-                  child: _MetricTile(
-                    label: 'Cấp độ',
-                    value: '${user?.level ?? 1}',
-                  ),
+                _StatusPill(
+                  icon: Icons.bolt_rounded,
+                  label: 'PERFORMANCE OS',
+                  color: AppColors.limePerformance,
                 ),
-                Expanded(
-                  child: _MetricTile(label: 'XP', value: '${user?.xp ?? 0}'),
-                ),
-                Expanded(
-                  child: _MetricTile(
-                    label: 'Gói cước',
-                    value: subscriptionLabel(
-                      user?.subscriptionStatus ?? SubscriptionStatus.free,
-                      user?.subscriptionPlanCode,
+                const Spacer(),
+                Container(
+                  width: 42,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color:
+                          AppColors.primaryOf(context).withValues(alpha: 0.24),
                     ),
                   ),
+                  child: Icon(
+                    Icons.monitor_heart_rounded,
+                    color: AppColors.primaryOf(context),
+                    size: 22,
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Xin chào, ${user?.fullName ?? 'hội viên'}',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 12),
-          const _CheckinVoucherCard(),
-          const SizedBox(height: 18),
-          if (!auth.isAuthenticated) ...[
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Mở khóa tập luyện VIP',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Đăng ký tài khoản để lưu lại tiến độ, sử dụng các kế hoạch tập VIP và các công cụ huấn luyện cá nhân.',
-                    style: TextStyle(color: scheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppButton.add(
-                          label: 'Đăng ký VIP',
-                          fullWidth: true,
-                          onPressed: () => context.go('/register'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      AppButton.ghost(
-                        label: 'Đăng nhập',
-                        onPressed: () => context.go('/login'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            const SizedBox(height: AppSpacing.x6),
+            Text(
+              'Xin chào, $name',
+              style: AppTypography.headerLargeFor(context),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: AppSpacing.x2),
+            Text(
+              slogan,
+              style: AppTypography.bodyFor(context),
+            ),
+            const SizedBox(height: AppSpacing.x6),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton.primary(
+                    label: 'Bắt đầu tập',
+                    icon: Icons.play_arrow_rounded,
+                    onPressed: onStart,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.x3),
+                AppButton.ghost(
+                  label: 'Tiến độ',
+                  icon: Icons.show_chart_rounded,
+                  onPressed: onProgress,
+                ),
+              ],
+            ),
           ],
-          _QuickAction(
-            title: 'Chương trình luyện tập',
-            subtitle: 'Khám phá các chương trình luyện tập đa dạng.',
-            icon: Icons.fitness_center,
-            onTap: () => context.go('/workouts'),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricGrid extends StatelessWidget {
+  const _MetricGrid({
+    required this.wide,
+    required this.level,
+    required this.xp,
+    required this.subscription,
+  });
+
+  final bool wide;
+  final int level;
+  final int xp;
+  final String subscription;
+
+  @override
+  Widget build(BuildContext context) {
+    final tiles = [
+      MetricTile(
+        label: 'Cấp độ',
+        value: '$level',
+        icon: Icons.workspace_premium_rounded,
+        accentColor: AppColors.limePerformance,
+      ),
+      MetricTile(
+        label: 'XP hiện tại',
+        value: '$xp',
+        icon: Icons.auto_graph_rounded,
+        accentColor: AppColors.primaryCyan,
+      ),
+      MetricTile(
+        label: 'Gói cước',
+        value: subscription,
+        icon: Icons.verified_rounded,
+        accentColor: AppColors.energyMagenta,
+      ),
+    ];
+
+    if (wide) {
+      return Row(
+        children: [
+          Expanded(child: tiles[0]),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(child: tiles[1]),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(child: tiles[2]),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: tiles[0]),
+            const SizedBox(width: AppSpacing.x3),
+            Expanded(child: tiles[1]),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.x3),
+        tiles[2],
+      ],
+    );
+  }
+}
+
+class _GuestUnlockCard extends StatelessWidget {
+  const _GuestUnlockCard({
+    required this.onRegister,
+    required this.onLogin,
+  });
+
+  final VoidCallback onRegister;
+  final VoidCallback onLogin;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _StatusPill(
+            icon: Icons.lock_open_rounded,
+            label: 'VIP ACCESS',
+            color: AppColors.energyMagenta,
           ),
-          const SizedBox(height: 12),
-          _QuickAction(
-            title: 'Danh mục dinh dưỡng',
-            subtitle: 'Tra cứu thực phẩm và tính toán Calo thông minh.',
-            icon: Icons.restaurant,
-            onTap: () => context.go('/nutrition'),
+          const SizedBox(height: AppSpacing.x4),
+          Text(
+            'Mở khóa tập luyện cá nhân hóa',
+            style: AppTypography.headerMediumFor(context),
           ),
-          const SizedBox(height: 12),
-          _QuickAction(
-            title: 'Tiến độ tập luyện',
-            subtitle: 'Xem chỉ số cơ thể, huy hiệu và thử thách.',
-            icon: Icons.show_chart,
-            onTap: () => context.go('/progress'),
+          const SizedBox(height: AppSpacing.x2),
+          Text(
+            'Đăng ký tài khoản để lưu tiến độ, dùng giáo án VIP và công cụ huấn luyện cá nhân.',
+            style: AppTypography.bodyFor(context),
           ),
-          const SizedBox(height: 20),
-          appConfig.when(
-            data: (config) => config.maintenanceMode
-                ? ErrorView(
-                    message:
-                        config.maintenanceMessage ?? 'V-FIT đang được bảo trì.',
-                  )
-                : const SizedBox.shrink(),
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+          const SizedBox(height: AppSpacing.x4),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton.add(
+                  label: 'Đăng ký',
+                  fullWidth: true,
+                  onPressed: onRegister,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x3),
+              AppButton.ghost(
+                label: 'Đăng nhập',
+                onPressed: onLogin,
+              ),
+            ],
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 }
+
+class _CommandGrid extends StatelessWidget {
+  const _CommandGrid({
+    required this.wide,
+    required this.actions,
+  });
+
+  final bool wide;
+  final List<_HomeCommand> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    if (wide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < actions.length; index++) ...[
+            Expanded(child: _CommandTile(action: actions[index])),
+            if (index != actions.length - 1)
+              const SizedBox(width: AppSpacing.x3),
+          ],
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < actions.length; index++) ...[
+          _CommandTile(action: actions[index]),
+          if (index != actions.length - 1)
+            const SizedBox(height: AppSpacing.x3),
+        ],
+      ],
+    );
+  }
+}
+
+class _CommandTile extends StatelessWidget {
+  const _CommandTile({required this.action});
+
+  final _HomeCommand action;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: action.onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primaryOf(context).withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppRadius.input),
+            ),
+            child: Icon(action.icon, color: AppColors.primaryOf(context)),
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  action.title,
+                  style: AppTypography.headerMediumFor(context),
+                ),
+                const SizedBox(height: AppSpacing.x1),
+                Text(
+                  action.subtitle,
+                  style: AppTypography.bodySmallFor(context),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.textSecondaryOf(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeCommand {
+  const _HomeCommand({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x3,
+        vertical: AppSpacing.x2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 15),
+          const SizedBox(width: AppSpacing.x1),
+          Text(label, style: AppTypography.label(color: color)),
+        ],
+      ),
+    );
+  }
 }
 
 class _CheckinVoucherCard extends ConsumerStatefulWidget {
@@ -282,7 +501,8 @@ class _CheckinVoucherCardState extends ConsumerState<_CheckinVoucherCard> {
     });
 
     try {
-      final status = await ref.read(checkinRepositoryProvider).getCheckinStatus();
+      final status =
+          await ref.read(checkinRepositoryProvider).getCheckinStatus();
       if (mounted) {
         setState(() {
           _checkedToday = status.checkedToday;
@@ -306,9 +526,7 @@ class _CheckinVoucherCardState extends ConsumerState<_CheckinVoucherCard> {
       return;
     }
 
-    if (_loading) {
-      return;
-    }
+    if (_loading) return;
 
     setState(() {
       _loading = true;
@@ -316,9 +534,7 @@ class _CheckinVoucherCardState extends ConsumerState<_CheckinVoucherCard> {
 
     try {
       final result = await ref.read(checkinRepositoryProvider).checkinToday();
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _result = result;
         _checkedToday = true;
@@ -340,9 +556,7 @@ class _CheckinVoucherCardState extends ConsumerState<_CheckinVoucherCard> {
         );
       }
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       final message = error.toString();
       if (message.contains('điểm danh') || message.contains('xử lý')) {
         setState(() {
@@ -364,164 +578,96 @@ class _CheckinVoucherCardState extends ConsumerState<_CheckinVoucherCard> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
-    final scheme = Theme.of(context).colorScheme;
     final count = _result?.monthCheckinCount ?? _initialCount;
     final progress = count == null ? 0.0 : (count.clamp(0, 30) / 30);
     final subtitle = count == null
-        ? 'Điểm danh 1 lần mỗi ngày để nhận voucher.'
+        ? 'Điểm danh mỗi ngày để giữ nhịp và nhận voucher.'
         : 'Tháng này bạn đã điểm danh $count/30 ngày.';
 
     return AppCard(
-      padding: EdgeInsets.zero,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              scheme.surfaceContainerHighest.withValues(alpha: 0.72),
-              scheme.primaryContainer.withValues(alpha: 0.28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.input),
+                ),
+                child: const Icon(
+                  Icons.event_available_rounded,
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Điểm danh đổi voucher',
+                      style: AppTypography.headerMediumFor(context),
+                    ),
+                    const SizedBox(height: AppSpacing.x1),
+                    Text(subtitle, style: AppTypography.bodySmallFor(context)),
+                  ],
+                ),
+              ),
             ],
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: scheme.primary.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    Icons.event_available_rounded,
-                    color: scheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Điểm danh đổi Voucher',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: TextStyle(color: scheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                minHeight: 9,
-                value: progress,
-                backgroundColor: scheme.surface.withValues(alpha: 0.5),
-                valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
+          const SizedBox(height: AppSpacing.x4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: LinearProgressIndicator(
+              minHeight: 9,
+              value: progress,
+              backgroundColor: AppColors.surface2Of(context),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.success,
               ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _MilestonePill(
-                    label: '15 ngày',
-                    reward: 'Voucher 10K',
-                    reached: (count ?? 0) >= 15,
-                  ),
+          ),
+          const SizedBox(height: AppSpacing.x3),
+          Row(
+            children: [
+              Expanded(
+                child: _MilestonePill(
+                  label: '15 ngày',
+                  reward: 'Voucher 10K',
+                  reached: (count ?? 0) >= 15,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _MilestonePill(
-                    label: '30 ngày',
-                    reward: 'Voucher 30K',
-                    reached: (count ?? 0) >= 30,
-                  ),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              Expanded(
+                child: _MilestonePill(
+                  label: '30 ngày',
+                  reward: 'Voucher 30K',
+                  reached: (count ?? 0) >= 30,
                 ),
-              ],
-            ),
-            if (_result?.awardedVouchers.isNotEmpty == true) ...[
-              const SizedBox(height: 12),
-              _AwardedVoucherStrip(vouchers: _result!.awardedVouchers),
+              ),
             ],
-            const SizedBox(height: 16),
-            AppButton.primary(
-              label: auth.isAuthenticated
-                  ? (_checkedToday
-                      ? 'Đã điểm danh hôm nay'
-                      : 'Điểm danh hôm nay')
-                  : 'Đăng nhập để điểm danh',
-              icon: auth.isAuthenticated
-                  ? Icons.touch_app_rounded
-                  : Icons.login_rounded,
-              loading: _loading,
-              onPressed:
-                  _checkedToday && auth.isAuthenticated ? null : _handleCheckin,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: scheme.errorContainer.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: scheme.error.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        color: scheme.error,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Lưu ý quan trọng tránh mất Voucher:',
-                        style: TextStyle(
-                          color: scheme.error,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• Voucher và tiến độ điểm danh được liên kết trực tiếp với tài khoản đang đăng nhập.\n'
-                    '• Hãy chắc chắn bạn đã đăng nhập đúng tài khoản chính trước khi điểm danh. Việc đổi sang tài khoản khác sẽ không thể truy cập voucher của tài khoản cũ.\n'
-                    '• Hạn sử dụng: 15 ngày (Voucher 10K) và 30 ngày (Voucher 30K) kể từ ngày nhận thưởng.',
-                    style: TextStyle(
-                      color: scheme.onSurfaceVariant,
-                      fontSize: 11,
-                      height: 1.4,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          ),
+          if (_result?.awardedVouchers.isNotEmpty == true) ...[
+            const SizedBox(height: AppSpacing.x3),
+            _AwardedVoucherStrip(vouchers: _result!.awardedVouchers),
           ],
-        ),
+          const SizedBox(height: AppSpacing.x4),
+          AppButton.primary(
+            label: auth.isAuthenticated
+                ? (_checkedToday ? 'Đã điểm danh hôm nay' : 'Điểm danh hôm nay')
+                : 'Đăng nhập để điểm danh',
+            icon: auth.isAuthenticated
+                ? Icons.touch_app_rounded
+                : Icons.login_rounded,
+            loading: _loading,
+            onPressed:
+                _checkedToday && auth.isAuthenticated ? null : _handleCheckin,
+          ),
+        ],
       ),
     );
   }
@@ -540,22 +686,15 @@ class _MilestonePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final background = reached
-        ? const Color(0xFF32D583).withValues(alpha: 0.18)
-        : scheme.surface.withValues(alpha: 0.6);
-    final foreground =
-        reached ? const Color(0xFF32D583) : scheme.onSurfaceVariant;
-
+    final color =
+        reached ? AppColors.success : AppColors.textSecondaryOf(context);
     return Container(
-      constraints: const BoxConstraints(minHeight: 64),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: foreground.withValues(alpha: reached ? 0.62 : 0.2),
-        ),
+        color: color.withValues(alpha: reached ? 0.12 : 0.06),
+        borderRadius: BorderRadius.circular(AppRadius.small),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,30 +706,24 @@ class _MilestonePill extends StatelessWidget {
                 reached
                     ? Icons.check_circle_rounded
                     : Icons.radio_button_unchecked_rounded,
-                size: 16,
-                color: foreground,
+                size: 15,
+                color: color,
               ),
-              const SizedBox(width: 6),
-              Flexible(
+              const SizedBox(width: AppSpacing.x1),
+              Expanded(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: foreground,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: AppTypography.label(color: color),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             reward,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurface,
-                  fontWeight: FontWeight.w700,
-                ),
+            style: AppTypography.bodySmallFor(context),
           ),
         ],
       ),
@@ -605,131 +738,43 @@ class _AwardedVoucherStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: scheme.primary.withValues(alpha: 0.28)),
+        color: AppColors.success.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.small),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.22)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Voucher vừa nhận',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w900,
-                ),
+            style: AppTypography.label(color: AppColors.success),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.x1),
           ...vouchers.map(
             (voucher) => Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.x1),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       voucher.code,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
+                      style: AppTypography.bodyFor(context),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpacing.x2),
                   Text(
                     voucher.amountLabel,
-                    style: TextStyle(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: AppTypography.label(color: AppColors.success),
                   ),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: scheme.primary,
-                fontWeight: FontWeight.w900,
-              ),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(color: scheme.onSurfaceVariant)),
-      ],
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return AppCard(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: scheme.primary.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: scheme.primary),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(color: scheme.onSurfaceVariant),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
         ],
       ),
     );

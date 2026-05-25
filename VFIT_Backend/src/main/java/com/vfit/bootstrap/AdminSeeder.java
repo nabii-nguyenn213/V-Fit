@@ -13,6 +13,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 @RequiredArgsConstructor
@@ -24,13 +25,17 @@ public class AdminSeeder {
 
     public void seed() {
         AppProperties.Bootstrap.Admin admin = appProperties.getBootstrap().getAdmin();
+        if (!StringUtils.hasText(admin.getEmail())
+                || !StringUtils.hasText(admin.getPassword())
+                || !StringUtils.hasText(admin.getFullName())) {
+            throw new IllegalStateException("Admin bootstrap is enabled but BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD, or BOOTSTRAP_ADMIN_FULL_NAME is missing.");
+        }
         if (!userRepository.existsByEmail(admin.getEmail().toLowerCase())) {
             userService.createLocalUser(admin.getEmail(), admin.getPassword(), admin.getFullName(), RoleName.ADMIN);
         }
-        seedDemoUsers();
     }
 
-    private void seedDemoUsers() {
+    public void seedDemoUsers() {
         List<DemoUser> users = List.of(
                 new DemoUser("tranduytrung251105@gmail.com", "123456A", "Tran Duy Trung", RoleName.USER, SubscriptionStatus.ACTIVE, SubscriptionPlanCatalog.VIP_YEARLY.code(), 365),
                 new DemoUser("vip.month@vfit.local", "123456A", "VIP Month User", RoleName.USER, SubscriptionStatus.ACTIVE, SubscriptionPlanCatalog.VIP_MONTHLY.code(), 30),

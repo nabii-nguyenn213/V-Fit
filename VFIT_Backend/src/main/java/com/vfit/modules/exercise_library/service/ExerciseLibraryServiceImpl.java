@@ -55,7 +55,14 @@ public class ExerciseLibraryServiceImpl implements ExerciseLibraryService {
     public ExerciseCatalogResponse seedDefaultCatalog(String locale) {
         String normalizedLocale = normalizeLocale(locale);
         ExerciseCatalog catalog = seedFactory.defaultCatalog(normalizedLocale);
+        // Xóa catalog cũ trước để đảm bảo replace hoàn toàn (tránh stale fields)
+        if (exerciseCatalogRepository.existsById(catalog.getId())) {
+            log.info("[ExerciseLibrary] Deleting old catalog id={} before re-seeding", catalog.getId());
+            exerciseCatalogRepository.deleteById(catalog.getId());
+        }
         ExerciseCatalog saved = exerciseCatalogRepository.save(catalog);
+        log.info("[ExerciseLibrary] Seeded catalog id={} version={} locale={} with {} groups",
+                saved.getId(), saved.getVersion(), saved.getLocale(), saved.getGroups().size());
         evictGroupedCache();
         return toResponse(saved);
     }

@@ -65,12 +65,9 @@ public class AppProperties {
         @Getter
         @Setter
         public static class Admin {
-            @NotBlank
-            private String email;
-            @NotBlank
-            private String password;
-            @NotBlank
-            private String fullName;
+            private String email = "";
+            private String password = "";
+            private String fullName = "";
         }
 
         @Getter

@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.vfit.common.exception.AppException;
 import com.vfit.infrastructure.config.AppProperties;
-import com.vfit.bootstrap.storage.FileStorageService;
+import com.vfit.bootstrap.storage.CloudinaryService;
 import com.vfit.modules.progress.document.JourneySnap;
 import com.vfit.modules.progress.dto.response.JourneySnapResponse;
 import com.vfit.modules.progress.mapper.JourneySnapMapper;
@@ -29,7 +29,7 @@ class JourneySnapServiceImplTest {
     @Mock
     private JourneySnapRepository journeySnapRepository;
     @Mock
-    private FileStorageService fileStorageService;
+    private CloudinaryService cloudinaryService;
     @Mock
     private UserRepository userRepository;
     @Mock
@@ -45,7 +45,7 @@ class JourneySnapServiceImplTest {
 
         journeySnapService = new JourneySnapServiceImpl(
                 journeySnapRepository,
-                fileStorageService,
+                cloudinaryService,
                 new JourneySnapMapper(),
                 appProperties,
                 userRepository,
@@ -57,7 +57,7 @@ class JourneySnapServiceImplTest {
         MockMultipartFile file = new MockMultipartFile("file", "progress.jpg", "image/jpeg", "image".getBytes());
 
         when(userRepository.existsById("user-1")).thenReturn(true);
-        when(fileStorageService.store(file, "snaps")).thenReturn("snaps/progress.jpg");
+        when(cloudinaryService.upload(file, "snaps")).thenReturn("https://res.cloudinary.com/dkekrbdeg/image/upload/v123456/progress.jpg");
         when(journeySnapRepository.save(any(JourneySnap.class))).thenAnswer(invocation -> {
             JourneySnap snap = invocation.getArgument(0);
             snap.setId("snap-1");
@@ -67,11 +67,11 @@ class JourneySnapServiceImplTest {
         JourneySnapResponse response = journeySnapService.uploadSnap("user-1", file, "day 1");
 
         assertThat(response.getId()).isEqualTo("snap-1");
-        assertThat(response.getPhotoUrl()).isEqualTo("http://localhost:8080/uploads/snaps/progress.jpg");
+        assertThat(response.getPhotoUrl()).isEqualTo("https://res.cloudinary.com/dkekrbdeg/image/upload/v123456/progress.jpg");
         ArgumentCaptor<JourneySnap> captor = ArgumentCaptor.forClass(JourneySnap.class);
         verify(journeySnapRepository).save(captor.capture());
         assertThat(captor.getValue().getUserId()).isEqualTo("user-1");
-        assertThat(captor.getValue().getPhotoUrl()).isEqualTo("snaps/progress.jpg");
+        assertThat(captor.getValue().getPhotoUrl()).isEqualTo("https://res.cloudinary.com/dkekrbdeg/image/upload/v123456/progress.jpg");
         assertThat(captor.getValue().getNote()).isEqualTo("day 1");
     }
 
@@ -84,7 +84,7 @@ class JourneySnapServiceImplTest {
         assertThatThrownBy(() -> journeySnapService.uploadSnap("user-1", file, null))
                 .isInstanceOf(AppException.class)
                 .hasMessage("User not found");
-        verify(fileStorageService, never()).store(any(), any());
+        verify(cloudinaryService, never()).upload(any(), any());
         verify(journeySnapRepository, never()).save(any());
     }
 }

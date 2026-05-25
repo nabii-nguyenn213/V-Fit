@@ -40,6 +40,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (next.error == 'ACCOUNT_DEACTIVATED') {
+        ref.read(authControllerProvider.notifier).clearError();
+        context.push('/deactivated');
+      } else if (next.error != null && (next.error!.contains('OTP') || next.error!.contains('xác thực'))) {
+        final email = _emailController.text.trim();
+        ref.read(authControllerProvider.notifier).clearError();
+        context.go('/register-otp?email=${Uri.encodeComponent(email)}');
+      }
+    });
+
     final auth = ref.watch(authControllerProvider);
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;

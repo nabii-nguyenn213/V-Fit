@@ -8,10 +8,12 @@ class CachedExerciseCatalog {
   const CachedExerciseCatalog({
     required this.catalog,
     required this.cachedAt,
+    required this.catalogVersion,
   });
 
   final ExerciseCatalogModel catalog;
   final DateTime cachedAt;
+  final int catalogVersion;
 
   bool isFresh(Duration ttl) {
     return DateTime.now().difference(cachedAt) < ttl;
@@ -22,12 +24,15 @@ class ExerciseLibraryLocalDataSource {
   static const _boxName = 'exercise_library_cache';
   static const _catalogJsonKey = 'catalog_json';
   static const _cachedAtMsKey = 'cached_at_ms';
+  static const _catalogVersionKey = 'catalog_version';
 
   Future<CachedExerciseCatalog?> read() async {
     final box = await Hive.openBox<String>(_boxName);
     final json = box.get(_catalogJsonKey);
     final cachedAtRaw = box.get(_cachedAtMsKey);
     final cachedAtMs = int.tryParse(cachedAtRaw ?? '');
+    final versionRaw = box.get(_catalogVersionKey);
+    final catalogVersion = int.tryParse(versionRaw ?? '') ?? 0;
     if (json == null || cachedAtMs == null) {
       return null;
     }
@@ -36,6 +41,7 @@ class ExerciseLibraryLocalDataSource {
         Map<String, dynamic>.from(jsonDecode(json) as Map),
       ),
       cachedAt: DateTime.fromMillisecondsSinceEpoch(cachedAtMs),
+      catalogVersion: catalogVersion,
     );
   }
 
@@ -46,5 +52,14 @@ class ExerciseLibraryLocalDataSource {
       _cachedAtMsKey,
       DateTime.now().millisecondsSinceEpoch.toString(),
     );
+    await box.put(
+      _catalogVersionKey,
+      catalog.catalogVersion.toString(),
+    );
+  }
+
+  Future<void> clear() async {
+    final box = await Hive.openBox<String>(_boxName);
+    await box.clear();
   }
 }

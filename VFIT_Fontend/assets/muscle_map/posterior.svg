@@ -32,6 +32,10 @@
   <path fill="none" stroke="#5b1713" stroke-width="1.45" stroke-linecap="round" opacity=".62" d="M92 232 C91 262 91 292 95 314 M104 232 C102 260 102 288 104 308 M148 232 C149 262 149 292 145 314 M136 232 C138 260 138 288 136 308 M90 221 C101 230 110 235 119 238 M150 221 C139 230 130 235 121 238"/>
   <path fill="none" stroke="#ffd6bd" stroke-width="1.08" stroke-linecap="round" opacity=".88" d="M96 235 C94 260 95 286 99 308 M106 238 C106 262 106 284 105 302 M144 235 C146 260 145 286 141 308 M134 238 C134 262 134 284 135 302 M91 226 C101 232 110 236 118 238 M149 226 C139 232 130 236 122 238"/>
 
+  <!-- CORE visible from posterior (lower back / obliques) -->
+  <path id="core-cardio" data-label="Bụng &amp; Cardio" data-badge-x="120" data-badge-y="178" fill="url(#muscleOrange)" stroke="#5d1515" stroke-width="1.2" stroke-linejoin="round" opacity=".70" d="M107 195 C105 180 105 165 108 155 C112 153 128 153 132 155 C135 165 135 180 133 195 C127 200 113 200 107 195 Z"/>
+  <path fill="none" stroke="#ffd6bd" stroke-width=".9" stroke-linecap="round" opacity=".75" d="M112 162 L128 162 M111 175 L129 175 M112 188 L128 188 M120 158 L120 196"/>
+
   <!-- High-detail anatomy layer: non-interactive posterior subdivisions. -->
   <path fill="#e5743a" opacity=".82" stroke="#551411" stroke-width=".8" d="M120 60 C109 78 101 96 96 116 C108 110 116 96 120 78 C124 96 132 110 144 116 C139 96 131 78 120 60 Z"/>
   <path fill="#b73328" opacity=".78" stroke="#551411" stroke-width=".8" d="M96 92 C105 99 113 108 120 120 C108 120 98 113 91 101 Z M144 92 C135 99 127 108 120 120 C132 120 142 113 149 101 Z"/>

@@ -39,11 +39,41 @@ class AuthRepository {
     }
   }
 
-  Future<AuthResponse> register(RegisterRequest request) async {
+  Future<void> register(RegisterRequest request) async {
     try {
-      final response = await _dio.post<dynamic>(
+      await _dio.post<dynamic>(
         ApiEndpoints.register,
         data: request.toJson(),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  Future<void> resendOtp({required String email}) async {
+    try {
+      await _dio.post<dynamic>(
+        ApiEndpoints.resendOtp,
+        data: {
+          'email': email.trim(),
+        },
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  Future<AuthResponse> verifyOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        ApiEndpoints.verifyOtp,
+        data: {
+          'email': email.trim(),
+          'otpCode': otpCode.trim(),
+        },
       );
       final auth = ApiResponseParser.unwrap(
         response,

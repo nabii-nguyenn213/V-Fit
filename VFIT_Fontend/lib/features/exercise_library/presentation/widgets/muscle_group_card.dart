@@ -61,6 +61,7 @@ class MuscleGroupCard extends StatelessWidget {
       'legs' => Icons.directions_run,
       'biceps' => Icons.sports_martial_arts,
       'triceps' => Icons.flash_on,
+      'core-cardio' => Icons.whatshot_rounded,
       _ => Icons.self_improvement,
     };
   }

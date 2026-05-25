@@ -91,6 +91,7 @@ class AuthInterceptor extends Interceptor {
   static const _publicPaths = {
     ApiEndpoints.login,
     ApiEndpoints.register,
+    ApiEndpoints.verifyOtp,
     ApiEndpoints.refreshToken,
     ApiEndpoints.forgotPassword,
     ApiEndpoints.resetPassword,

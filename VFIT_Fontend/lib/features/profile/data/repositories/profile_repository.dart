@@ -86,4 +86,13 @@ class ProfileRepository {
       throw ApiException.fromDio(error);
     }
   }
+
+  Future<void> deleteAccount() async {
+    try {
+      final response = await _dio.delete<dynamic>(ApiEndpoints.deleteAccount);
+      ApiResponseParser.unwrapVoid(response);
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
 }

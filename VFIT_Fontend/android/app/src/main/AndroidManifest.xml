@@ -5,10 +5,10 @@
         android:maxSdkVersion="28" />
 
     <application
-        android:label="vfit_frontend"
+        android:label="V-FIT"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="${usesCleartextTraffic}">
         <activity
             android:name=".MainActivity"
             android:exported="true"

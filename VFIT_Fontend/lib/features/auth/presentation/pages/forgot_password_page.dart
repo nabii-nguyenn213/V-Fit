@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../application/auth_controller.dart';
 
@@ -18,7 +20,6 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   bool _loading = false;
-  String? _message;
 
   @override
   void dispose() {
@@ -34,13 +35,15 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     try {
       await ref
           .read(authControllerProvider.notifier)
-          .forgotPassword(_emailController.text);
-      setState(
-        () => _message =
-            'Nếu tài khoản tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi đến email của bạn.',
-      );
+          .forgotPassword(_emailController.text.trim());
+      if (mounted) {
+        AppFeedback.success('Mã đặt lại mật khẩu đã được gửi đến email của bạn.');
+        context.go('/reset-password');
+      }
     } catch (error) {
-      setState(() => _message = error.toString());
+      if (mounted) {
+        AppFeedback.error(error.toString(), title: 'Gửi yêu cầu thất bại');
+      }
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -72,10 +75,6 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 validator: Validators.email,
                 keyboardType: TextInputType.emailAddress,
               ),
-              if (_message != null) ...[
-                const SizedBox(height: 12),
-                Text(_message!),
-              ],
               const SizedBox(height: 20),
               AppButton(
                 label: 'Gửi hướng dẫn đặt lại',

@@ -5,9 +5,6 @@ enum Gender { male, female, other }
 enum GoalType {
   loseWeight,
   gainMuscle,
-  maintain,
-  improveEndurance,
-  improveMobility,
 }
 
 enum DifficultyLevel { beginner, intermediate, advanced }
@@ -52,9 +49,6 @@ GoalType? goalTypeFromJson(String? value) {
   return switch (value) {
     'LOSE_WEIGHT' => GoalType.loseWeight,
     'GAIN_MUSCLE' => GoalType.gainMuscle,
-    'MAINTAIN' => GoalType.maintain,
-    'IMPROVE_ENDURANCE' => GoalType.improveEndurance,
-    'IMPROVE_MOBILITY' => GoalType.improveMobility,
     _ => null,
   };
 }
@@ -63,9 +57,6 @@ String? goalTypeToJson(GoalType? value) {
   return switch (value) {
     GoalType.loseWeight => 'LOSE_WEIGHT',
     GoalType.gainMuscle => 'GAIN_MUSCLE',
-    GoalType.maintain => 'MAINTAIN',
-    GoalType.improveEndurance => 'IMPROVE_ENDURANCE',
-    GoalType.improveMobility => 'IMPROVE_MOBILITY',
     null => null,
   };
 }
@@ -132,9 +123,6 @@ String goalLabel(GoalType value) {
   return switch (value) {
     GoalType.loseWeight => 'Giam can',
     GoalType.gainMuscle => 'Tang co',
-    GoalType.maintain => 'Duy tri voc dang',
-    GoalType.improveEndurance => 'Cai thien suc ben',
-    GoalType.improveMobility => 'Tang do linh hoat',
   };
 }
 

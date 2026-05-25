@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../presentation/theme/app_colors.dart';
+import '../../presentation/theme/app_radius.dart';
+import '../../presentation/theme/app_spacing.dart';
+import '../../presentation/theme/app_typography.dart';
 import '../constants/app_assets.dart';
 
 class AppShell extends StatelessWidget {
@@ -19,17 +23,19 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = GoRouterState.of(context).uri.path;
-    final index = _routes.indexWhere((route) => path.startsWith(route));
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final title = switch (index < 0 ? 0 : index) {
+    final selectedIndex = _routes.indexWhere((route) => path.startsWith(route));
+    final safeIndex = selectedIndex < 0 ? 0 : selectedIndex;
+    final title = switch (safeIndex) {
       0 => 'Trang chủ',
       1 => 'Luyện tập',
       2 => 'Dinh dưỡng',
       3 => 'Tiến độ',
       _ => 'Hồ sơ',
     };
+    final isDark = AppColors.isDark(context);
+
     return Scaffold(
+      backgroundColor: AppColors.backgroundOf(context),
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -37,90 +43,170 @@ class AppShell extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: isDark
                 ? const [
-                    Color(0xFF070711),
-                    Color(0xFF111225),
-                    Color(0xFF190B2D),
-                    Color(0xFF061E2A),
+                    AppColors.background,
+                    AppColors.surface1,
+                    Color(0xFF101328),
                   ]
                 : const [
-                    Color(0xFFF8FAFF),
-                    Color(0xFFEAF8FF),
-                    Color(0xFFFFF0FB),
+                    AppColors.lightBackground,
+                    AppColors.lightSurface1,
+                    Color(0xFFEAF1FF),
                   ],
           ),
         ),
         child: SafeArea(
+          bottom: false,
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 20, 4),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 58,
-                      height: 42,
-                      child: Image.asset(
-                        AppAssets.vfitLogoMark,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Text(
-                            'V-FIT',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(
-                                  color: scheme.primary,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        title,
-                        textAlign: TextAlign.right,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _ShellHeader(title: title),
               Expanded(child: child),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 70,
-        surfaceTintColor: Colors.transparent,
-        shadowColor: scheme.primary.withValues(alpha: 0.34),
-        selectedIndex: index < 0 ? 0 : index,
+      bottomNavigationBar: _ShellNavigationBar(
+        selectedIndex: safeIndex,
         onDestinationSelected: (value) => context.go(_routes[value]),
+      ),
+    );
+  }
+}
+
+class _ShellHeader extends StatelessWidget {
+  const _ShellHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x4,
+        AppSpacing.x3,
+        AppSpacing.x4,
+        AppSpacing.x2,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            padding: const EdgeInsets.all(AppSpacing.x2),
+            decoration: BoxDecoration(
+              color: AppColors.surface2Of(context).withValues(alpha: 0.82),
+              borderRadius: BorderRadius.circular(AppRadius.input),
+              border: Border.all(color: AppColors.borderSubtleOf(context)),
+            ),
+            child: Image.asset(
+              AppAssets.vfitLogoMark,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Center(
+                  child: Text(
+                    'VF',
+                    style: AppTypography.labelFor(
+                      context,
+                      color: AppColors.primaryOf(context),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'V-FIT',
+                  style: AppTypography.labelFor(
+                    context,
+                    color: AppColors.primaryOf(context),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.x1),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.headerMediumFor(context),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShellNavigationBar extends StatelessWidget {
+  const _ShellNavigationBar({
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBarTheme(
+      data: NavigationBarThemeData(
+        backgroundColor: AppColors.surface1Of(context),
+        indicatorColor: AppColors.primaryOf(context).withValues(alpha: 0.16),
+        surfaceTintColor: Colors.transparent,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected
+                ? AppColors.primaryOf(context)
+                : AppColors.textSecondaryOf(context),
+            size: 23,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return AppTypography.labelFor(
+            context,
+            color: selected
+                ? AppColors.primaryOf(context)
+                : AppColors.textSecondaryOf(context),
+          ).copyWith(fontSize: 11);
+        }),
+      ),
+      child: NavigationBar(
+        height: 72,
+        elevation: 0,
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onDestinationSelected,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.dashboard_rounded),
+            icon: Icon(Icons.dashboard_outlined),
             label: 'Trang chủ',
           ),
           NavigationDestination(
-            icon: Icon(Icons.fitness_center),
+            selectedIcon: Icon(Icons.fitness_center_rounded),
+            icon: Icon(Icons.fitness_center_outlined),
             label: 'Luyện tập',
           ),
           NavigationDestination(
-            icon: Icon(Icons.restaurant),
+            selectedIcon: Icon(Icons.restaurant_rounded),
+            icon: Icon(Icons.restaurant_outlined),
             label: 'Dinh dưỡng',
           ),
           NavigationDestination(
-            icon: Icon(Icons.show_chart),
+            selectedIcon: Icon(Icons.show_chart_rounded),
+            icon: Icon(Icons.show_chart_outlined),
             label: 'Tiến độ',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person_rounded),
+            icon: Icon(Icons.person_outline_rounded),
             label: 'Hồ sơ',
           ),
         ],

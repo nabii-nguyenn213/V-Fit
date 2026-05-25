@@ -6,6 +6,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../presentation/theme/app_colors.dart';
+import '../../../../presentation/theme/app_radius.dart';
+import '../../../../presentation/theme/app_spacing.dart';
+import '../../../../presentation/theme/app_typography.dart';
 import '../../data/models/food_calorie_estimate_model.dart';
 import '../../data/repositories/food_repository_impl.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -57,28 +61,28 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4,
+                AppSpacing.x3,
+                AppSpacing.x4,
+                96,
+              ),
               children: [
                 Text(
-                  'Máy tính dinh dưỡng',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  'Nutrition Hub',
+                  style: AppTypography.headerLargeFor(context),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.x2),
                 Text(
-                  'Quét nhanh món ăn hoặc chọn món để tính macro ngay trên máy.',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  'Quét món ăn, tra cứu calo và tính macro trong một workspace gọn.',
+                  style: AppTypography.bodySmallFor(context),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.x4),
                 _FoodScanCard(
                   loading: _scanLoading,
                   onTap: _scanFood,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.x4),
                 _NutritionSearchBar(
                   controller: _searchController,
                   loading: state.loading,
@@ -93,7 +97,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
                   _FoodListSection(
                     title: state.hasKeyword
                         ? 'Kết quả phù hợp'
-                        : 'Món ăn phổ biến cho Gymer',
+                        : 'Món ăn phổ biến cho gymer',
                     foods: state.foods,
                     onFoodTap: (food) => _openCalculator(context, food),
                   ),
@@ -168,18 +172,17 @@ class _FoodScanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: scheme.surface.withValues(alpha: 0.94),
-      borderRadius: BorderRadius.circular(14),
+      color: AppColors.surface1Of(context),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: loading ? null : onTap,
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpacing.x4),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: scheme.outlineVariant),
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.borderSubtleOf(context)),
           ),
           child: Row(
             children: [
@@ -187,10 +190,10 @@ class _FoodScanCard extends StatelessWidget {
                 width: 58,
                 height: 58,
                 decoration: BoxDecoration(
-                  color: scheme.primary.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(16),
+                  color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.input),
                   border: Border.all(
-                    color: scheme.primary.withValues(alpha: 0.42),
+                    color: AppColors.primaryOf(context).withValues(alpha: 0.28),
                   ),
                 ),
                 child: loading
@@ -198,36 +201,33 @@ class _FoodScanCard extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: scheme.primary,
+                          color: AppColors.primaryOf(context),
                         ),
                       )
                     : Icon(
-                        Icons.camera_alt_outlined,
-                        color: scheme.primary,
+                        Icons.document_scanner_rounded,
+                        color: AppColors.primaryOf(context),
                         size: 30,
                       ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppSpacing.x3),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Quét Calo thức ăn',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w900),
+                      'Quét calo thức ăn',
+                      style: AppTypography.headerMediumFor(context),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.x1),
                     Text(
-                      'Mở camera để tự động phân tích và ước tính lượng Calo.',
-                      style: TextStyle(color: scheme.onSurfaceVariant),
+                      'Mở camera để phân tích và ước tính lượng calo nhanh.',
+                      style: AppTypography.bodySmallFor(context),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.x2),
               FilledButton.icon(
                 onPressed: loading ? null : onTap,
                 icon: const Icon(Icons.qr_code_scanner_rounded),

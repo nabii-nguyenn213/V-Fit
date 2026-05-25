@@ -12,6 +12,12 @@ services:
       - uploads_data:/app/uploads
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    pids_limit: 256
     logging:
       driver: json-file
       options:

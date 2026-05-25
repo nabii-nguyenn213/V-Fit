@@ -86,6 +86,19 @@ class ProgressRepository {
   }
 
   Future<JourneySnapModel> uploadSnap(File file, String? note) async {
+    // Check daily upload limit (max 5 snaps per day)
+    final now = DateTime.now();
+    final todayDate = DateTime(now.year, now.month, now.day);
+    final existingResponse = await getSnaps();
+    final todaysCount = existingResponse.content.where((snap) {
+      final local = snap.createdAt.toLocal();
+      return local.year == todayDate.year &&
+          local.month == todayDate.month &&
+          local.day == todayDate.day;
+    }).length;
+    if (todaysCount >= 5) {
+      throw ApiException(message: 'Bạn đã chụp tối đa 5 ảnh trong ngày ($todaysCount/5).', statusCode: 400);
+    }
     try {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(file.path),

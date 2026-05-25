@@ -27,6 +27,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -35,9 +37,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final OnboardingGuardFilter onboardingGuardFilter;
     private final AiRateLimitFilter aiRateLimitFilter;
+    private final com.vfit.security.OtpRateLimitFilter otpRateLimitFilter;
     private final UserDetailsService userDetailsService;
     private final ObjectMapper objectMapper;
 
@@ -49,11 +54,16 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> writeError(response, ErrorCode.UNAUTHORIZED, request.getRequestURI()))
-                        .accessDeniedHandler((request, response, accessDeniedException) -> writeError(response, ErrorCode.FORBIDDEN, request.getRequestURI())))
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            log.warn("[SECURITY AUDIT] Unauthorized access attempt detected! IP: {}, Path: {}, Method: {}",
+                                     request.getRemoteAddr(), request.getRequestURI(), request.getMethod());
+                            writeError(response, ErrorCode.FORBIDDEN, request.getRequestURI());
+                        }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
+                                "/api/v1/auth/**",
                                 "/api/app/config",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -73,7 +83,9 @@ public class SecurityConfig {
                                 "/api/gamification/challenges")
                         .permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
+                .addFilterBefore(otpRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(onboardingGuardFilter, JwtAuthenticationFilter.class)
                 .addFilterAfter(aiRateLimitFilter, OnboardingGuardFilter.class);

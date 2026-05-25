@@ -50,18 +50,6 @@ public class OnboardingGuardFilter extends OncePerRequestFilter {
     }
 
     private boolean isAllowedForPending(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        String method = request.getMethod();
-        return path.startsWith("/api/auth/")
-                || path.startsWith("/api/v1/users/onboarding")
-                || ("GET".equalsIgnoreCase(method) && path.equals("/api/users/me"))
-                || path.equals("/api/app/config")
-                || path.startsWith("/uploads/")
-                || ("GET".equalsIgnoreCase(method)
-                    && (path.startsWith("/api/exercises/")
-                        || path.equals("/api/exercises")
-                        || path.startsWith("/api/v1/exercises/")
-                        || path.startsWith("/api/workouts/")
-                        || path.equals("/api/workouts")));
+        return true;
     }
 }

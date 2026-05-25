@@ -13,14 +13,19 @@ import '../../../../core/utils/media_url_resolver.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../../presentation/theme/app_colors.dart';
+import '../../../../presentation/theme/app_radius.dart';
+import '../../../../presentation/theme/app_spacing.dart';
+import '../../../../presentation/theme/app_typography.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../../profile/data/models/user_model.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../data/models/gamification_models.dart';
 import '../../data/models/journey_snap_model.dart';
 import '../../data/repositories/progress_repository.dart';
-import '../../../challenges/presentation/controllers/active_challenge_notifier.dart';
+
 import '../../../challenges/data/models/participation_model.dart';
+import '../../../challenges/presentation/controllers/active_challenge_notifier.dart';
 
 class ProgressPage extends ConsumerStatefulWidget {
   const ProgressPage({super.key});
@@ -37,6 +42,46 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
   final List<_LocalJourneySnap> _localSnaps = [];
 
   Future<void> _takeSnap() async {
+    // --- Daily snap limit: max 5 per day (anti-spam) ---
+    int todaysServerCount = 0;
+    final now = DateTime.now();
+    final todayDate = DateTime(now.year, now.month, now.day);
+    final snapsAsync = ref.read(journeySnapsProvider);
+    if (snapsAsync is AsyncData<PageResponse<JourneySnapModel>>) {
+      todaysServerCount = snapsAsync.value.content.where((snap) {
+        final local = snap.createdAt.toLocal();
+        return local.year == todayDate.year &&
+            local.month == todayDate.month &&
+            local.day == todayDate.day;
+      }).length;
+    } else {
+      try {
+        final freshSnaps =
+            await ref.read(progressRepositoryProvider).getSnaps();
+        todaysServerCount = freshSnaps.content.where((snap) {
+          final local = snap.createdAt.toLocal();
+          return local.year == todayDate.year &&
+              local.month == todayDate.month &&
+              local.day == todayDate.day;
+        }).length;
+      } catch (_) {}
+    }
+    // Also count local snaps still uploading today
+    final todaysLocalCount = _localSnaps.where((snap) {
+      return snap.createdAt.year == todayDate.year &&
+          snap.createdAt.month == todayDate.month &&
+          snap.createdAt.day == todayDate.day;
+    }).length;
+    final totalToday = todaysServerCount + todaysLocalCount;
+    if (totalToday >= 5) {
+      if (mounted) {
+        AppFeedback.error(
+          'Bạn chỉ được chụp tối đa 5 ảnh hành trình mỗi ngày. Hãy quay lại vào ngày mai nhé!',
+          title: 'Đã đạt giới hạn ($totalToday/5)',
+        );
+      }
+      return;
+    }
     final pickedFile = await ImagePicker().pickImage(
       source: ImageSource.camera,
       imageQuality: 85,
@@ -139,16 +184,25 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _isUploading ? null : _takeSnap,
+        backgroundColor: AppColors.primaryOf(context),
+        foregroundColor: AppColors.onAccentOf(context),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
         icon: _isUploading
-            ? const SizedBox.square(
+            ? SizedBox.square(
                 dimension: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: AppColors.onAccentOf(context),
                 ),
               )
-            : const Icon(Icons.camera_alt),
-        label: const Text('Ảnh hành trình'),
+            : const Icon(Icons.add_photo_alternate_rounded),
+        label: Text(
+          'Chụp tiến độ',
+          style: AppTypography.label(color: AppColors.onAccentOf(context)),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -193,7 +247,7 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
             const SizedBox(height: 20),
             _BadgesSection(badges: badges),
             const SizedBox(height: 20),
-            _ChallengesSection(challenges: challenges),
+            _ChallengesSection(challenges: ref.watch(challengesProvider)),
             const SizedBox(height: 20),
             const _AiInsightCard(),
           ],
@@ -282,12 +336,11 @@ class _ProgressHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final nextLevelXp = math.max(user.level, 1) * 1000;
     final levelProgress = (user.xp % 1000) / 1000;
 
     return AppCard(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpacing.x5),
       child: Row(
         children: [
           _ProgressRing(
@@ -295,37 +348,34 @@ class _ProgressHeader extends StatelessWidget {
             center: 'Lv.${user.level}',
             caption: '${user.xp} XP',
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.x4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Tiến độ',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  style: AppTypography.headerLargeFor(context),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.x2),
                 Text(
                   'Còn ${nextLevelXp - user.xp % 1000} XP để lên cấp tiếp theo.',
-                  style: TextStyle(color: scheme.onSurfaceVariant),
+                  style: AppTypography.bodySmallFor(context),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.x3),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: AppSpacing.x2,
+                  runSpacing: AppSpacing.x2,
                   children: [
                     _TinyPill(
                       icon: Icons.local_fire_department,
                       label: 'Consistency',
-                      color: scheme.primary,
+                      color: AppColors.primaryOf(context),
                     ),
                     _TinyPill(
                       icon: Icons.timeline,
                       label: 'Journey',
-                      color: scheme.secondary,
+                      color: AppColors.energyMagenta,
                     ),
                   ],
                 ),
@@ -1776,7 +1826,9 @@ class _JourneySnapCard extends StatelessWidget {
           );
         },
         errorBuilder: (context, error, stackTrace) {
-          debugPrint('[JourneyImage] Failed to load remote snap image: $imageUrl, error: $error');
+          debugPrint(
+            '[JourneyImage] Failed to load remote snap image: $imageUrl, error: $error',
+          );
           return const _JourneyImageError();
         },
       ),
@@ -2017,7 +2069,12 @@ class _ChallengesSection extends ConsumerWidget {
               }
 
               final isJoined = participation != null;
-              final isCompleted = isJoined && participation.status == 'COMPLETED';
+              // Chỉ coi là hoàn thành khi số ngày check-in thực tế >= mục tiêu
+              final actualProgress =
+                  isJoined ? participation.verifiedPhotos.length : 0;
+              final isCompleted = isJoined &&
+                  challenge.targetValue > 0 &&
+                  actualProgress >= challenge.targetValue;
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -2030,10 +2087,14 @@ class _ChallengesSection extends ConsumerWidget {
                           Icon(
                             isCompleted
                                 ? Icons.verified_rounded
-                                : (isJoined ? Icons.bolt_rounded : Icons.flag_outlined),
+                                : (isJoined
+                                    ? Icons.bolt_rounded
+                                    : Icons.flag_outlined),
                             color: isCompleted
                                 ? Colors.green
-                                : (isJoined ? scheme.primary : scheme.onSurfaceVariant),
+                                : (isJoined
+                                    ? scheme.primary
+                                    : scheme.onSurfaceVariant),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -2042,7 +2103,10 @@ class _ChallengesSection extends ConsumerWidget {
                               children: [
                                 Text(
                                   challenge.title,
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
                                         fontWeight: FontWeight.w900,
                                       ),
                                 ),
@@ -2059,8 +2123,32 @@ class _ChallengesSection extends ConsumerWidget {
                           if (!isJoined)
                             ElevatedButton(
                               onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Xác nhận tham gia'),
+                                    content: Text(
+                                      'Bạn có muốn tham gia thử thách "${challenge.title}"?\n\nSau khi xác nhận, bạn không thể thay đổi mục tiêu này.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(ctx).pop(false),
+                                        child: const Text('Hủy'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () =>
+                                            Navigator.of(ctx).pop(true),
+                                        child: const Text('Xác nhận tham gia'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm != true) return;
                                 await ref
-                                    .read(activeChallengeNotifierProvider.notifier)
+                                    .read(
+                                      activeChallengeNotifierProvider.notifier,
+                                    )
                                     .joinChallenge(challenge.id);
                                 AppFeedback.success(
                                   'Đã đăng ký thử thách "${challenge.title}" thành công. Hãy chụp ảnh tiến độ mỗi ngày để duy trì kỷ luật nhé!',
@@ -2068,7 +2156,10 @@ class _ChallengesSection extends ConsumerWidget {
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
                                 backgroundColor: scheme.primary,
                                 foregroundColor: scheme.onPrimary,
                               ),
@@ -2076,7 +2167,10 @@ class _ChallengesSection extends ConsumerWidget {
                             )
                           else if (isCompleted)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.green.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
@@ -2092,7 +2186,10 @@ class _ChallengesSection extends ConsumerWidget {
                             )
                           else
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: scheme.primary.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
@@ -2108,18 +2205,24 @@ class _ChallengesSection extends ConsumerWidget {
                             ),
                         ],
                       ),
-                      if (isJoined && !isCompleted) ...[
+                      if (isJoined) ...[
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Chuỗi: ${participation.currentStreak} ngày',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                              'Tiến độ: $actualProgress / ${challenge.targetValue} ngày',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             Text(
-                              'Kỷ lục: ${participation.maxStreakAchieved} ngày',
-                              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                              'Chuỗi: ${participation.currentStreak} ngày',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: scheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -2128,11 +2231,29 @@ class _ChallengesSection extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(99),
                           child: LinearProgressIndicator(
                             value: challenge.targetValue > 0
-                                ? (participation.currentStreak / challenge.targetValue).clamp(0.0, 1.0)
+                                ? (actualProgress / challenge.targetValue)
+                                    .clamp(0.0, 1.0)
                                 : 0.0,
                             backgroundColor: scheme.surfaceContainerHighest,
-                            valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              isCompleted ? Colors.green : scheme.primary,
+                            ),
                             minHeight: 6,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            challenge.targetValue > 0
+                                ? '${((actualProgress / challenge.targetValue) * 100).clamp(0, 100).toStringAsFixed(0)}% hoàn thành'
+                                : '0% hoàn thành',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  isCompleted ? Colors.green : scheme.primary,
+                            ),
                           ),
                         ),
                         Builder(
@@ -2142,13 +2263,14 @@ class _ChallengesSection extends ConsumerWidget {
 
                             final now = DateTime.now();
                             final lastCheckin = p.lastCheckinDate;
-                            
+
                             bool showRevive = false;
                             if (lastCheckin != null) {
                               try {
                                 final lastDate = DateTime.parse(lastCheckin);
                                 final diff = now.difference(lastDate).inDays;
-                                if (diff > 1 && p.currentStreak < p.maxStreakAchieved) {
+                                if (diff > 1 &&
+                                    p.currentStreak < p.maxStreakAchieved) {
                                   showRevive = true;
                                 }
                               } catch (_) {}
@@ -2166,18 +2288,25 @@ class _ChallengesSection extends ConsumerWidget {
                                       final confirm = await showDialog<bool>(
                                         context: context,
                                         builder: (context) => AlertDialog(
-                                          title: const Text('Cứu chuỗi kỷ luật?'),
+                                          title:
+                                              const Text('Cứu chuỗi kỷ luật?'),
                                           content: const Text(
                                             'Bạn có chắc chắn muốn sử dụng 150 V-Points để khôi phục chuỗi ngày kỷ luật tối đa không?',
                                           ),
                                           actions: [
                                             TextButton(
-                                              onPressed: () => Navigator.of(context).pop(false),
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(false),
                                               child: const Text('Hủy'),
                                             ),
                                             FilledButton(
-                                              onPressed: () => Navigator.of(context).pop(true),
-                                              child: const Text('Cứu chuỗi (150 VP)'),
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(true),
+                                              child: const Text(
+                                                'Cứu chuỗi (150 VP)',
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -2185,7 +2314,10 @@ class _ChallengesSection extends ConsumerWidget {
 
                                       if (confirm == true) {
                                         await ref
-                                            .read(activeChallengeNotifierProvider.notifier)
+                                            .read(
+                                              activeChallengeNotifierProvider
+                                                  .notifier,
+                                            )
                                             .reviveStreak(challenge.id);
                                         AppFeedback.success(
                                           'Đã khôi phục chuỗi kỷ luật của bạn thành công!',
@@ -2193,10 +2325,18 @@ class _ChallengesSection extends ConsumerWidget {
                                         );
                                       }
                                     },
-                                    icon: const Icon(Icons.favorite_rounded, color: Colors.pink, size: 16),
+                                    icon: const Icon(
+                                      Icons.favorite_rounded,
+                                      color: Colors.pink,
+                                      size: 16,
+                                    ),
                                     label: const Text(
                                       'Cứu chuỗi (150 V-Points)',
-                                      style: TextStyle(color: Colors.pink, fontSize: 11, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        color: Colors.pink,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -2315,30 +2455,33 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return AppCard(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.x4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: scheme.primary),
-          const SizedBox(height: 10),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.primaryOf(context).withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppRadius.small),
+            ),
+            child: Icon(icon, color: AppColors.primaryOf(context), size: 20),
+          ),
+          const SizedBox(height: AppSpacing.x3),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w900),
+            style: AppTypography.metricFor(context),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.x1),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
+            style: AppTypography.bodySmallFor(context),
           ),
         ],
       ),

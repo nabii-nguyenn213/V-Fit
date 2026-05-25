@@ -9,6 +9,10 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../../presentation/theme/app_colors.dart';
+import '../../../../presentation/theme/app_radius.dart';
+import '../../../../presentation/theme/app_spacing.dart';
+import '../../../../presentation/theme/app_typography.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../data/repositories/profile_repository.dart';
 
@@ -204,8 +208,55 @@ class ProfilePage extends ConsumerWidget {
           title: 'Đăng xuất',
           onTap: () => ref.read(authControllerProvider.notifier).logout(),
         ),
+        if (!user.isAdmin)
+          _ProfileAction(
+            icon: Icons.delete_forever_outlined,
+            title: 'Xóa tài khoản',
+            color: Theme.of(context).colorScheme.error,
+            onTap: () => _deleteAccount(context, ref),
+          ),
       ],
     );
+  }
+
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xóa tài khoản?'),
+        content: const Text(
+          'Tài khoản của bạn sẽ bị vô hiệu hóa ngay lập tức và sẽ bị xóa vĩnh viễn sau 30 ngày. Trong thời gian này, bạn có thể liên hệ Support để khôi phục.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: const Text('Xóa tài khoản'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await ref.read(profileRepositoryProvider).deleteAccount();
+        await ref.read(authControllerProvider.notifier).logout();
+        if (context.mounted) {
+          AppFeedback.success('Tài khoản đã được vô hiệu hóa thành công.');
+        }
+      } catch (error) {
+        if (context.mounted) {
+          AppFeedback.error(error.toString(), title: 'Xóa tài khoản thất bại');
+        }
+      }
+    }
   }
 }
 
@@ -214,44 +265,48 @@ class _VipPricingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.workspace_premium, color: scheme.secondary),
-              const SizedBox(width: 10),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.energyMagenta.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.input),
+                ),
+                child: const Icon(
+                  Icons.workspace_premium_rounded,
+                  color: AppColors.energyMagenta,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x3),
               Expanded(
                 child: Text(
                   'V-FIT VIP',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  style: AppTypography.headerMediumFor(context),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.x3),
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: AppSpacing.x2,
+            runSpacing: AppSpacing.x2,
             children: const [
               _PlanPill(label: 'Hàng tháng', price: '150K / tháng'),
               _PlanPill(label: 'Hàng năm (Ưu đãi)', price: '1M / năm'),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.x4),
           Text(
             'Bảng so sánh Free và VIP',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: AppTypography.labelFor(context),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.x3),
           const _BenefitRow(
             free: 'Xem bài tập, món ăn cơ bản',
             vip: 'Kế hoạch tập và ăn cá nhân hóa',
@@ -264,7 +319,7 @@ class _VipPricingCard extends StatelessWidget {
             free: 'Không có ưu tiên AI/coach',
             vip: 'Gợi ý form, phân tích cơ thể, thử thách VIP',
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.x4),
           AppButton.add(
             label: 'Nạp VIP',
             fullWidth: true,
@@ -384,28 +439,24 @@ class _ThemeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return AppCard(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.x4),
       child: Row(
         children: [
           Container(
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: scheme.primary.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(14),
+              color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.input),
             ),
-            child: Icon(Icons.contrast, color: scheme.primary),
+            child: Icon(Icons.contrast, color: AppColors.primaryOf(context)),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.x3),
           Expanded(
             child: Text(
               'Giao diện',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: AppTypography.headerMediumFor(context),
             ),
           ),
           SegmentedButton<ThemeMode>(
@@ -436,19 +487,39 @@ class _ProfileAction extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.onTap,
+    this.color,
   });
 
   final IconData icon;
   final String title;
   final VoidCallback onTap;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
+    final themeColor = color ?? AppColors.textPrimaryOf(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.x2),
+      child: AppCard(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x4,
+          vertical: AppSpacing.x3,
+        ),
+        onTap: onTap,
+        child: Row(
+          children: [
+            Icon(icon, color: themeColor),
+            const SizedBox(width: AppSpacing.x3),
+            Expanded(
+              child: Text(
+                title,
+                style: AppTypography.body(color: themeColor),
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: themeColor),
+          ],
+        ),
+      ),
     );
   }
 }

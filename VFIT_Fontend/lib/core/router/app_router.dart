@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/admin/presentation/pages/admin_page.dart';
+import '../../features/admin_dashboard/presentation/pages/admin_revenue_screen.dart';
 import '../../features/auth/application/auth_controller.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/register_otp_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
+import '../../features/auth/presentation/pages/deactivated_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 
 import '../../features/nutrition/presentation/pages/nutrition_page.dart';
@@ -38,6 +41,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isAuthRoute = {
         '/login',
         '/register',
+        '/register-otp',
         '/forgot-password',
         '/reset-password',
       }.contains(path);
@@ -54,18 +58,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return isSplash ? null : '/splash';
       }
 
+      if (auth.isAuthenticated && auth.user?.role == RoleName.admin) {
+        if (!path.startsWith('/admin')) {
+          return '/admin/revenue';
+        }
+        return null;
+      }
+
       if (!auth.isAuthenticated && (isProtectedRoute || isOnboardingRoute)) {
         return '/register';
       }
 
       if (auth.isAuthenticated && isAuthRoute) {
         return auth.isPendingOnboarding ? '/onboarding' : '/home';
-      }
-
-      if (auth.isPendingOnboarding &&
-          !isOnboardingRoute &&
-          !isPublicExerciseRoute) {
-        return '/onboarding';
       }
 
       if (auth.isActive && isOnboardingRoute) {
@@ -86,8 +91,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(
+        path: '/deactivated',
+        builder: (context, state) => const DeactivatedPage(),
+      ),
+      GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: '/register-otp',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return RegisterOtpPage(email: email);
+        },
       ),
       GoRoute(
         path: '/forgot-password',
@@ -146,6 +162,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ChangePasswordPage(),
       ),
       GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
+      GoRoute(
+        path: '/admin/revenue',
+        builder: (context, state) => const AdminRevenueScreen(),
+      ),
     ],
   );
 });

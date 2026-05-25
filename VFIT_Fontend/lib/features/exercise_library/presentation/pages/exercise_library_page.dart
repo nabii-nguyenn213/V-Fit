@@ -17,19 +17,19 @@ class ExerciseLibraryPage extends ConsumerWidget {
     return BlocProvider(
       create: (_) => ExerciseLibraryBloc(ref.read(getExerciseCatalogProvider))
         ..add(const ExerciseLibraryRequested()),
-      child: const _ExerciseLibraryView(),
+      child: const ExerciseLibraryView(),
     );
   }
 }
 
-class _ExerciseLibraryView extends StatefulWidget {
-  const _ExerciseLibraryView();
+class ExerciseLibraryView extends StatefulWidget {
+  const ExerciseLibraryView({super.key});
 
   @override
-  State<_ExerciseLibraryView> createState() => _ExerciseLibraryViewState();
+  State<ExerciseLibraryView> createState() => ExerciseLibraryViewState();
 }
 
-class _ExerciseLibraryViewState extends State<_ExerciseLibraryView> {
+class ExerciseLibraryViewState extends State<ExerciseLibraryView> {
   bool _showMap = true;
 
   Future<void> _refresh(BuildContext context) async {

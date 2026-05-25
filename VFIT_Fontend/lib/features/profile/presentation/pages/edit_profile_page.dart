@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,6 +43,17 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     _avatarUrl = user?.avatarUrl;
     _gender = user?.gender;
     _goalType = user?.goalType;
+
+    // Asynchronously fetch current body metrics to populate fields
+    ref.read(profileRepositoryProvider).bodyMetrics().then((metrics) {
+      if (mounted) {
+        setState(() {
+          _heightController.text = metrics.heightCm != null ? metrics.heightCm!.toStringAsFixed(0) : '';
+          _weightController.text = metrics.weightKg != null ? metrics.weightKg!.toStringAsFixed(1) : '';
+          _bodyFatController.text = metrics.bodyFatPercent != null ? metrics.bodyFatPercent!.toStringAsFixed(1) : '';
+        });
+      }
+    }).catchError((_) {});
   }
 
   @override
@@ -208,7 +219,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<Gender>(
-              initialValue: _gender,
+              value: _gender,
               decoration: const InputDecoration(labelText: 'Gioi tinh'),
               items: Gender.values
                   .map(
@@ -221,18 +232,50 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               onChanged: (value) => setState(() => _gender = value),
             ),
             const SizedBox(height: 14),
-            DropdownButtonFormField<GoalType>(
-              initialValue: _goalType,
-              decoration: const InputDecoration(labelText: 'Muc tieu'),
-              items: GoalType.values
-                  .map(
-                    (goal) => DropdownMenuItem(
-                      value: goal,
-                      child: Text(goalLabel(goal)),
+            Builder(
+              builder: (context) {
+                final user = ref.read(authControllerProvider).user;
+                final alreadySet = user?.goalType != null;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DropdownButtonFormField<GoalType>(
+                      value: _goalType,
+                      decoration: InputDecoration(
+                        labelText: 'Muc tieu',
+                        suffixIcon: alreadySet
+                            ? const Tooltip(
+                                message: 'Mục tiêu đã được chọn và không thể thay đổi',
+                                child: Icon(Icons.lock_outline, size: 18),
+                              )
+                            : null,
+                      ),
+                      items: GoalType.values
+                          .map(
+                            (goal) => DropdownMenuItem(
+                              value: goal,
+                              child: Text(goalLabel(goal)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: alreadySet
+                          ? null // Disable dropdown if already set
+                          : (value) => setState(() => _goalType = value),
                     ),
-                  )
-                  .toList(),
-              onChanged: (value) => setState(() => _goalType = value),
+                    if (alreadySet)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 12),
+                        child: Text(
+                          'Mục tiêu đã được chọn và không thể thay đổi.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 14),
             AppTextField(

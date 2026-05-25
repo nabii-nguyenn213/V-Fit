@@ -22,4 +22,8 @@ public interface UserService {
     void updateRole(String userId, RoleName role);
 
     void deleteUser(String userId);
+
+    java.util.List<com.vfit.modules.auth.dto.response.ActiveSessionResponse> getCurrentUserActiveSessions();
+
+    void revokeSession(String sessionId);
 }

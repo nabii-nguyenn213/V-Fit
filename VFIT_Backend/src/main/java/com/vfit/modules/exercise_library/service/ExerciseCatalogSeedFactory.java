@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ExerciseCatalogSeedFactory {
         public static final String DEFAULT_CATALOG_ID = "vfit-default";
-        public static final int DEFAULT_VERSION = 3; // Nâng version để tự động override và giải phóng bộ nhớ cache cũ
+        public static final int DEFAULT_VERSION = 4; // Nâng version để tự động override và giải phóng bộ nhớ cache cũ
 
         public ExerciseCatalog defaultCatalog(String locale) {
                 return ExerciseCatalog.builder()

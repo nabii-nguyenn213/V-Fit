@@ -54,6 +54,7 @@ public class User {
     private Instant createdAt;
     @LastModifiedDate
     private Instant updatedAt;
+    private Instant deactivatedAt;
 
     @Getter
     @Setter

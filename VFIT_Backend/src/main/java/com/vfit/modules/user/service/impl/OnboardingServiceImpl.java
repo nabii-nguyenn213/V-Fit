@@ -11,6 +11,7 @@ import com.vfit.bootstrap.storage.FileStorageService;
 import com.vfit.modules.ai.document.BodyAnalysisResult;
 import com.vfit.modules.ai.repository.BodyAnalysisRepository;
 import com.vfit.modules.user.document.User;
+import com.vfit.modules.user.dto.request.OnboardingMetricsRequest;
 import com.vfit.modules.user.dto.request.OnboardingProfileRequest;
 import com.vfit.modules.user.dto.response.OnboardingResponse;
 import com.vfit.modules.user.dto.response.UserResponse;
@@ -21,6 +22,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -44,6 +46,34 @@ public class OnboardingServiceImpl implements OnboardingService {
         metrics.setBmi(calculateBmi(request.getHeightCm(), request.getWeightKg()));
         metrics.setMeasuredAt(Instant.now());
         user.setBodyMetrics(metrics);
+        return userMapper.toResponse(userRepository.save(user));
+    }
+
+    @Override
+    @CacheEvict(value = "personalized_workouts", key = "T(com.vfit.common.util.SecurityUtil).requireCurrentUserId()")
+    public UserResponse updateOnboardingMetrics(OnboardingMetricsRequest request) {
+        User user = currentUser();
+        user.setGoalType(request.getGoalType());
+
+        User.BodyMetrics metrics = user.getBodyMetrics() == null ? new User.BodyMetrics() : user.getBodyMetrics();
+        if (request.getHeightCm() != null) {
+            metrics.setHeightCm(request.getHeightCm());
+        }
+        if (request.getWeightKg() != null) {
+            metrics.setWeightKg(request.getWeightKg());
+        }
+        if (request.getBodyFatPercent() != null) {
+            metrics.setBodyFatPercent(request.getBodyFatPercent());
+        }
+        if (metrics.getHeightCm() != null && metrics.getWeightKg() != null) {
+            metrics.setBmi(calculateBmi(metrics.getHeightCm(), metrics.getWeightKg()));
+        }
+        metrics.setMeasuredAt(Instant.now());
+        user.setBodyMetrics(metrics);
+
+        user.setOnboardingStatus(OnboardingStatus.COMPLETED);
+        user.setActive(true);
+
         return userMapper.toResponse(userRepository.save(user));
     }
 

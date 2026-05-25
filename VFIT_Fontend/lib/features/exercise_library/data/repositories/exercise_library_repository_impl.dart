@@ -38,10 +38,9 @@ class ExerciseLibraryRepositoryImpl implements ExerciseLibraryRepository {
   }) async {
     final cached = await localDataSource.read();
     final hasUsableCache = cached != null && cached.catalog.groups.isNotEmpty;
-    if (!forceRefresh && hasUsableCache && cached.isFresh(cacheTtl)) {
-      return cached.catalog;
-    }
 
+    // Luôn fetch remote trước — cache chỉ là fallback khi mất mạng.
+    // Điều này đảm bảo description mới nhất từ server luôn được hiển thị.
     try {
       final remote = await remoteDataSource.getGrouped(locale: locale);
       await localDataSource.write(remote);
@@ -58,4 +57,5 @@ class ExerciseLibraryRepositoryImpl implements ExerciseLibraryRepository {
       rethrow;
     }
   }
+
 }

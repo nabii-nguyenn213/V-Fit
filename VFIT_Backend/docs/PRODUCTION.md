@@ -30,6 +30,8 @@ APP_BASE_URL=https://api.your-domain.com
 CORS_ALLOWED_ORIGINS=https://your-domain.com,https://app.your-domain.com
 MONGODB_URI=mongodb+srv://vfit_app:<strong_password>@<cluster-host>/vfit?retryWrites=true&w=majority
 JWT_SECRET=<long_random_secret>
+OTP_PEPPER=<different_long_random_secret>
+BOOTSTRAP_ADMIN_EMAIL=admin@your-domain.com
 BOOTSTRAP_ADMIN_PASSWORD=<strong_admin_password>
 ```
 

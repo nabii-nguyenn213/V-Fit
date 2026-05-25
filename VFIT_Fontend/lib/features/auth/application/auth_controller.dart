@@ -107,15 +107,33 @@ class AuthController extends StateNotifier<AuthState> {
   }) async {
     state = state.copyWith(loading: true, clearError: true);
     try {
-      final auth = await _repository.register(
+      await _repository.register(
         RegisterRequest(email: email, password: password, fullName: fullName),
       );
-      setUser(auth.user);
+      state = state.copyWith(loading: false);
     } catch (error) {
       state = AuthState(
         status: AuthStatus.unauthenticated,
         error: error.toString(),
       );
+      rethrow;
+    }
+  }
+
+  Future<void> verifyRegisterOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final auth = await _repository.verifyOtp(email: email, otpCode: otpCode);
+      setUser(auth.user);
+    } catch (error) {
+      state = state.copyWith(
+        loading: false,
+        error: error.toString(),
+      );
+      rethrow;
     }
   }
 
@@ -130,6 +148,10 @@ class AuthController extends StateNotifier<AuthState> {
           : AuthStatus.pendingOnboarding,
       user: user,
     );
+  }
+
+  void clearError() {
+    state = state.copyWith(clearError: true);
   }
 
   Future<void> logout() async {
