@@ -26,7 +26,9 @@ public class ExerciseController {
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.ok(PageResponse.from(exerciseCatalogService.search(muscleGroup, difficulty, keyword, PageRequest.of(page, size))));
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        return ApiResponse.ok(PageResponse.from(exerciseCatalogService.search(muscleGroup, difficulty, keyword, PageRequest.of(safePage, safeSize))));
     }
 
     @GetMapping("/{id}")

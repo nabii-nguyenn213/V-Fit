@@ -39,6 +39,7 @@ public class AdminSeeder {
         List<DemoUser> users = List.of(
                 new DemoUser("tranduytrung251105@gmail.com", "123456A", "Tran Duy Trung", RoleName.USER, SubscriptionStatus.ACTIVE, SubscriptionPlanCatalog.VIP_YEARLY.code(), 365),
                 new DemoUser("vip.month@vfit.local", "123456A", "VIP Month User", RoleName.USER, SubscriptionStatus.ACTIVE, SubscriptionPlanCatalog.VIP_MONTHLY.code(), 30),
+                new DemoUser("free.vip.test@vfit.local", "123456A", "Free VIP Test User", RoleName.USER, SubscriptionStatus.FREE, null, 0),
                 new DemoUser("minh.user@vfit.local", "123456A", "Minh Nguyen", RoleName.USER, SubscriptionStatus.FREE, null, 0),
                 new DemoUser("linh.user@vfit.local", "123456A", "Linh Tran", RoleName.USER, SubscriptionStatus.FREE, null, 0));
 

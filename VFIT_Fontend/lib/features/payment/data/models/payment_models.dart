@@ -140,6 +140,32 @@ class PremiumPaymentStatusResult {
   }
 }
 
+class VipStatus {
+  const VipStatus({
+    required this.isVip,
+    required this.canRenew,
+    required this.remainingDays,
+    this.vipType,
+    this.expiredAt,
+  });
+
+  final bool isVip;
+  final String? vipType;
+  final DateTime? expiredAt;
+  final int remainingDays;
+  final bool canRenew;
+
+  factory VipStatus.fromJson(Map<String, dynamic> json) {
+    return VipStatus(
+      isVip: json['isVip'] == true,
+      vipType: json['vipType']?.toString(),
+      expiredAt: DateTime.tryParse(json['expiredAt']?.toString() ?? ''),
+      remainingDays: (json['remainingDays'] as num?)?.toInt() ?? 0,
+      canRenew: json['canRenew'] == true,
+    );
+  }
+}
+
 class PremiumPaymentRealtimeEvent {
   const PremiumPaymentRealtimeEvent({
     required this.type,

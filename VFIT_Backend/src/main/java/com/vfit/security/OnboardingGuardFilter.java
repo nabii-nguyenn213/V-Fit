@@ -27,12 +27,18 @@ public class OnboardingGuardFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication == null
+                || !(authentication.getPrincipal() instanceof CustomUserDetails);
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null
-                && authentication.getPrincipal() instanceof CustomUserDetails details
-                && details.getOnboardingStatus() == OnboardingStatus.PENDING
+        CustomUserDetails details = (CustomUserDetails) authentication.getPrincipal();
+        if (details.getOnboardingStatus() == OnboardingStatus.PENDING
                 && !isAllowedForPending(request)) {
             response.setStatus(ErrorCode.FORBIDDEN.getStatus().value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -50,6 +56,32 @@ public class OnboardingGuardFilter extends OncePerRequestFilter {
     }
 
     private boolean isAllowedForPending(HttpServletRequest request) {
-        return true;
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        // 1. Allow onboarding endpoints
+        if (path.startsWith("/api/v1/users/onboarding")) {
+            return true;
+        }
+        if (path.equals("/api/v1/users/onboarding-metrics") && "PUT".equalsIgnoreCase(method)) {
+            return true;
+        }
+
+        // 2. Allow fetching current user profile info
+        if (path.equals("/api/users/me") && "GET".equalsIgnoreCase(method)) {
+            return true;
+        }
+
+        // 3. Allow session endpoints to sign out / cancel onboarding
+        if (path.startsWith("/api/users/sessions")) {
+            return true;
+        }
+
+        // 4. Allow public/auth endpoints
+        if (path.startsWith("/api/auth/") || path.startsWith("/api/v1/auth/")) {
+            return true;
+        }
+
+        return false;
     }
 }

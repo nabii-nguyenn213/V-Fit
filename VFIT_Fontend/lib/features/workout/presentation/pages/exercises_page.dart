@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/enum_parsers.dart';
 import '../../../../core/utils/responsive.dart';
@@ -9,7 +10,9 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../auth/application/auth_controller.dart';
 import '../../data/repositories/workout_repository.dart';
+import 'workout_page.dart';
 
 class ExercisesPage extends ConsumerStatefulWidget {
   const ExercisesPage({super.key});
@@ -31,6 +34,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
   Widget build(BuildContext context) {
     final query = ref.watch(exerciseQueryProvider);
     final exercises = ref.watch(exercisesProvider(query));
+    final user = ref.watch(authControllerProvider).user;
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 76,
@@ -89,11 +93,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
           ),
           const SizedBox(height: 16),
           _ExerciseFormScanCard(
-            onTap: () {
-              AppFeedback.info(
-                'Camera check form tập luyện đang được phát triển.',
-              );
-            },
+            onTap: () => _handleFormScan(user),
           ),
           const SizedBox(height: 16),
           exercises.when(
@@ -147,6 +147,38 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleFormScan(dynamic user) async {
+    if (user == null) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => const LoginRequiredModal(),
+      );
+      return;
+    }
+
+    if (user.isVipActive != true) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => const VipRequiredModal(),
+      );
+      return;
+    }
+
+    try {
+      final image = await ImagePicker().pickImage(source: ImageSource.camera);
+      if (!mounted || image == null) {
+        return;
+      }
+      AppFeedback.success(
+        'Da nhan anh scan form. AI se xu ly o buoc tiep theo.',
+      );
+    } catch (error) {
+      if (mounted) {
+        AppFeedback.error('Khong the mo camera: $error');
+      }
+    }
   }
 }
 

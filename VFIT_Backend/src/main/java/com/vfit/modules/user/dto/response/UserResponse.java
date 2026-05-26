@@ -27,5 +27,10 @@ public class UserResponse {
     private final int level;
     private final SubscriptionStatus subscriptionStatus;
     private final String subscriptionPlanCode;
+    private final boolean premiumActive;
+    private final String premiumPlan;
+    private final Instant premiumExpiredAt;
+    private final long premiumRemainingDays;
+    private final boolean canRenewPremium;
     private final Instant createdAt;
 }

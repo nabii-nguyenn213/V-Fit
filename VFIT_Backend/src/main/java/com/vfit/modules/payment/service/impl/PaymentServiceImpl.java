@@ -13,6 +13,7 @@ import com.vfit.modules.payment.dto.CreatePaymentRequest;
 import com.vfit.modules.payment.dto.PaymentResponse;
 import com.vfit.modules.payment.dto.PaymentStatusResponse;
 import com.vfit.modules.payment.dto.PaymentQuoteResponseDto;
+import com.vfit.modules.payment.dto.VipStatusResponse;
 import com.vfit.modules.payment.config.PaymentProperties;
 import com.vfit.modules.payment.entity.PaymentOrder;
 import com.vfit.modules.payment.entity.PaymentOrderStatus;
@@ -61,6 +62,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentQuoteResponseDto applyVoucher(String userId, CheckoutRequestDto request) {
         return withPaymentLock(userId, () -> {
+            assertVipCanRenew(userId, Instant.now());
             PaymentOrder order = getOrCreateDraftOrder(userId);
             applyVoucherToOrder(order, normalizeVoucherCode(request.getVoucherCode()));
             return toQuote(paymentOrderRepository.save(order));
@@ -70,6 +72,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public CheckoutResponseDto checkout(String userId, CheckoutRequestDto request) {
         return withPaymentLock(userId, () -> {
+            assertVipCanRenew(userId, Instant.now());
             PaymentOrder order = getOrCreateDraftOrder(userId);
             String requestedVoucherCode = normalizeVoucherCode(request.getVoucherCode());
             if (requestedVoucherCode != null) {
@@ -131,6 +134,7 @@ public class PaymentServiceImpl implements PaymentService {
         return withPaymentLock(userId, () -> {
             validatePaymentConfig();
             Instant now = Instant.now();
+            assertVipCanRenew(userId, now);
             Instant expiredAt = now.plus(Duration.ofMinutes(paymentProperties.getExpiryMinutes()));
             String paymentCode = generateUniquePaymentCode();
             PremiumPlan plan = request.plan();
@@ -191,6 +195,11 @@ public class PaymentServiceImpl implements PaymentService {
                 status,
                 premiumUnlocked,
                 premiumUntil);
+    }
+
+    @Override
+    public VipStatusResponse getVipStatus(String userId) {
+        return toVipStatus(userId, Instant.now());
     }
 
     private PaymentOrder getOrCreateDraftOrder(String userId) {
@@ -266,6 +275,81 @@ public class PaymentServiceImpl implements PaymentService {
                 .premiumUntil(premiumUntil)
                 .build());
         userRepository.save(user);
+    }
+
+    private void assertVipCanRenew(String userId, Instant now) {
+        VipStatusResponse status = toVipStatus(userId, now);
+        if (status.isVip() && !status.canRenew()) {
+            throw new AppException(ErrorCode.CONFLICT, "VIP package is already active.");
+        }
+    }
+
+    private VipStatusResponse toVipStatus(String userId, Instant now) {
+        User.SubscriptionSnapshot subscription = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "User not found"))
+                .getSubscription();
+        Subscription persistedSubscription = subscriptionRepository
+                .findFirstByUserIdOrderByExpiresAtDesc(userId)
+                .orElse(null);
+        Instant expiredAt = resolvePremiumUntil(subscription, persistedSubscription);
+        String planCode = resolvePlanCode(subscription, persistedSubscription);
+        SubscriptionStatus status = resolveStatus(subscription, persistedSubscription);
+        boolean hasVipPlan = isVipPlan(planCode);
+        boolean isVip = status == SubscriptionStatus.ACTIVE
+                && hasVipPlan
+                && (expiredAt == null || expiredAt.isAfter(now));
+        Duration remaining = expiredAt == null || !expiredAt.isAfter(now)
+                ? Duration.ZERO
+                : Duration.between(now, expiredAt);
+        boolean canRenew = !isVip || (expiredAt != null && remaining.compareTo(Duration.ofDays(3)) < 0);
+        return new VipStatusResponse(
+                isVip,
+                normalizeVipType(planCode),
+                expiredAt,
+                remaining.toDays(),
+                canRenew);
+    }
+
+    private Instant resolvePremiumUntil(User.SubscriptionSnapshot snapshot, Subscription persistedSubscription) {
+        if (snapshot != null && snapshot.getPremiumUntil() != null) {
+            return snapshot.getPremiumUntil();
+        }
+        return persistedSubscription == null ? null : persistedSubscription.getExpiresAt();
+    }
+
+    private String resolvePlanCode(User.SubscriptionSnapshot snapshot, Subscription persistedSubscription) {
+        if (snapshot != null && snapshot.getPlanCode() != null && !snapshot.getPlanCode().isBlank()) {
+            return snapshot.getPlanCode();
+        }
+        return persistedSubscription == null ? null : persistedSubscription.getPlanCode();
+    }
+
+    private SubscriptionStatus resolveStatus(User.SubscriptionSnapshot snapshot, Subscription persistedSubscription) {
+        if (snapshot != null && snapshot.getStatus() != null) {
+            return snapshot.getStatus();
+        }
+        return persistedSubscription == null ? null : persistedSubscription.getStatus();
+    }
+
+    private String normalizeVipType(String planCode) {
+        if (planCode == null || planCode.isBlank()) {
+            return null;
+        }
+        return switch (planCode.toUpperCase(Locale.ROOT)) {
+            case "VIP_MONTHLY", "MONTHLY" -> "MONTHLY";
+            case "VIP_YEARLY", "YEARLY" -> "YEARLY";
+            default -> planCode;
+        };
+    }
+
+    private boolean isVipPlan(String planCode) {
+        if (planCode == null || planCode.isBlank()) {
+            return false;
+        }
+        return switch (planCode.toUpperCase(Locale.ROOT)) {
+            case "VIP_MONTHLY", "VIP_YEARLY", "MONTHLY", "YEARLY" -> true;
+            default -> false;
+        };
     }
 
     private String generateUniquePaymentCode() {

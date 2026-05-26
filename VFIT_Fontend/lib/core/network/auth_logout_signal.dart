@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final authLogoutSignalProvider = Provider<AuthLogoutSignal>((ref) {
-  return AuthLogoutSignal();
+  final signal = AuthLogoutSignal();
+  ref.onDispose(signal.dispose);
+  return signal;
 });
 
 class AuthLogoutSignal {
@@ -12,5 +14,9 @@ class AuthLogoutSignal {
 
   void triggerLogout() {
     _controller.add(null);
+  }
+
+  void dispose() {
+    _controller.close();
   }
 }

@@ -5,9 +5,14 @@ import '../../domain/entities/exercise_catalog.dart';
 import '../widgets/exercise_detail_sheet.dart';
 
 class ExerciseGroupDetailPage extends StatelessWidget {
-  const ExerciseGroupDetailPage({super.key, required this.group});
+  const ExerciseGroupDetailPage({
+    super.key,
+    required this.group,
+    this.initialSubGroupId,
+  });
 
   final MuscleGroup group;
+  final String? initialSubGroupId;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +41,9 @@ class ExerciseGroupDetailPage extends StatelessWidget {
           final subGroup = group.subGroups[index];
           return _SubGroupSection(
             subGroup: subGroup,
-            initiallyExpanded: index == 0,
+            initiallyExpanded: initialSubGroupId == null
+                ? index == 0
+                : subGroup.id == initialSubGroupId,
           );
         },
       ),
@@ -209,8 +216,7 @@ class _ExerciseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final hasVideo =
-        exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty;
+    final hasVideo = exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty;
 
     return Column(
       children: [
@@ -239,9 +245,7 @@ class _ExerciseCard extends StatelessWidget {
                     hasVideo
                         ? Icons.play_circle_fill_rounded
                         : Icons.link_off_rounded,
-                    color: hasVideo
-                        ? scheme.primary
-                        : scheme.onSurfaceVariant,
+                    color: hasVideo ? scheme.primary : scheme.onSurfaceVariant,
                     size: 22,
                   ),
                 ),

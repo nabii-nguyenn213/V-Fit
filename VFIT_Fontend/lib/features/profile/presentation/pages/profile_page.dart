@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/error/app_error_mapper.dart';
 import '../../../../core/error/crash_reporter.dart';
@@ -22,6 +23,7 @@ import '../../../../presentation/theme/app_typography.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../../payment/data/models/payment_models.dart';
 import '../../../payment/data/repositories/payment_repository.dart';
+import '../../data/models/user_model.dart';
 import '../../data/repositories/profile_repository.dart';
 
 class ProfilePage extends ConsumerWidget {
@@ -78,7 +80,7 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const _VipPricingCard(),
+          const VipPromotionCard(),
           const SizedBox(height: 16),
           _ThemeSelector(
             value: themeMode,
@@ -146,7 +148,11 @@ class ProfilePage extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const _VipPricingCard(),
+        if (user.isVipActive) VipActiveStatusCard(user: user),
+        if (!user.isVipActive || user.canRenewVip) ...[
+          const SizedBox(height: 16),
+          VipPromotionCard(user: user),
+        ],
         const SizedBox(height: 16),
         bodyMetrics.when(
           data: (metric) => AppCard(
@@ -268,18 +274,22 @@ class ProfilePage extends ConsumerWidget {
   }
 }
 
-class _VipPricingCard extends ConsumerStatefulWidget {
-  const _VipPricingCard();
+class VipPromotionCard extends ConsumerStatefulWidget {
+  const VipPromotionCard({super.key, this.user});
+
+  final UserModel? user;
 
   @override
-  ConsumerState<_VipPricingCard> createState() => _VipPricingCardState();
+  ConsumerState<VipPromotionCard> createState() => _VipPromotionCardState();
 }
 
-class _VipPricingCardState extends ConsumerState<_VipPricingCard> {
+class _VipPromotionCardState extends ConsumerState<VipPromotionCard> {
   bool _creating = false;
 
   @override
   Widget build(BuildContext context) {
+    final isRenewal =
+        widget.user?.isVipActive == true && widget.user?.canRenewVip == true;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,53 +300,35 @@ class _VipPricingCardState extends ConsumerState<_VipPricingCard> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: AppColors.energyMagenta.withValues(alpha: 0.12),
+                  color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.input),
+                  border: Border.all(
+                    color: AppColors.success.withValues(alpha: 0.24),
+                  ),
                 ),
                 child: const Icon(
                   Icons.workspace_premium_rounded,
-                  color: AppColors.energyMagenta,
+                  color: AppColors.success,
                 ),
               ),
               const SizedBox(width: AppSpacing.x3),
               Expanded(
                 child: Text(
-                  'V-FIT VIP',
-                  style: AppTypography.headerMediumFor(context),
+                  'V-FIT Premium',
+                  style: AppTypography.headerMediumFor(context).copyWith(
+                    letterSpacing: 0,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.x3),
-          Wrap(
-            spacing: AppSpacing.x2,
-            runSpacing: AppSpacing.x2,
-            children: const [
-              _PlanPill(label: 'Hàng tháng', price: '150K / tháng'),
-              _PlanPill(label: 'Hàng năm (Ưu đãi)', price: '1M / năm'),
-            ],
-          ),
+          const VipPlanSelector(),
           const SizedBox(height: AppSpacing.x4),
-          Text(
-            'Bảng so sánh Free và VIP',
-            style: AppTypography.labelFor(context),
-          ),
-          const SizedBox(height: AppSpacing.x3),
-          const _BenefitRow(
-            free: 'Xem bài tập, món ăn cơ bản',
-            vip: 'Kế hoạch tập và ăn cá nhân hóa',
-          ),
-          const _BenefitRow(
-            free: 'Theo dõi level, XP cơ bản',
-            vip: 'Lưu tiến trình chi tiết, body metrics, mục tiêu',
-          ),
-          const _BenefitRow(
-            free: 'Không có ưu tiên AI/coach',
-            vip: 'Gợi ý form, phân tích cơ thể, thử thách VIP',
-          ),
+          const VipBenefitsTable(),
           const SizedBox(height: AppSpacing.x4),
           AppButton.add(
-            label: 'Nạp VIP',
+            label: isRenewal ? 'Gia hạn VIP' : 'Nạp VIP',
             fullWidth: true,
             loading: _creating,
             onPressed: _creating ? null : _startVipPayment,
@@ -353,6 +345,12 @@ class _VipPricingCardState extends ConsumerState<_VipPricingCard> {
       if (mounted) {
         context.go('/login');
       }
+      return;
+    }
+    if (user.isVipActive && !user.canRenewVip) {
+      AppFeedback.info(
+        'VIP đang hoạt động. Bạn có thể gia hạn khi còn dưới 3 ngày.',
+      );
       return;
     }
 
@@ -390,6 +388,290 @@ class _VipPricingCardState extends ConsumerState<_VipPricingCard> {
   }
 }
 
+class VipActiveStatusCard extends StatelessWidget {
+  const VipActiveStatusCard({
+    super.key,
+    required this.user,
+  });
+
+  final UserModel user;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final startedAt = user.premiumStartedAt;
+    final expiredAt = user.premiumExpiredAt;
+    final totalDays = expiredAt == null
+        ? 0
+        : _positiveDaysBetween(startedAt ?? now, expiredAt);
+    final elapsedDays =
+        startedAt == null ? 0 : _positiveDaysBetween(startedAt, now);
+    final localRemainingDays = expiredAt == null
+        ? user.premiumRemainingDays
+        : expiredAt.difference(now).inDays + 1;
+    final remainingDays = math.max(
+      1,
+      user.premiumRemainingDays > 0
+          ? user.premiumRemainingDays
+          : localRemainingDays,
+    );
+    final progress = totalDays == 0
+        ? 1.0
+        : (elapsedDays / totalDays).clamp(0.0, 1.0).toDouble();
+    final isExpiringSoon = user.canRenewVip;
+    final accent = isExpiringSoon ? AppColors.warning : AppColors.success;
+    final plan =
+        _formatPremiumPlan(user.premiumPlan ?? user.subscriptionPlanCode);
+    final isMonthlyPlan =
+        _isMonthlyPlan(user.premiumPlan ?? user.subscriptionPlanCode);
+    final dateFormat = DateFormat('dd/MM/yyyy');
+    final expiredAtText = expiredAt == null
+        ? 'Ngày hết hạn đang được đồng bộ'
+        : 'Hết hạn: ${dateFormat.format(expiredAt.toLocal())}';
+    final headline =
+        isMonthlyPlan ? 'Còn $remainingDays ngày VIP' : expiredAtText;
+    final supportingText =
+        isMonthlyPlan ? expiredAtText : 'Gói VIP năm đang hoạt động';
+
+    return Container(
+      padding: AppResponsive.cardPadding(context),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF07110F).withValues(alpha: 0.98),
+            const Color(0xFF10131D).withValues(alpha: 0.96),
+            (isExpiringSoon ? const Color(0xFF1D1608) : const Color(0xFF071A14))
+                .withValues(alpha: 0.94),
+          ],
+        ),
+        border: Border.all(color: accent.withValues(alpha: 0.38)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.14),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(AppRadius.input),
+                  border: Border.all(color: accent.withValues(alpha: 0.32)),
+                ),
+                child: Icon(
+                  isExpiringSoon
+                      ? Icons.warning_amber_rounded
+                      : Icons.workspace_premium_rounded,
+                  color: accent,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'V-FIT Premium',
+                      style: AppTypography.headerMedium(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Gói hiện tại: $plan',
+                      style: AppTypography.bodySmall(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _VipStatusBadge(label: '✓ VIP đang hoạt động', color: accent),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.x4),
+          Text(
+            headline,
+            style: AppTypography.metric(color: accent),
+          ),
+          if (!isMonthlyPlan) ...[
+            const SizedBox(height: AppSpacing.x2),
+            Text(
+              supportingText,
+              style: AppTypography.body(color: AppColors.textPrimary),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.x4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: LinearProgressIndicator(
+              minHeight: 9,
+              value: progress,
+              backgroundColor: Colors.white.withValues(alpha: 0.12),
+              valueColor: AlwaysStoppedAnimation<Color>(accent),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.x3),
+          Wrap(
+            spacing: AppSpacing.x2,
+            runSpacing: AppSpacing.x2,
+            children: [
+              _VipDateChip(
+                icon: Icons.event_available_rounded,
+                label: 'Kích hoạt',
+                value: startedAt == null
+                    ? '-'
+                    : dateFormat.format(startedAt.toLocal()),
+              ),
+              if (expiredAt != null)
+                _VipDateChip(
+                  icon: Icons.event_busy_rounded,
+                  label: 'Hết hạn',
+                  value: dateFormat.format(expiredAt.toLocal()),
+                ),
+            ],
+          ),
+          if (isExpiringSoon) ...[
+            const SizedBox(height: AppSpacing.x3),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.x3),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(AppRadius.small),
+                border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.42),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.warning,
+                    size: 20,
+                  ),
+                  const SizedBox(width: AppSpacing.x2),
+                  Expanded(
+                    child: Text(
+                      'VIP sắp hết hạn',
+                      style: AppTypography.body(color: AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  static int _positiveDaysBetween(DateTime start, DateTime end) {
+    return math.max(0, end.difference(start).inDays);
+  }
+
+  static String _formatPremiumPlan(String? value) {
+    return switch (value) {
+      'VIP_MONTHLY' || 'MONTHLY' => 'MONTHLY',
+      'VIP_YEARLY' || 'YEARLY' => 'YEARLY',
+      final plan? when plan.isNotEmpty => plan,
+      _ => 'VIP',
+    };
+  }
+
+  static bool _isMonthlyPlan(String? value) {
+    return switch (value) {
+      'VIP_MONTHLY' || 'MONTHLY' => true,
+      _ => false,
+    };
+  }
+}
+
+class _VipStatusBadge extends StatelessWidget {
+  const _VipStatusBadge({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: color.withValues(alpha: 0.36)),
+      ),
+      child: Text(label, style: AppTypography.label(color: color)),
+    );
+  }
+}
+
+class _VipDateChip extends StatelessWidget {
+  const _VipDateChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x3,
+        vertical: AppSpacing.x2,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(AppRadius.small),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: AppColors.textSecondary),
+          const SizedBox(width: AppSpacing.x2),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTypography.bodySmall(color: AppColors.textSecondary),
+              ),
+              Text(
+                value,
+                style: AppTypography.body(color: AppColors.textPrimary),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PremiumPlanSelection {
   const _PremiumPlanSelection({
     required this.plan,
@@ -419,20 +701,26 @@ class _PremiumPlanDialogState extends State<_PremiumPlanDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return AlertDialog(
-      title: const Text('Chon goi VIP'),
+      backgroundColor: scheme.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      title: const Text('Chọn gói Premium'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _planTile(PremiumPlan.monthly, 'VIP 1 thang', '150K'),
-            _planTile(PremiumPlan.yearly, 'VIP 1 nam', '1M'),
-            const SizedBox(height: 12),
+            _planTile(PremiumPlan.monthly, 'VIP 1 tháng', '150K'),
+            _planTile(PremiumPlan.yearly, 'VIP 1 năm', '1M'),
+            const SizedBox(height: AppSpacing.x3),
             TextField(
               controller: _voucherController,
               textCapitalization: TextCapitalization.characters,
               decoration: const InputDecoration(
-                labelText: 'Ma voucher neu co',
+                labelText: 'Mã voucher',
                 prefixIcon: Icon(Icons.confirmation_number_outlined),
               ),
             ),
@@ -442,28 +730,64 @@ class _PremiumPlanDialogState extends State<_PremiumPlanDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Huy'),
+          child: const Text('Hủy'),
         ),
         FilledButton.icon(
           onPressed: _confirm,
           icon: const Icon(Icons.qr_code_rounded),
-          label: const Text('Tao QR'),
+          label: const Text('Tạo QR'),
         ),
       ],
     );
   }
 
   Widget _planTile(PremiumPlan plan, String title, String price) {
-    return RadioListTile<PremiumPlan>(
-      value: plan,
-      groupValue: _selected,
-      onChanged: (value) {
-        if (value == null) return;
-        setState(() => _selected = value);
-      },
-      title: Text(title),
-      subtitle: Text(price),
-      contentPadding: EdgeInsets.zero,
+    final selected = _selected == plan;
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.input),
+      onTap: () => setState(() => _selected = plan),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.x2),
+        padding: const EdgeInsets.all(AppSpacing.x3),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.success.withValues(alpha: 0.1)
+              : scheme.surfaceContainerHighest.withValues(alpha: 0.28),
+          borderRadius: BorderRadius.circular(AppRadius.input),
+          border: Border.all(
+            color: selected
+                ? AppColors.success.withValues(alpha: 0.7)
+                : scheme.outlineVariant.withValues(alpha: 0.55),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              selected
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: selected ? AppColors.success : scheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: AppSpacing.x3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 2),
+                  Text(
+                    price,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -529,8 +853,17 @@ class _PremiumPaymentDialogState extends ConsumerState<_PremiumPaymentDialog> {
           math.max(140.0, maxHeight * (compact ? 0.34 : 0.38)),
         )
         .clamp(140.0, compact ? 200.0 : 260.0);
+    final amountText =
+        '${NumberFormat.decimalPattern('vi_VN').format(payment.finalAmount)} VND';
+    final planLabel = switch (payment.plan) {
+      PremiumPlan.yearly => 'VIP năm',
+      PremiumPlan.monthly => 'VIP tháng',
+      _ => 'V-FIT VIP',
+    };
+    final paid = _status == PremiumPaymentStatus.paid;
 
     return Dialog(
+      backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.symmetric(
         horizontal: horizontalInset,
         vertical: verticalInset,
@@ -542,120 +875,180 @@ class _PremiumPaymentDialogState extends ConsumerState<_PremiumPaymentDialog> {
             maxWidth: maxWidth,
             maxHeight: maxHeight,
           ),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              compact ? 14 : 20,
-              compact ? 14 : 18,
-              compact ? 14 : 20,
-              compact ? 10 : 14,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.qr_code_rounded),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Quet QR chuyen khoan',
-                        style: Theme.of(context).textTheme.titleLarge,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF07110F),
+                  Color(0xFF11141E),
+                  Color(0xFF071A14),
+                ],
+              ),
+              border: Border.all(
+                color: AppColors.success.withValues(alpha: 0.34),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.success.withValues(alpha: 0.14),
+                  blurRadius: 28,
+                  offset: const Offset(0, 16),
                 ),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: qrSize,
-                            height: qrSize,
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.black.withValues(alpha: 0.08),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                compact ? 14 : 20,
+                compact ? 14 : 18,
+                compact ? 14 : 20,
+                compact ? 10 : 14,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.success.withValues(alpha: 0.28),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.workspace_premium_rounded,
+                          color: AppColors.success,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.x3),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Thanh toán Premium',
+                              style: AppTypography.headerMedium(
+                                color: AppColors.textPrimary,
                               ),
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                payment.vietQrUrl,
-                                fit: BoxFit.contain,
-                                filterQuality: FilterQuality.none,
-                                errorBuilder: (_, __, ___) => const Center(
-                                  child: Icon(Icons.broken_image_outlined),
+                            Text(
+                              planLabel,
+                              style: AppTypography.bodySmall(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _VipStatusBadge(
+                        label: paid ? 'Đã mở' : 'Chờ thanh toán',
+                        color: paid ? AppColors.success : AppColors.warning,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.x4),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Text(
+                            amountText,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.metric(
+                              color: AppColors.success,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.x3),
+                          Center(
+                            child: Container(
+                              width: qrSize,
+                              height: qrSize,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 18,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Image.network(
+                                  payment.vietQrUrl,
+                                  fit: BoxFit.contain,
+                                  filterQuality: FilterQuality.none,
+                                  errorBuilder: (_, __, ___) => const Center(
+                                    child: Icon(Icons.broken_image_outlined),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        _paymentLine(
-                          'Gia goc',
-                          '${payment.baseAmount.toStringAsFixed(0)} VND',
-                        ),
-                        if (payment.discountAmount > 0)
-                          _paymentLine(
-                            'Giam gia',
-                            '${payment.discountAmount.toStringAsFixed(0)} VND',
+                          const SizedBox(height: AppSpacing.x4),
+                          _paymentLine('Nội dung', payment.paymentCode),
+                          _paymentLine('Ngân hàng', payment.bankCode),
+                          _paymentLine('Số tài khoản', payment.accountNumber),
+                          if (payment.expiredAt != null)
+                            _paymentLine(
+                              'Hạn thanh toán',
+                              DateFormat('HH:mm dd/MM/yyyy').format(
+                                payment.expiredAt!.toLocal(),
+                              ),
+                            ),
+                          const SizedBox(height: AppSpacing.x3),
+                          AppFeedbackPanel(
+                            compact: true,
+                            type: paid
+                                ? AppFeedbackType.success
+                                : AppFeedbackType.info,
+                            title: paid ? 'VIP đã kích hoạt' : 'Đang xác nhận',
+                            message: paid
+                                ? 'Tài khoản đã được nâng cấp.'
+                                : 'Giữ nguyên nội dung chuyển khoản để hệ thống tự đối soát.',
                           ),
-                        _paymentLine(
-                          'Can chuyen',
-                          '${payment.finalAmount.toStringAsFixed(0)} VND',
-                        ),
-                        _paymentLine('Noi dung', payment.paymentCode),
-                        _paymentLine('Ngan hang', payment.bankCode),
-                        _paymentLine('So TK', payment.accountNumber),
-                        _paymentLine('Chu TK', payment.accountName),
-                        if (payment.expiredAt != null)
-                          _paymentLine(
-                            'Han thanh toan',
-                            payment.expiredAt!.toLocal().toString(),
-                          ),
-                        const SizedBox(height: 12),
-                        AppFeedbackPanel(
-                          compact: true,
-                          type: _status == PremiumPaymentStatus.paid
-                              ? AppFeedbackType.success
-                              : AppFeedbackType.info,
-                          title: _status == PremiumPaymentStatus.paid
-                              ? 'Da mo VIP'
-                              : 'Dang cho thanh toan',
-                          message: _status == PremiumPaymentStatus.paid
-                              ? 'Goi VIP da duoc kich hoat.'
-                              : 'App se tu cap nhat sau khi SePay xac nhan giao dich.',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    TextButton(
-                      onPressed: _checking ? null : _pollStatus,
-                      child: const Text('Kiem tra'),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        _status == PremiumPaymentStatus.paid ? 'Xong' : 'Dong',
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: AppSpacing.x3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _checking ? null : _pollStatus,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.textPrimary,
+                            side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.18),
+                            ),
+                          ),
+                          child: const Text('Kiểm tra'),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.x2),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.success,
+                            foregroundColor: Colors.black,
+                          ),
+                          child: Text(paid ? 'Xong' : 'Đóng'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -664,61 +1057,57 @@ class _PremiumPaymentDialogState extends ConsumerState<_PremiumPaymentDialog> {
   }
 
   Widget _paymentLine(String label, String value) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final labelStyle = TextStyle(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-          fontSize: 12,
-        );
-        const valueStyle = TextStyle(fontWeight: FontWeight.w800);
-        final valueWidget = SelectableText(
-          value,
-          style: valueStyle,
-        );
-
-        if (constraints.maxWidth >= 340) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(width: 116, child: Text(label, style: labelStyle)),
-                const SizedBox(width: 10),
-                Expanded(child: valueWidget),
-              ],
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: AppSpacing.x2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x3,
+        vertical: AppSpacing.x2,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.09)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: AppTypography.bodySmall(color: AppColors.textSecondary),
             ),
-          );
-        }
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: labelStyle),
-              const SizedBox(height: 2),
-              valueWidget,
-            ],
           ),
-        );
-      },
+          const SizedBox(width: AppSpacing.x2),
+          Flexible(
+            flex: 2,
+            child: SelectableText(
+              value,
+              textAlign: TextAlign.right,
+              style: AppTypography.label(color: AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   void _listenPaymentRealtime() {
-    _paymentEvents = ref
-        .read(paymentRepositoryProvider)
-        .watchPremiumPayments()
-        .listen((event) {
-      if (!mounted ||
-          event.paymentId != widget.payment.paymentId ||
-          !event.isPaid) {
-        return;
-      }
-      unawaited(_completePayment('Da nhan thanh toan. VIP da duoc kich hoat.'));
-    }, onError: (_) {
-      // WebSocket is best-effort; polling below remains the fallback.
-    });
+    _paymentEvents =
+        ref.read(paymentRepositoryProvider).watchPremiumPayments().listen(
+      (event) {
+        if (!mounted ||
+            event.paymentId != widget.payment.paymentId ||
+            !event.isPaid) {
+          return;
+        }
+        unawaited(
+          _completePayment('Da nhan thanh toan. VIP da duoc kich hoat.'),
+        );
+      },
+      onError: (_) {
+        // WebSocket is best-effort; polling below remains the fallback.
+      },
+    );
   }
 
   Future<void> _pollStatus() async {
@@ -769,6 +1158,52 @@ class _PremiumPaymentDialogState extends ConsumerState<_PremiumPaymentDialog> {
   }
 }
 
+class VipPlanSelector extends StatelessWidget {
+  const VipPlanSelector({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Wrap(
+      spacing: AppSpacing.x2,
+      runSpacing: AppSpacing.x2,
+      children: [
+        _PlanPill(label: 'Hàng tháng', price: '150K / tháng'),
+        _PlanPill(label: 'Hàng năm (ưu đãi)', price: '1M / năm'),
+      ],
+    );
+  }
+}
+
+class VipBenefitsTable extends StatelessWidget {
+  const VipBenefitsTable({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quyền lợi Premium',
+          style: AppTypography.labelFor(context),
+        ),
+        const SizedBox(height: AppSpacing.x3),
+        const _BenefitRow(
+          free: 'Xem bài tập, món ăn cơ bản',
+          vip: 'Kế hoạch tập và ăn cá nhân hóa',
+        ),
+        const _BenefitRow(
+          free: 'Theo dõi level, XP cơ bản',
+          vip: 'Lưu tiến trình chi tiết, body metrics, mục tiêu',
+        ),
+        const _BenefitRow(
+          free: 'Không có ưu tiên AI/coach',
+          vip: 'Gợi ý form, phân tích cơ thể, thử thách VIP',
+        ),
+      ],
+    );
+  }
+}
+
 class _PlanPill extends StatelessWidget {
   const _PlanPill({
     required this.label,
@@ -784,9 +1219,9 @@ class _PlanPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: scheme.primary.withValues(alpha: 0.36)),
+        color: AppColors.success.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.24)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -796,10 +1231,10 @@ class _PlanPill extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             price,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(color: scheme.primary, fontWeight: FontWeight.w900),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w900,
+                ),
           ),
         ],
       ),
@@ -819,8 +1254,14 @@ class _BenefitRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.x2),
+      padding: const EdgeInsets.all(AppSpacing.x3),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.28),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -830,11 +1271,14 @@ class _BenefitRow extends StatelessWidget {
               style: TextStyle(color: scheme.onSurfaceVariant),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.x3),
           Expanded(
             child: Text(
               vip,
-              style: TextStyle(color: scheme.onSurface),
+              style: TextStyle(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

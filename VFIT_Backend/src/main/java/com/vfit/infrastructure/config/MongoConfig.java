@@ -55,6 +55,18 @@ public class MongoConfig {
                     .createIndex(
                             new Document("user_id", 1).append("status", 1).append("created_at", -1),
                             new IndexOptions().name("idx_payment_order_user_status_created"));
+            mongoTemplate.getCollection("password_reset_tokens")
+                    .createIndex(
+                            new Document("expiresAt", 1),
+                            new IndexOptions().name("idx_password_reset_token_expiry").expireAfter(0L, java.util.concurrent.TimeUnit.SECONDS));
+            mongoTemplate.getCollection("user_sessions")
+                    .createIndex(
+                            new Document("expiresAt", 1),
+                            new IndexOptions().name("idx_user_session_expiry").expireAfter(0L, java.util.concurrent.TimeUnit.SECONDS));
+            mongoTemplate.getCollection("user_sessions")
+                    .createIndex(
+                            new Document("userId", 1).append("isRevoked", 1),
+                            new IndexOptions().name("idx_user_session_user_revoked"));
         };
     }
 }

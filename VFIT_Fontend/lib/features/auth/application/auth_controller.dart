@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/auth_logout_signal.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../profile/data/models/user_model.dart';
 import '../data/models/auth_models.dart';
 import '../data/repositories/auth_repository.dart';
@@ -8,11 +9,11 @@ import '../data/repositories/auth_repository.dart';
 final authControllerProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) {
   final controller = AuthController(ref.watch(authRepositoryProvider));
-  ref.listen<AuthLogoutSignal>(authLogoutSignalProvider, (previous, next) {
-    next.onLogout.listen((_) {
-      controller.logout();
-    });
+  final signal = ref.read(authLogoutSignalProvider);
+  final sub = signal.onLogout.listen((_) {
+    controller.logout();
   });
+  ref.onDispose(sub.cancel);
   return controller;
 });
 
@@ -87,15 +88,19 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(loading: true, clearError: true);
+    state = const AuthState(
+      status: AuthStatus.unauthenticated,
+      loading: true,
+    );
     try {
       final auth = await _repository
           .login(LoginRequest(email: email, password: password));
       setUser(auth.user);
     } catch (error) {
+      await _repository.clearLocalSession();
       state = AuthState(
         status: AuthStatus.unauthenticated,
-        error: error.toString(),
+        error: _loginErrorMessage(error),
       );
     }
   }
@@ -171,5 +176,12 @@ class AuthController extends StateNotifier<AuthState> {
       resetToken: resetToken,
       newPassword: newPassword,
     );
+  }
+
+  String _loginErrorMessage(Object error) {
+    if (error is ApiException && error.statusCode == 401) {
+      return 'Email hoặc mật khẩu không chính xác.';
+    }
+    return error.toString();
   }
 }

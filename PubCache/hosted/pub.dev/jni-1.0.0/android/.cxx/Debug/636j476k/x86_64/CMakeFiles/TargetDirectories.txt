@@ -1,0 +1,3 @@
+D:/EXE_PRM/PubCache/hosted/pub.dev/jni-1.0.0/android/.cxx/Debug/636j476k/x86_64/CMakeFiles/jni.dir
+D:/EXE_PRM/PubCache/hosted/pub.dev/jni-1.0.0/android/.cxx/Debug/636j476k/x86_64/CMakeFiles/edit_cache.dir
+D:/EXE_PRM/PubCache/hosted/pub.dev/jni-1.0.0/android/.cxx/Debug/636j476k/x86_64/CMakeFiles/rebuild_cache.dir

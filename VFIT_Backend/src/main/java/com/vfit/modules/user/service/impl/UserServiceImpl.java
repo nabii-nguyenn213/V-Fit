@@ -104,6 +104,16 @@ public class UserServiceImpl implements UserService {
         }
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+
+        // Revoke all active sessions on password change (same as resetPassword)
+        List<UserSession> activeSessions = userSessionRepository
+                .findByUserIdAndIsRevokedFalse(user.getId());
+        for (UserSession session : activeSessions) {
+            session.setRevoked(true);
+            session.setRevokedAt(Instant.now());
+            session.setRevokedReason("PASSWORD_CHANGED");
+        }
+        userSessionRepository.saveAll(activeSessions);
     }
 
     @Override

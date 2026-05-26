@@ -37,8 +37,6 @@ import java.util.Base64;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -47,7 +45,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-    private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final UserSessionRepository userSessionRepository;
@@ -95,22 +92,22 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED, "Email hoặc mật khẩu không chính xác."));
 
+        // Block deactivated (soft-deleted) users before anything else
+        if (user.getDeactivatedAt() != null) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản đã bị vô hiệu hóa.");
+        }
+
         // Validate password
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Email hoặc mật khẩu không chính xác.");
         }
 
-        // For regular user: must be active (which means they have verified their OTP)
-        if (user.getRole() == RoleName.USER) {
-            if (!user.isActive()) {
-                // If not active, trigger a new OTP and inform the user
-                otpService.generateAndSendOtp(user.getEmail());
-                throw new AppException(ErrorCode.UNAUTHORIZED, "Vui lòng xác thực email bằng mã OTP trước khi đăng nhập. Một mã OTP mới đã được gửi.");
-            }
+        // For regular user: must be active (verified OTP)
+        if (user.getRole() == RoleName.USER && !user.isActive()) {
+            otpService.generateAndSendOtp(user.getEmail());
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Vui lòng xác thực email bằng mã OTP trước khi đăng nhập. Một mã OTP mới đã được gửi.");
         }
 
-        // Proceed to authenticate
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(normalizedEmail, request.getPassword()));
         return authMapper.toAuthResponse(userMapper.toResponse(user), issueTokens(user));
     }
 
@@ -210,8 +207,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private TokenResponse issueTokens(User user) {
-        CustomUserDetails details = new CustomUserDetails(user);
-        String accessToken = jwtTokenProvider.createAccessToken(details);
         String refreshToken = randomToken();
         String tokenHash = hashSha256(refreshToken);
 
@@ -228,7 +223,10 @@ public class AuthServiceImpl implements AuthService {
                 userAgent = "Unknown";
             }
             ipAddress = request.getHeader("X-Forwarded-For");
-            if (ipAddress == null || ipAddress.isEmpty()) {
+            if (ipAddress != null && !ipAddress.isEmpty()) {
+                // Take only the first IP (original client) to prevent spoofing
+                ipAddress = ipAddress.split(",")[0].trim();
+            } else {
                 ipAddress = request.getRemoteAddr();
             }
             deviceId = request.getHeader("X-Device-Id");
@@ -248,6 +246,9 @@ public class AuthServiceImpl implements AuthService {
                 .isRevoked(false)
                 .build();
         userSessionRepository.save(session);
+
+        CustomUserDetails details = new CustomUserDetails(user);
+        String accessToken = jwtTokenProvider.createAccessToken(details, session.getId());
 
         return TokenResponse.builder()
                 .accessToken(accessToken)

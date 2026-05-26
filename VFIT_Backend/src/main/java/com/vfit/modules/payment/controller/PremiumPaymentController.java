@@ -5,6 +5,7 @@ import com.vfit.common.util.SecurityUtil;
 import com.vfit.modules.payment.dto.CreatePaymentRequest;
 import com.vfit.modules.payment.dto.PaymentResponse;
 import com.vfit.modules.payment.dto.PaymentStatusResponse;
+import com.vfit.modules.payment.dto.VipStatusResponse;
 import com.vfit.modules.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,5 +35,11 @@ public class PremiumPaymentController {
     @Operation(summary = "Poll current premium payment status")
     public ApiResponse<PaymentStatusResponse> status(@PathVariable String paymentId) {
         return ApiResponse.ok(paymentService.getPaymentStatus(SecurityUtil.requireCurrentUserId(), paymentId));
+    }
+
+    @GetMapping("/vip-status")
+    @Operation(summary = "Get current VIP membership status and renewal eligibility")
+    public ApiResponse<VipStatusResponse> vipStatus() {
+        return ApiResponse.ok(paymentService.getVipStatus(SecurityUtil.requireCurrentUserId()));
     }
 }

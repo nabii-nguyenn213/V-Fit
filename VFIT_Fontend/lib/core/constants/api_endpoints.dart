@@ -43,6 +43,7 @@ class ApiEndpoints {
   static const applyVoucher = '/api/v1/payments/apply-voucher';
   static const checkout = '/api/v1/payments/checkout';
   static const createPremiumPayment = '/api/payments/create';
+  static const vipStatus = '/api/payments/vip-status';
   static String premiumPaymentStatus(String id) => '/api/payments/$id/status';
   static const checkin = '/api/v1/checkin';
   static const checkinStatus = '/api/v1/checkin/status';

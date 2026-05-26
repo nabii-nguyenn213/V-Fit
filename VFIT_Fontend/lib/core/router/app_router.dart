@@ -29,13 +29,30 @@ import '../widgets/app_shell.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
+final _authRefreshListenable = Provider<_AuthRefreshNotifier>((ref) {
+  final notifier = _AuthRefreshNotifier();
+  ref.listen<AuthState>(authControllerProvider, (previous, next) {
+    // Only trigger router refresh when actual auth status changes
+    if (previous?.status != next.status) {
+      notifier.notify();
+    }
+  });
+  return notifier;
+});
+
+class _AuthRefreshNotifier extends ChangeNotifier {
+  void notify() => notifyListeners();
+}
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final auth = ref.watch(authControllerProvider);
+  final refreshNotifier = ref.watch(_authRefreshListenable);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
+      final auth = ref.read(authControllerProvider);
       final path = state.uri.path;
       final isSplash = path == '/splash';
       final isAuthRoute = {
@@ -46,10 +63,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         '/reset-password',
       }.contains(path);
       final isOnboardingRoute = path == '/onboarding';
-      final isPublicExerciseRoute = path == '/workouts' ||
-          path.startsWith('/workouts/') ||
-          path == '/exercises' ||
-          path.startsWith('/exercises/');
       final isProtectedRoute = path.startsWith('/profile/edit') ||
           path.startsWith('/profile/change-password') ||
           path.startsWith('/admin');
@@ -78,7 +91,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (isSplash) {
-        return auth.isPendingOnboarding ? '/onboarding' : '/home';
+        if (auth.isPendingOnboarding) {
+          return '/onboarding';
+        }
+        if (auth.isActive) {
+          return '/home';
+        }
+        return '/login';
       }
 
       if (path.startsWith('/admin') && auth.user?.role != RoleName.admin) {
@@ -135,6 +154,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/profile',
+            builder: (context, state) => const ProfilePage(),
+          ),
+          GoRoute(
+            path: '/premium',
             builder: (context, state) => const ProfilePage(),
           ),
         ],

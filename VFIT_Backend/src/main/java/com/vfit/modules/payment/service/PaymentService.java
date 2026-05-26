@@ -6,6 +6,7 @@ import com.vfit.modules.payment.dto.CreatePaymentRequest;
 import com.vfit.modules.payment.dto.PaymentResponse;
 import com.vfit.modules.payment.dto.PaymentStatusResponse;
 import com.vfit.modules.payment.dto.PaymentQuoteResponseDto;
+import com.vfit.modules.payment.dto.VipStatusResponse;
 
 public interface PaymentService {
     PaymentQuoteResponseDto applyVoucher(String userId, CheckoutRequestDto request);
@@ -15,4 +16,6 @@ public interface PaymentService {
     PaymentResponse createPremiumPayment(String userId, CreatePaymentRequest request);
 
     PaymentStatusResponse getPaymentStatus(String userId, String paymentId);
+
+    VipStatusResponse getVipStatus(String userId);
 }

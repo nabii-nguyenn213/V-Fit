@@ -62,6 +62,18 @@ class PaymentRepository {
     }
   }
 
+  Future<VipStatus> getVipStatus() async {
+    try {
+      final response = await _dio.get<dynamic>(ApiEndpoints.vipStatus);
+      return ApiResponseParser.unwrap(
+        response,
+        (json) => VipStatus.fromJson(Map<String, dynamic>.from(json as Map)),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
   Stream<PremiumPaymentRealtimeEvent> watchPremiumPayments() async* {
     final token = await appTokenStorage.readAccessToken();
     if (token == null || token.isEmpty) {

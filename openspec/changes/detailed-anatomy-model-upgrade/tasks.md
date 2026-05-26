@@ -1,0 +1,5 @@
+- [ ] Nâng cấp cấu trúc hình vẽ đầu và thân cơ bản sang dạng 3D khối giải phẫu học cao cấp <!-- id: 1 -->
+- [ ] Thêm chi tiết xương quai xanh, xương sườn, xương đầu gối, khớp khuỷu tay và cột sống xoay theo góc Z <!-- id: 2 -->
+- [ ] Tích hợp tính năng vẽ sợi cơ (striations) chi tiết thông qua clipPath trong hàm vẽ các Muscle Zone <!-- id: 3 -->
+- [ ] Thêm hiệu ứng gân bám màu kem sáng chuyển tiếp ở đầu các cơ khớp để tăng độ thẩm mỹ y khoa <!-- id: 4 -->
+- [ ] Chạy `flutter analyze` kiểm tra chất lượng code và biên dịch ứng dụng để kiểm tra trực quan <!-- id: 5 -->

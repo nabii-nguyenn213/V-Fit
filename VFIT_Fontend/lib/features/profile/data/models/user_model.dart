@@ -12,6 +12,12 @@ class UserModel {
     required this.level,
     required this.subscriptionStatus,
     this.subscriptionPlanCode,
+    this.premiumActive = false,
+    this.premiumPlan,
+    this.premiumStartedAt,
+    this.premiumExpiredAt,
+    this.premiumRemainingDays = 0,
+    this.canRenewPremium = true,
     this.avatarUrl,
     this.gender,
     this.dateOfBirth,
@@ -33,11 +39,49 @@ class UserModel {
   final int level;
   final SubscriptionStatus subscriptionStatus;
   final String? subscriptionPlanCode;
+  final bool premiumActive;
+  final String? premiumPlan;
+  final DateTime? premiumStartedAt;
+  final DateTime? premiumExpiredAt;
+  final int premiumRemainingDays;
+  final bool canRenewPremium;
   final DateTime? createdAt;
 
   bool get isAdmin => role == RoleName.admin;
   bool get isOnboardingCompleted =>
       onboardingStatus == OnboardingStatus.completed;
+  bool get hasVipPlan {
+    final plan = (premiumPlan ?? subscriptionPlanCode)?.toUpperCase();
+    return plan == 'VIP_MONTHLY' ||
+        plan == 'VIP_YEARLY' ||
+        plan == 'MONTHLY' ||
+        plan == 'YEARLY';
+  }
+
+  bool get isVipActive {
+    final expiredAt = premiumExpiredAt;
+    if (premiumActive &&
+        expiredAt != null &&
+        expiredAt.isAfter(DateTime.now())) {
+      return true;
+    }
+    if (subscriptionStatus == SubscriptionStatus.active && hasVipPlan) {
+      return expiredAt == null || expiredAt.isAfter(DateTime.now());
+    }
+    return false;
+  }
+
+  bool get canRenewVip {
+    if (!isVipActive) {
+      return true;
+    }
+    final expiredAt = premiumExpiredAt;
+    if (expiredAt == null) {
+      return false;
+    }
+    return canRenewPremium ||
+        expiredAt.difference(DateTime.now()) < const Duration(days: 3);
+  }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
@@ -58,6 +102,16 @@ class UserModel {
       subscriptionStatus:
           subscriptionStatusFromJson(json['subscriptionStatus']?.toString()),
       subscriptionPlanCode: json['subscriptionPlanCode']?.toString(),
+      premiumActive: json['premiumActive'] == true,
+      premiumPlan: json['premiumPlan']?.toString() ??
+          json['subscriptionPlanCode']?.toString(),
+      premiumStartedAt:
+          DateTime.tryParse(json['premiumStartedAt']?.toString() ?? ''),
+      premiumExpiredAt:
+          DateTime.tryParse(json['premiumExpiredAt']?.toString() ?? ''),
+      premiumRemainingDays:
+          (json['premiumRemainingDays'] as num?)?.toInt() ?? 0,
+      canRenewPremium: json['canRenewPremium'] != false,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
     );
   }

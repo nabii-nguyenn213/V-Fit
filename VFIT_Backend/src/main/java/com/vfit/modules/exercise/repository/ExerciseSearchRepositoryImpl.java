@@ -24,7 +24,7 @@ public class ExerciseSearchRepositoryImpl implements ExerciseSearchRepository {
         Query query = new Query();
         List<Criteria> criteria = new ArrayList<>();
         if (StringUtils.hasText(muscleGroup)) {
-            criteria.add(Criteria.where("muscleGroup").regex("^" + java.util.regex.Pattern.quote(muscleGroup.trim()) + "$", "i"));
+            criteria.add(Criteria.where("muscleGroup").is(muscleGroup.trim()));
         }
         if (difficulty != null) {
             criteria.add(Criteria.where("difficulty").is(difficulty));

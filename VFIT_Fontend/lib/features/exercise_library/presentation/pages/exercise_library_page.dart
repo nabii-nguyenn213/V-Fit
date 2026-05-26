@@ -6,7 +6,7 @@ import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../data/repositories/exercise_library_repository_impl.dart';
 import '../bloc/exercise_library_bloc.dart';
-import '../widgets/interactive_muscle_model_viewer.dart';
+import '../widgets/interactive_muscle_map.dart';
 import '../widgets/muscle_group_card.dart';
 import 'exercise_group_detail_page.dart';
 
@@ -127,14 +127,13 @@ class ExerciseLibraryViewState extends State<ExerciseLibraryView> {
               ),
               const SizedBox(height: 20),
               if (_showMap)
-                InteractiveMuscleModelViewer(
-                  key: const ValueKey('interactive-muscle-model-viewer'),
+                InteractiveMuscleMap(
+                  key: const ValueKey('interactive-muscle-map-svg-v2'),
                   groups: groups,
-                  onSelection: (selection) => Navigator.of(context).push(
+                  onGroupSelected: (group) => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (context) => ExerciseGroupDetailPage(
-                        group: selection.group,
-                        initialSubGroupId: selection.subGroupId,
+                        group: group,
                       ),
                     ),
                   ),
