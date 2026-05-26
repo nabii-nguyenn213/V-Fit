@@ -132,8 +132,9 @@ class ExerciseLibraryViewState extends State<ExerciseLibraryView> {
                   groups: groups,
                   onGroupSelected: (group) => Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (context) =>
-                          ExerciseGroupDetailPage(group: group),
+                      builder: (context) => ExerciseGroupDetailPage(
+                        group: group,
+                      ),
                     ),
                   ),
                 )
