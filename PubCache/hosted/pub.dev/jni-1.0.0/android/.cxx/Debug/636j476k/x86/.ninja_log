@@ -1,8 +1,0 @@
-# ninja log v5
-19	134	8007499523769993	CMakeFiles/jni.dir/include/dart_api_dl.c.o	4db56daf6ac34899
-9	191	8007499524336334	CMakeFiles/jni.dir/dartjni.c.o	70970186f1f26a68
-0	355	8007499525925367	CMakeFiles/jni.dir/third_party/global_jni_env.c.o	b481011fe585f272
-356	535	8007499527736990	D:/EXE_PRM/VFIT_Fontend/build/jni/intermediates/cxx/Debug/636j476k/obj/x86/libdartjni.so	cd162452daf1e940
-4	217	8007511557503673	D:/EXE_PRM/VFIT_Fontend/build/jni/intermediates/cxx/Debug/636j476k/obj/x86/libdartjni.so	cd162452daf1e940
-8	640	8009877790437312	D:/EXE_PRM/VFIT_Fontend/build/jni/intermediates/cxx/Debug/636j476k/obj/x86/libdartjni.so	cd162452daf1e940
-4	248	8014103452854399	D:/EXE_PRM/VFIT_Fontend/build/jni/intermediates/cxx/Debug/636j476k/obj/x86/libdartjni.so	cd162452daf1e940

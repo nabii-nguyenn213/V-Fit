@@ -3,3 +3,42 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# ── Pub/Flutter Cache (should NOT be in repo) ──
+PubCache/
+
+# ── IDE ──
+.idea/
+.vscode/
+*.iml
+
+# ── Backend build & runtime artifacts ──
+VFIT_Backend/target/
+VFIT_Backend/uploads/
+VFIT_Backend/*.log
+VFIT_Backend/*.err
+VFIT_Backend/*.out
+VFIT_Backend/jar-run.*
+VFIT_Backend/java-version.*
+VFIT_Backend/spring-boot.*
+VFIT_Backend/sepay-webhook-debug.log
+VFIT_Backend/backend-dev.log
+
+# ── Backend secrets (NEVER commit) ──
+VFIT_Backend/.env
+VFIT_Backend/secrets.local.md
+
+# ── Frontend build artifacts ──
+VFIT_Fontend/build/
+VFIT_Fontend/.dart_tool/
+VFIT_Fontend/.flutter-plugins
+VFIT_Fontend/.flutter-plugins-dependencies
+VFIT_Fontend/android/.gradle/
+VFIT_Fontend/android/.kotlin/
+VFIT_Fontend/android/app/build/
+VFIT_Fontend/flutter-web.log
+
+# ── OS junk ──
+.DS_Store
+Thumbs.db
+*.swp
