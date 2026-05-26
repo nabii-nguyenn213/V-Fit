@@ -1,4 +1,15 @@
-# OS junk
+# Môi trường ảo (Virtual Environments)
+vfit/
+vfit_new/
+vfit_ai/
+venv/
+
+# File nháp và Cache của Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS Files
 .DS_Store
 Thumbs.db
 desktop.ini
