@@ -32,4 +32,7 @@ ai-fitness-app/
 
 # Usage
 
-
+- Recommendation : 
+```bash
+uvicorn main:app --reload
+```
