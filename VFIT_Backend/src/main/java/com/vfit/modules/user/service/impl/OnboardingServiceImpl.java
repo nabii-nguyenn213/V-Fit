@@ -1,5 +1,6 @@
 package com.vfit.modules.user.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vfit.common.enums.OnboardingStatus;
 import com.vfit.common.exception.AppException;
 import com.vfit.common.exception.ErrorCode;
@@ -7,8 +8,10 @@ import com.vfit.common.exception.ResourceNotFoundException;
 import com.vfit.common.util.SecurityUtil;
 import com.vfit.infrastructure.config.AppProperties;
 import com.vfit.infrastructure.external.ai.AiClient;
+import com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult;
 import com.vfit.bootstrap.storage.FileStorageService;
 import com.vfit.modules.ai.document.BodyAnalysisResult;
+import com.vfit.modules.ai.mapper.AiResultMapper;
 import com.vfit.modules.ai.repository.BodyAnalysisRepository;
 import com.vfit.modules.user.document.User;
 import com.vfit.modules.user.dto.request.OnboardingMetricsRequest;
@@ -19,7 +22,6 @@ import com.vfit.modules.user.mapper.UserMapper;
 import com.vfit.modules.user.repository.UserRepository;
 import com.vfit.modules.user.service.OnboardingService;
 import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -35,6 +37,8 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final AiClient aiClient;
     private final BodyAnalysisRepository bodyAnalysisRepository;
     private final AppProperties appProperties;
+    private final AiResultMapper aiResultMapper;
+    private final ObjectMapper objectMapper;
 
     @Override
     public UserResponse updatePhysicalProfile(OnboardingProfileRequest request) {
@@ -91,58 +95,35 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         String scanPath = fileStorageService.store(file, "body-scans");
         String scanUrl = appProperties.getBaseUrl() + "/uploads/" + scanPath;
-        Map<String, Object> aiResult = aiClient.analyzeBody(
+        AiBodyAnalysisResult aiResult = aiClient.analyzeBody(
                 user.getId(),
                 scanUrl,
                 Map.of("heightCm", metrics.getHeightCm(), "weightKg", metrics.getWeightKg()));
-
-        Map<String, Object> posture = mapValue(aiResult, "posture");
-        Map<String, Object> imbalance = mapValue(aiResult, "imbalance");
-        Map<String, Object> estimate = mapValue(aiResult, "estimate");
-        Map<String, Object> recommendation = mapValue(aiResult, "recommendation");
 
         bodyAnalysisRepository.save(BodyAnalysisResult.builder()
                 .userId(user.getId())
                 .imageUrl(scanPath)
                 .metadata(Map.of("source", "onboarding", "scanUrl", scanUrl))
-                .posture(posture)
-                .imbalance(imbalance)
-                .estimate(estimate)
-                .recommendation(recommendation)
-                .result(aiResult)
+                .posture(aiResultMapper.toMap(objectMapper, aiResult.posture()))
+                .imbalance(aiResultMapper.toMap(objectMapper, aiResult.imbalance()))
+                .estimate(aiResultMapper.toMap(objectMapper, aiResult.estimate()))
+                .recommendation(aiResultMapper.toMap(objectMapper, aiResult.recommendation()))
+                .result(aiResultMapper.toMap(objectMapper, aiResult))
                 .build());
 
         user.setOnboardingStatus(OnboardingStatus.COMPLETED);
         user.setActive(true);
         User saved = userRepository.save(user);
 
-        return OnboardingResponse.builder()
-                .onboardingStatus(saved.getOnboardingStatus())
-                .user(userMapper.toResponse(saved))
-                .posture(posture)
-                .imbalance(imbalance)
-                .estimate(estimate)
-                .recommendation(recommendation)
-                .build();
+        return aiResultMapper.toOnboardingResponse(
+                saved.getOnboardingStatus(),
+                userMapper.toResponse(saved),
+                aiResult);
     }
 
     private User currentUser() {
         return userRepository.findById(SecurityUtil.requireCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-    }
-
-    private Map<String, Object> mapValue(Map<String, Object> source, String key) {
-        Object value = source.get(key);
-        if (!(value instanceof Map<?, ?> map)) {
-            return Map.of();
-        }
-        Map<String, Object> typed = new LinkedHashMap<>();
-        map.forEach((entryKey, entryValue) -> {
-            if (entryKey instanceof String stringKey) {
-                typed.put(stringKey, entryValue);
-            }
-        });
-        return typed;
     }
 
     private Double calculateBmi(Double heightCm, Double weightKg) {
