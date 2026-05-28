@@ -1,198 +1,213 @@
-# Feature Specification: AI-Native V-FIT Baseline
+# VFIT Baseline Specification
 
-**Feature Branch**: `001-ai-native-baseline`
+## Purpose
 
-**Created**: 2026-05-28
+VFIT is a mobile-first AI fitness ecosystem. The app combines authentication,
+onboarding, workout guidance, exercise catalog browsing, nutrition search, AI
+food estimation, progress tracking, challenges, VIP payment, and admin
+operations. The backend is the trusted gateway. The frontend is the primary
+customer and admin interface. AI is the reasoning layer.
 
-**Status**: Draft
+## Current Source Layout
 
-**Input**: User description: "Scan the existing V-FIT codebase and populate
-Spec Kit artifacts for an AI-driven system controlled by prompts under
-skills/conversation and architecture decisions under skills/tech-decision."
+- Backend: `VFIT_Backend`.
+- Frontend: `VFIT_Fontend`.
+- Prompt logic: `skills/conversation/`.
+- Architecture decisions: `skills/tech-decision/decision.md`.
+- Spec Kit docs: `specs/` and `.specify/`.
 
-## User Scenarios & Testing
+## Actors
 
-### User Story 1 - Complete Fitness Onboarding (Priority: P1)
+- Guest: opens app config, public catalogs, login, register, OTP, password
+  recovery.
+- Pending user: authenticated user who has not completed onboarding.
+- Active free user: completed onboarding, non-VIP user.
+- Active VIP user: completed onboarding with active VIP monthly or yearly plan.
+- Admin: platform operator routed to admin screens.
+- Sepay: external payment webhook sender.
+- AI Core: intelligent processing service behind `AiClient`.
 
-A new user registers, verifies OTP, submits physical profile data, completes
-onboarding, and reaches the main app with an active profile.
+## Feature Inventory
 
-**Why this priority**: No protected customer flow can operate safely until the
-system knows identity, onboarding status, and baseline body data.
+### App Shell And Routing
 
-**Independent Test**: Register, verify OTP, submit onboarding metrics, upload
-body scan, and confirm `/home` becomes available.
+Flutter starts at `/splash`. GoRouter redirects by auth status, onboarding
+status, and role. Admin users are routed to `/admin/revenue`. Active customers
+use the shell routes `/home`, `/workouts`, `/nutrition`, `/progress`,
+`/profile`, and `/premium`.
 
-**Acceptance Scenarios**:
+### Authentication
 
-1. **Given** a pending user, **When** the user opens a protected route, **Then**
-   the system MUST route the user to onboarding.
-2. **Given** completed onboarding, **When** the user opens the app, **Then** the
-   system MUST route the user to home.
+The system supports registration, OTP resend, OTP verification, login, refresh
+token, logout, forgot password, reset password, active sessions, and session
+deletion. Flutter uses Dio with an auth interceptor that attaches access tokens
+and refreshes tokens on eligible `401` responses.
 
-### User Story 2 - Consume AI Premium Coaching (Priority: P1)
+### Onboarding
 
-A premium user uses AI food scanning, AI form check, body analysis context, and
-personalized workout guidance.
+Pending users provide physical profile fields and goal metrics. Body scan
+uploads are stored by backend storage, sent to `AiClient.analyzeBody`, persisted
+as `BodyAnalysisResult`, and returned as posture, imbalance, estimate, and
+recommendation context. Completing onboarding marks the user active.
 
-**Why this priority**: AI coaching is the core value of Naturity/V-FIT.
+### Profile
 
-**Independent Test**: Activate VIP, call an AI endpoint, and verify typed,
-rate-limited, fallback-safe output.
+Users can view current profile, update profile, upload avatar, change password,
+view body metrics, list sessions, delete sessions, and delete account.
 
-**Acceptance Scenarios**:
+### Home And App Config
 
-1. **Given** an active VIP user, **When** the user scans food, **Then** the
-   system MUST return estimated food, calories, macros, confidence, and notes.
-2. **Given** an active VIP user, **When** the user streams form-check frames,
-   **Then** the system MUST return real-time feedback JSON.
-3. **Given** an AI provider failure, **When** an AI flow runs, **Then** the
-   system MUST return a safe fallback response.
+The app reads public configuration from `/api/app/config`. Backend app config
+stores app name, slogan, support email, terms URL, privacy URL, latest version,
+minimum supported version, and maintenance state.
 
-### User Story 3 - Train With Catalogs And Progress (Priority: P2)
+### Workout Catalog
 
-A user browses workouts, exercises, muscle maps, nutrition data, daily check-in,
-journey snaps, badges, and challenges.
+The backend exposes workout programs at `/api/workouts` and
+`/api/workouts/{id}`. Flutter displays workout list and detail routes.
 
-**Why this priority**: This is the daily habit loop that keeps users active.
+### Exercise Library
 
-**Independent Test**: Browse catalog screens, create progress snapshots, join
-challenges, and verify progress remains visible.
+The backend exposes classic exercise endpoints at `/api/exercises` and
+`/api/exercises/{id}` plus grouped exercise library at
+`/api/v1/exercises/grouped`. Flutter includes a muscle map using SVG, XML, and
+path hit testing to browse exercise groups and details.
 
-**Acceptance Scenarios**:
+### Personalized Workout
 
-1. **Given** a user on workouts, **When** the user selects a workout, **Then**
-   the system MUST show workout detail.
-2. **Given** a user on progress, **When** the user uploads a journey snap,
-   **Then** the system MUST store and list the snap.
-3. **Given** challenge availability, **When** the user joins, **Then** the
-   system MUST track participation.
+The backend exposes `/api/v1/workouts/personalized`. The service reads the
+current user's `GoalType`, fetches `GoalWorkoutMetadata`, and returns rules,
+nutrition recovery guidance, and weekly schedule. Results are cached by user id.
 
-### User Story 4 - Unlock Premium By Payment (Priority: P2)
+### Nutrition
 
-A user applies vouchers, starts checkout, pays through Sepay/VietQR, and receives
-VIP status.
+The backend exposes food search at `/api/v1/foods/search` backed by MongoDB food
+data. Flutter supports search and local food remembrance through Hive.
 
-**Why this priority**: Premium payment controls access to paid AI value.
+### AI Nutrition Scan
 
-**Independent Test**: Apply voucher, create payment, simulate webhook, and
-verify subscription snapshot becomes active.
+Premium users call `/api/ai/food-calorie-estimate` with a multipart camera
+image. Backend validates premium access, builds metadata, calls
+`AiClient.estimateFoodCalories`, and returns food name, serving size, calories,
+macros, confidence, notes, and estimated timestamp.
 
-**Acceptance Scenarios**:
+### AI Form Check
 
-1. **Given** a valid voucher, **When** checkout applies it, **Then** the final
-   amount MUST reflect the discount once.
-2. **Given** a paid transaction, **When** the webhook is accepted, **Then** VIP
-   status MUST unlock premium AI.
+VIP users connect to `/ws/ai/form-check?token=<jwt>&exerciseId=<id>`.
+Handshake validates JWT, onboarding, and premium state. Flutter sends binary
+camera frames. Backend forwards frame metadata to `AiClient.analyzeForm` and
+returns feedback JSON over WebSocket.
 
-### User Story 5 - Admin Operates The Platform (Priority: P3)
+### Progress
 
-An admin manages users, app configuration, exercise library seed data, and
-revenue reporting.
+Users create, list, and delete journey snaps at `/api/progress/snaps`. Uploads
+are stored through Cloudinary/local storage. Creating a snap publishes
+`ProgressPhotoUploadedEvent`.
 
-**Why this priority**: Operators need control without entering customer flows.
+### Gamification
 
-**Independent Test**: Login as admin and confirm redirect to `/admin/revenue`.
+The backend exposes badges, challenges, join, revive, participation detail, and
+active participations. An async listener maps uploaded progress photos to active
+challenges without blocking the upload response.
 
-**Acceptance Scenarios**:
+### Check-In
 
-1. **Given** an admin account, **When** login succeeds, **Then** the app MUST
-   route to the admin revenue dashboard.
-2. **Given** a non-admin user, **When** the user opens admin routes, **Then** the
-   app MUST route back to customer home.
+Users can perform daily check-in through `/api/v1/checkin` and inspect monthly
+status through `/api/v1/checkin/status`. Check-in can reward vouchers.
 
-### Edge Cases
+### Payment And VIP
 
-- AI provider returns malformed output.
-- Redis is unavailable during AI rate limiting or payment locking.
-- User is authenticated but onboarding is pending.
-- User is free-tier and calls premium AI.
-- Uploaded image is absent, too large, or unknown content type.
-- Payment webhook is duplicated, expired, or unsigned.
-- Voucher is expired, already used, or stacked.
-- Admin attempts to access customer-only flows.
+Users can apply vouchers, checkout, create premium payment, inspect payment
+status, and inspect VIP status. Sepay webhook verifies HMAC, extracts payment
+code, validates amount, marks payment paid, unlocks premium, consumes voucher,
+and pushes realtime payment status over `/ws/payments`.
 
-## Requirements
+### Admin
 
-### Functional Requirements
+Admins can view dashboard stats, manage users, update app config, seed exercise
+library defaults, view monthly revenue, and view revenue transactions.
 
-- **FR-001**: System MUST authenticate users with email, password, OTP, JWT
-  access tokens, refresh tokens, logout, forgot password, and reset password.
-- **FR-002**: System MUST enforce onboarding before protected customer flows.
-- **FR-003**: System MUST expose app configuration, workout catalog, exercise
-  catalog, grouped muscle library, food search, badges, and challenges.
-- **FR-004**: System MUST support profile updates, avatar upload, password
-  change, body metrics, sessions, and account deletion.
-- **FR-005**: System MUST support daily check-in and voucher rewards.
-- **FR-006**: System MUST support progress journey snaps with photo upload,
-  listing, and deletion.
-- **FR-007**: System MUST support personalized workout plans based on user goal
-  and seeded goal metadata.
-- **FR-008**: System MUST expose AI food calorie estimation for premium users.
-- **FR-009**: System MUST expose real-time AI form check over WebSocket for
-  premium users.
-- **FR-010**: System MUST route all AI calls through a backend AI client
-  boundary.
-- **FR-011**: System MUST rate-limit AI endpoints and apply circuit-breaker
-  fallback behavior.
-- **FR-012**: System MUST parse AI responses into bounded output contracts.
-- **FR-013**: System MUST store runtime prompts under `skills/conversation/`.
-- **FR-014**: System MUST store architecture decisions under
-  `skills/tech-decision/decision.md`.
-- **FR-015**: System MUST support premium checkout, voucher validation, payment
-  creation, payment status, Sepay webhook, VietQR, and VIP status.
-- **FR-016**: System MUST support admin dashboard, admin users, admin app
-  config, revenue monthly data, and transactions.
-- **FR-017**: System MUST return API responses through consistent success and
-  error envelopes.
-- **FR-018**: System MUST log operationally meaningful AI, payment, auth, and
-  profile events.
+## Sync Flows
 
-### Key Entities
+### Auth Sync Flow
 
-- **User**: Identity, role, active flag, onboarding status, physical profile,
-  progress, and subscription snapshot.
-- **Session And Token**: Refresh token, user session, password reset token, and
-  email OTP.
-- **Body Analysis Result**: AI posture, imbalance, estimate, recommendation, and
-  metadata.
-- **Form Check Result**: Exercise feedback, score, summary, and AI payload.
-- **Food**: Searchable nutrition catalog item with calories and macros.
-- **Workout Program**: Training plan and exercises for catalog browsing.
-- **Goal Workout Metadata**: Goal-specific rules, schedule, nutrition, and
-  recovery guidance.
-- **Journey Snap**: Progress photo, note, metrics, and timestamps.
-- **Challenge And Badge**: Gamification goals, rewards, participation, and
-  status.
-- **Voucher And Payment Transaction**: Discount, checkout, payment code, VietQR,
-  payment status, expiry, and premium unlock.
-- **App Config**: Public app name, slogan, support, terms, privacy, version, and
-  maintenance state.
+Flutter form -> Dio -> Spring auth controller -> auth service -> MongoDB
+session/token documents -> API envelope -> Flutter auth controller -> GoRouter
+redirect.
+
+### Onboarding Sync Flow
+
+Flutter onboarding page -> REST profile/body scan request -> Spring onboarding
+controller -> user service -> file storage -> `AiClient.analyzeBody` -> MongoDB
+body analysis and user state -> onboarding response -> Flutter route unlock.
+
+### Catalog Sync Flow
+
+Flutter page -> public GET endpoint -> Spring controller -> service/repository
+-> MongoDB catalog -> API envelope -> Flutter list/detail UI.
+
+### Payment Sync Flow
+
+Flutter premium page -> create payment REST -> payment service -> MongoDB
+payment transaction -> VietQR URL -> Flutter payment UI -> status polling or
+WebSocket event.
+
+## Async Flows
+
+### Progress Challenge Async Flow
+
+Journey snap upload -> save progress document -> publish
+`ProgressPhotoUploadedEvent` -> `@Async @EventListener` ->
+`ChallengeParticipationService.mapPhotoToActiveChallenges`.
+
+### Sepay Webhook Async Flow
+
+Sepay bank event -> `/api/payments/sepay/webhook` -> HMAC verification ->
+transaction lookup -> mark paid -> save subscription -> update user snapshot ->
+publish `/ws/payments` event.
+
+### Scheduler Async Flow
+
+Spring schedulers run cleanup loops for expired auth artifacts, inactive
+accounts, pending payment expiry, and voucher expiry.
+
+### AI WebSocket Async Flow
+
+Flutter camera stream -> `/ws/ai/form-check` binary frames -> AI client call per
+frame -> text feedback message -> Flutter realtime coaching overlay.
+
+## Queue And Context Runtime
+
+The current codebase does not include RabbitMQ, Kafka, JMS, SQS, or another
+external queue broker. The current "queue" behavior is in-process and
+event-driven:
+
+- Spring application events carry domain events.
+- `@Async` listeners process background challenge mapping.
+- Schedulers poll MongoDB for time-based transitions.
+- Webhooks receive external async payment events.
+- WebSockets push realtime events to connected clients.
+- Redis holds temporary counters, locks, and cache entries.
+- MongoDB holds durable context documents.
+
+The "dAbbit context" for this repo is the AI/context state bundle made of
+MongoDB durable user state, Redis runtime state, Flutter local/session state,
+and prompt contracts in `skills/conversation/`.
+
+## AI Control Requirements
+
+- AI inputs MUST include only required metadata.
+- AI outputs MUST be mapped to bounded response contracts.
+- AI fallback responses MUST be safe and explicit.
+- Premium AI MUST be protected by JWT, onboarding state, subscription state,
+  rate limit, and circuit breaker.
+- Prompt changes MUST happen in `skills/conversation/`.
 
 ## Success Criteria
 
-### Measurable Outcomes
-
-- **SC-001**: A new user can complete register, OTP verification, onboarding,
-  and home access in under 5 minutes.
-- **SC-002**: Premium AI calls return either a typed success response or a typed
-  fallback response 100% of the time.
-- **SC-003**: Free users are blocked from premium AI in 100% of tested attempts.
-- **SC-004**: AI rate limiting prevents more than the configured request count
-  per window for a single user or token.
-- **SC-005**: Payment checkout applies at most one voucher per order in 100% of
-  tested cases.
-- **SC-006**: Admin users land on the revenue dashboard after login in 100% of
-  tested cases.
-
-## Assumptions
-
-- Flutter remains the primary customer and admin client.
-- Spring Boot remains the backend gateway and modular monolith.
-- MongoDB remains the source of truth for application data.
-- Redis remains available for cache and protection, with fallback behavior where
-  implemented.
-- `MockAiClient` represents the current AI boundary until a production AI Core
-  client is wired.
-- AI prompts are documentation-controlled now and become runtime-loaded only
-  after a later implementation task.
+- Users complete auth and onboarding without accessing protected flows early.
+- VIP users receive AI outputs or safe fallback outputs for every AI request.
+- Free users are blocked from premium AI.
+- Payment webhook unlocks premium exactly once per valid paid transaction.
+- Progress photo uploads do not wait for challenge mapping.
+- Specs are concrete and match actual code paths.
