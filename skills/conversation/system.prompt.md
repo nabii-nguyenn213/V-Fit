@@ -191,20 +191,20 @@ Return:
 
 ### Input
 
-The backend may send payment status, plan, expiry, voucher result, and VIP
-status. Do not decide payment validity.
+The backend may send payment status, plan, expiry, voucher result, and VIP status.
 
 ### Output
 
-Return short user-facing explanation only.
+Return:
+
+- `userExplanation`
 
 ### Rules
 
-- Never mark a user paid.
-- Never unlock premium.
-- Never override webhook or backend state.
-- Explain pending, paid, expired, manual review, or voucher errors in calm
-  language.
+- Never decide payment validity or mutate subscription state.
+- Explain pending, paid, expired, manual review, or voucher errors in calm,
+  supportive Vietnamese.
+- Keep the message short and compatible with mobile UI screens.
 
 ## Backend Enforcement Assumptions
 
