@@ -1,14 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/responsive.dart';
+import '../../../../core/widgets/app_feedback.dart';
+import '../../../../presentation/theme/app_colors.dart';
+import '../../../../presentation/theme/app_radius.dart';
+import '../../../../presentation/theme/app_spacing.dart';
+import '../../../../presentation/theme/app_typography.dart';
 import '../../../exercise_library/domain/entities/exercise_catalog.dart';
 import '../../../exercise_library/presentation/bloc/exercise_library_bloc.dart';
 import '../../../exercise_library/presentation/widgets/exercise_detail_sheet.dart';
 import '../../domain/entities/personalized_workout.dart';
+import '../notifiers/workout_session_notifier.dart';
 import 'weekly_selector_widget.dart';
 
-class PersonalWorkoutPlanWidget extends StatefulWidget {
+class PersonalWorkoutPlanWidget extends ConsumerStatefulWidget {
   const PersonalWorkoutPlanWidget({
     super.key,
     required this.plan,
@@ -17,11 +26,12 @@ class PersonalWorkoutPlanWidget extends StatefulWidget {
   final PersonalizedWorkout plan;
 
   @override
-  State<PersonalWorkoutPlanWidget> createState() =>
+  ConsumerState<PersonalWorkoutPlanWidget> createState() =>
       _PersonalWorkoutPlanWidgetState();
 }
 
-class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
+class _PersonalWorkoutPlanWidgetState
+    extends ConsumerState<PersonalWorkoutPlanWidget> {
   late int _selectedDay;
 
   @override
@@ -214,36 +224,66 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
             ),
             const SizedBox(height: 8),
 
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.only(
-                left: AppResponsive.horizontalPadding(context),
-                right: AppResponsive.horizontalPadding(context),
-                bottom: 20,
-              ),
-              itemCount: daySchedule.exercises.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final exerciseMeta = daySchedule.exercises[index];
-                final exerciseDetails =
-                    _lookupExercise(context, exerciseMeta.exerciseId);
-                final displayName = exerciseDetails?.name ??
-                    exerciseMeta.exerciseId
-                        .split('-')
-                        .map((word) => word.isNotEmpty
-                            ? '${word[0].toUpperCase()}${word.substring(1)}'
-                            : '')
-                        .join(' ');
-
-                return _buildExerciseCard(
-                  context: context,
-                  meta: exerciseMeta,
-                  displayName: displayName,
-                  details: exerciseDetails,
+            Builder(builder: (ctx) {
+                final isToday = _selectedDay == DateTime.now().weekday;
+                final exerciseIds = daySchedule.exercises
+                    .map((e) => e.exerciseId)
+                    .toList();
+                final session = ref.watch(workoutSessionProvider(exerciseIds));
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        left: AppResponsive.horizontalPadding(ctx),
+                        right: AppResponsive.horizontalPadding(ctx),
+                        bottom: 12,
+                      ),
+                      itemCount: daySchedule.exercises.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: 12),
+                      itemBuilder: (ctx2, index) {
+                        final exerciseMeta = daySchedule.exercises[index];
+                        final exerciseDetails =
+                            _lookupExercise(ctx2, exerciseMeta.exerciseId);
+                        final displayName = exerciseDetails?.name ??
+                            exerciseMeta.exerciseId
+                                .split('-')
+                                .map((w) => w.isNotEmpty
+                                    ? '${w[0].toUpperCase()}${w.substring(1)}'
+                                    : '')
+                                .join(' ');
+                        return _buildExerciseCard(
+                          context: ctx2,
+                          meta: exerciseMeta,
+                          displayName: displayName,
+                          details: exerciseDetails,
+                          session: session,
+                          isToday: isToday,
+                          onTick: () => _handleTick(
+                            ctx2,
+                            exerciseMeta.exerciseId,
+                            exerciseIds,
+                            session,
+                          ),
+                        );
+                      },
+                    ),
+                    if (session.allDone)
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppResponsive.horizontalPadding(ctx),
+                        ),
+                        child: _WorkoutDoneBanner(
+                          isSubmitting: session.isSubmitting,
+                          submitted: session.submitted,
+                        ),
+                      ),
+                  ],
                 );
-              },
-            ),
+              }),
 
             if (daySchedule.cardioAfterWorkout != null) ...[
               _buildCardioBanner(context, daySchedule.cardioAfterWorkout!),
@@ -404,6 +444,9 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
     required ExerciseItemMetadata meta,
     required String displayName,
     required ExerciseItem? details,
+    required WorkoutSessionState session,
+    required bool isToday,
+    required VoidCallback onTick,
   }) {
     final scheme = Theme.of(context).colorScheme;
 
@@ -484,17 +527,74 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
                 ),
               ),
 
-              // Arrow indicator
-              Icon(
-                Icons.chevron_right_rounded,
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
-                size: 24,
-              ),
+              // Arrow indicator / Done / cooldown button
+              if (!isToday)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Icon(
+                    Icons.lock_rounded,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    size: 18,
+                  ),
+                )
+              else if (session.isDone(meta.exerciseId))
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: AppColors.success.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: AppColors.success,
+                    size: 20,
+                  ),
+                )
+              else
+                _CooldownButton(
+                  cooldown: session.cooldownRemaining(),
+                  onTap: onTick,
+                ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  // ------------------------------------------------------------------
+  // Cooldown tick handler
+  // ------------------------------------------------------------------
+  void _handleTick(
+    BuildContext context,
+    String exerciseId,
+    List<String> exerciseIds,
+    WorkoutSessionState session,
+  ) {
+    final notifier =
+        ref.read(workoutSessionProvider(exerciseIds).notifier);
+    final accepted = notifier.markDone(exerciseId);
+    if (!accepted) {
+      final remaining = session.cooldownRemaining();
+      if (remaining != null) {
+        final mins = remaining.inMinutes;
+        final secs =
+            (remaining.inSeconds % 60).toString().padLeft(2, '0');
+        AppFeedback.info(
+          'Cần chờ $mins:$secs nữa trước khi đánh dấu bài tiếp theo.',
+          title: 'Nghỉ giữa hiệp',
+        );
+      }
+    }
   }
 
   Widget _buildBadge(BuildContext context, String label) {
@@ -687,6 +787,183 @@ class _PersonalWorkoutPlanWidgetState extends State<PersonalWorkoutPlanWidget> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _CooldownButton — "Xong" tap target, or a live countdown when in cooldown
+// ---------------------------------------------------------------------------
+
+class _CooldownButton extends StatefulWidget {
+  const _CooldownButton({required this.cooldown, required this.onTap});
+
+  /// Remaining cooldown, or null when the user can tick immediately.
+  final Duration? cooldown;
+  final VoidCallback onTap;
+
+  @override
+  State<_CooldownButton> createState() => _CooldownButtonState();
+}
+
+class _CooldownButtonState extends State<_CooldownButton> {
+  Timer? _timer;
+  Duration? _remaining;
+
+  @override
+  void initState() {
+    super.initState();
+    _remaining = widget.cooldown;
+    if (_remaining != null) _startTick();
+  }
+
+  @override
+  void didUpdateWidget(_CooldownButton old) {
+    super.didUpdateWidget(old);
+    if (widget.cooldown == null) {
+      _timer?.cancel();
+      setState(() => _remaining = null);
+    } else if (old.cooldown == null && widget.cooldown != null) {
+      setState(() => _remaining = widget.cooldown);
+      _startTick();
+    }
+  }
+
+  void _startTick() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        final r = _remaining;
+        if (r == null || r.inSeconds <= 1) {
+          _remaining = null;
+          _timer?.cancel();
+        } else {
+          _remaining = r - const Duration(seconds: 1);
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = _remaining;
+    final canTick = remaining == null;
+
+    if (canTick) {
+      return GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.primaryOf(context).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(
+              color: AppColors.primaryOf(context).withValues(alpha: 0.2),
+            ),
+          ),
+          child: Icon(
+            Icons.radio_button_unchecked_rounded,
+            color: AppColors.primaryOf(context).withValues(alpha: 0.7),
+            size: 22,
+          ),
+        ),
+      );
+    }
+
+    // Cooldown active — show MM:SS countdown badge
+    final mins = remaining.inMinutes;
+    final secs = (remaining.inSeconds % 60).toString().padLeft(2, '0');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.small),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        '$mins:$secs',
+        style: AppTypography.label(color: AppColors.warning),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _WorkoutDoneBanner — shown below the list when all exercises are ticked
+// ---------------------------------------------------------------------------
+
+class _WorkoutDoneBanner extends StatelessWidget {
+  const _WorkoutDoneBanner({
+    required this.isSubmitting,
+    required this.submitted,
+  });
+
+  final bool isSubmitting;
+  final bool submitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 340),
+      margin: const EdgeInsets.only(bottom: AppSpacing.x4),
+      padding: const EdgeInsets.all(AppSpacing.x4),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(
+          color: AppColors.success.withValues(alpha: 0.36),
+        ),
+      ),
+      child: Row(
+        children: [
+          if (isSubmitting)
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                color: AppColors.success,
+              ),
+            )
+          else
+            const Icon(
+              Icons.celebration_rounded,
+              color: AppColors.success,
+              size: 28,
+            ),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  submitted
+                      ? 'Buổi tập hôm nay đã được ghi nhận!'
+                      : 'Hoàn thành tất cả bài tập!',
+                  style: AppTypography.headerMedium(
+                    color: AppColors.success,
+                  ),
+                ),
+                if (submitted)
+                  Text(
+                    'Streak thử thách của bạn đã được cập nhật.',
+                    style: AppTypography.bodySmall(
+                      color: AppColors.success.withValues(alpha: 0.8),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

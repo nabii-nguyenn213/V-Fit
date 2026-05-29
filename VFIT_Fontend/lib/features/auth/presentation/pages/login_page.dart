@@ -7,6 +7,8 @@ import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/vfit_logo_avatar.dart';
+import '../../../../presentation/theme/app_colors.dart';
+import '../../../../presentation/theme/app_typography.dart';
 import '../../application/auth_controller.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -82,25 +84,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
-                    color: scheme.surface.withValues(alpha: 0.94),
+                    color: scheme.surface.withValues(alpha: 0.96),
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: scheme.primary.withValues(alpha: 0.32),
+                      // Structural border — uses outlineVariant not primary
+                      // so the card reads as layout, not an accent highlight.
+                      color: scheme.outlineVariant.withValues(alpha: 0.6),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: scheme.primary.withValues(
-                          alpha: isDark ? 0.32 : 0.12,
-                        ),
-                        blurRadius: 34,
-                        offset: const Offset(-12, 18),
-                      ),
-                      BoxShadow(
-                        color: scheme.secondary.withValues(
-                          alpha: isDark ? 0.24 : 0.1,
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.30 : 0.08,
                         ),
                         blurRadius: 28,
-                        offset: const Offset(12, 12),
+                        offset: const Offset(0, 14),
                       ),
                     ],
                   ),
@@ -119,19 +116,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         Text(
                           'Đăng nhập',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.w900),
+                          style: AppTypography.headerLargeFor(context),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Đăng nhập để sử dụng các tính năng VIP và lưu lại tiến độ tập luyện.',
                           textAlign: TextAlign.center,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
+                          style: AppTypography.bodyFor(
+                            context,
+                            color: AppColors.textSecondaryOf(context),
+                          ),
                         ),
                         const SizedBox(height: 28),
                         AppTextField(

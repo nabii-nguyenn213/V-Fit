@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   const AppTheme._();
@@ -79,10 +80,14 @@ class AppTheme {
   }
 
   static TextTheme _textTheme(Color color) {
-    return Typography.material2021().black.apply(
-          bodyColor: color,
-          displayColor: color,
-        );
+    // Use Plus Jakarta Sans as the base font for all Material widgets.
+    // Screens that need Inter or metric styles still use AppTypography helpers.
+    return GoogleFonts.plusJakartaSansTextTheme(
+      Typography.material2021().black,
+    ).apply(
+      bodyColor: color,
+      displayColor: color,
+    );
   }
 
   static InputDecorationTheme _inputDecorationTheme(ColorScheme scheme) {
@@ -159,9 +164,10 @@ class AppTheme {
         );
       }),
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        // Use primary for selected labels — secondary (magenta) is too visually noisy.
         return TextStyle(
           color: states.contains(WidgetState.selected)
-              ? scheme.secondary
+              ? scheme.primary
               : scheme.onSurfaceVariant,
           fontSize: 11,
           fontWeight: states.contains(WidgetState.selected)

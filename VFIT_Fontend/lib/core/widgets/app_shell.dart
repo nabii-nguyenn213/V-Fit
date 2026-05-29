@@ -58,6 +58,11 @@ class AppShell extends StatelessWidget {
         child: Column(
           children: [
             _ShellHeader(title: title),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: AppColors.borderSubtleOf(context),
+            ),
             Expanded(
               child: AppResponsive.centeredContent(
                 context: context,
@@ -198,6 +203,7 @@ class _ShellNavigationBar extends StatelessWidget {
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
+          // Both icon and label use primary — secondary (magenta) created visual noise.
           return AppTypography.labelFor(
             context,
             color: selected
@@ -260,6 +266,7 @@ class _ShellNavigationRail extends StatelessWidget {
       onDestinationSelected: onDestinationSelected,
       labelType: NavigationRailLabelType.all,
       minWidth: 92,
+      // Rail also uses primary for consistency — no magenta leaking through.
       selectedIconTheme: IconThemeData(color: AppColors.primaryOf(context)),
       unselectedIconTheme:
           IconThemeData(color: AppColors.textSecondaryOf(context)),

@@ -8,13 +8,21 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/gamification/challenges")
 @RequiredArgsConstructor
 @Tag(name = "Gamification Challenges", description = "Endpoints for managing user progress photo challenges and rewards")
 public class ChallengeParticipationController {
+
+    private static final ZoneId ZONE_VN = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private final ChallengeParticipationService participationService;
 
@@ -44,5 +52,18 @@ public class ChallengeParticipationController {
     public ApiResponse<List<UserChallengeParticipation>> getActiveParticipations() {
         String userId = SecurityUtil.requireCurrentUserId();
         return ApiResponse.ok(participationService.getActiveParticipations(userId));
+    }
+
+    /**
+     * Called by Flutter when the user completes ALL exercises for the day.
+     * Increments streak on every active challenge participation (idempotent per day).
+     */
+    @PostMapping("/workout-checkin")
+    @Operation(summary = "Log a completed workout day — updates challenge streaks for all active participations")
+    public ApiResponse<Map<String, String>> workoutCheckin() {
+        String userId = SecurityUtil.requireCurrentUserId();
+        String todayVn = LocalDate.now(ZONE_VN).format(DATE_FMT);
+        participationService.recordWorkoutCheckin(userId, todayVn);
+        return ApiResponse.ok(Map.of("date", todayVn, "status", "checked_in"));
     }
 }

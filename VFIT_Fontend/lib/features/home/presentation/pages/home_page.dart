@@ -164,7 +164,7 @@ class _HomeHero extends StatelessWidget {
               children: [
                 _StatusPill(
                   icon: Icons.bolt_rounded,
-                  label: 'PERFORMANCE OS',
+                  label: 'V-FIT COACHING',
                   color: AppColors.limePerformance,
                 ),
                 const Spacer(),
@@ -623,7 +623,7 @@ class _CheckinVoucherCardState extends ConsumerState<_CheckinVoucherCard> {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
-              minHeight: 9,
+              minHeight: 6,
               value: progress,
               backgroundColor: AppColors.surface2Of(context),
               valueColor: const AlwaysStoppedAnimation<Color>(
@@ -689,7 +689,6 @@ class _MilestonePill extends StatelessWidget {
     final color =
         reached ? AppColors.success : AppColors.textSecondaryOf(context);
     return Container(
-      constraints: const BoxConstraints(minHeight: 58),
       padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: reached ? 0.12 : 0.06),

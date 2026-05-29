@@ -52,16 +52,14 @@ class ProfilePage extends ConsumerWidget {
                 const SizedBox(height: 14),
                 Text(
                   'Tham gia V-FIT VIP',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  style: AppTypography.headerMediumFor(context),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Sử dụng ứng dụng miễn phí như khách. Tạo tài khoản khi bạn cần lưu tiến trình, sử dụng gói tập VIP và công cụ hồ sơ.',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  style: AppTypography.bodyFor(
+                    context,
+                    color: AppColors.textSecondaryOf(context),
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -119,11 +117,33 @@ class ProfilePage extends ConsumerWidget {
                 children: [
                   Text(
                     user.fullName,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: AppTypography.headerMediumFor(context),
                   ),
-                  Text(user.email),
+                  Text(
+                    user.email,
+                    style: AppTypography.bodySmallFor(context),
+                  ),
                   const SizedBox(height: 6),
-                  Chip(label: Text('Customer')),
+                  // Role pill — consistent with _StatusPill style used throughout
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.x3,
+                      vertical: AppSpacing.x1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryOf(context).withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: AppColors.primaryOf(context).withValues(alpha: 0.24),
+                      ),
+                    ),
+                    child: Text(
+                      'Customer',
+                      style: AppTypography.label(
+                        color: AppColors.primaryOf(context),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -161,7 +181,7 @@ class ProfilePage extends ConsumerWidget {
               children: [
                 Text(
                   'Chỉ số cơ thể',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: AppTypography.labelFor(context),
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -328,7 +348,7 @@ class _VipPromotionCardState extends ConsumerState<VipPromotionCard> {
           const VipBenefitsTable(),
           const SizedBox(height: AppSpacing.x4),
           AppButton.add(
-            label: isRenewal ? 'Gia hạn VIP' : 'Nạp VIP',
+            label: isRenewal ? 'Gia hạn Premium' : 'Premium',
             fullWidth: true,
             loading: _creating,
             onPressed: _creating ? null : _startVipPayment,
@@ -440,12 +460,21 @@ class VipActiveStatusCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF07110F).withValues(alpha: 0.98),
-            const Color(0xFF10131D).withValues(alpha: 0.96),
-            (isExpiringSoon ? const Color(0xFF1D1608) : const Color(0xFF071A14))
-                .withValues(alpha: 0.94),
-          ],
+          colors: AppColors.isDark(context)
+              ? [
+                  const Color(0xFF07110F).withValues(alpha: 0.98),
+                  const Color(0xFF10131D).withValues(alpha: 0.96),
+                  (isExpiringSoon
+                          ? const Color(0xFF1D1608)
+                          : const Color(0xFF071A14))
+                      .withValues(alpha: 0.94),
+                ]
+              : [
+                  // Light mode — use surface tinted with the accent
+                  Theme.of(context).colorScheme.surface,
+                  accent.withValues(alpha: 0.06),
+                  accent.withValues(alpha: 0.10),
+                ],
         ),
         border: Border.all(color: accent.withValues(alpha: 0.38)),
         boxShadow: [

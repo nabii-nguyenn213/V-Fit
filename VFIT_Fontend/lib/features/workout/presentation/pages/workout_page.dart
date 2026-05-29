@@ -267,42 +267,6 @@ class WorkoutFreeContent extends StatelessWidget {
         if (user == null) const LoginToSetGoalState(),
         if (user?.goalType == null && user != null) const GoalRequiredState(),
         const SizedBox(height: AppSpacing.x3),
-        AppCard(
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryOf(context).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.input),
-                ),
-                child: Icon(
-                  Icons.local_library_rounded,
-                  color: AppColors.primaryOf(context),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.x3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Bài tập cơ bản vẫn miễn phí',
-                      style: AppTypography.headerMediumFor(context),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Bạn có thể xem thư viện bài tập và video hướng dẫn. Lịch tập chỉ được tạo sau khi có mục tiêu.',
-                      style: AppTypography.bodySmallFor(context),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.x3),
         AppButton.secondary(
           label: 'Xem thư viện bài tập',
           icon: Icons.local_library_rounded,
@@ -499,8 +463,27 @@ class VipRequiredModal extends StatelessWidget {
   }
 }
 
-class LoginToSetGoalState extends StatelessWidget {
-  const LoginToSetGoalState({super.key});
+// Shared card structure used by LoginToSetGoalState and GoalRequiredState.
+// Both states have identical layout: icon-container, gradient card, title,
+// body text, and a full-width primary CTA button.
+class _CallToActionCard extends StatelessWidget {
+  const _CallToActionCard({
+    required this.icon,
+    required this.accent,
+    required this.title,
+    required this.body,
+    required this.buttonLabel,
+    required this.buttonIcon,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final Color accent;
+  final String title;
+  final String body;
+  final String buttonLabel;
+  final IconData buttonIcon;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -514,15 +497,17 @@ class LoginToSetGoalState extends StatelessWidget {
           colors: [
             AppColors.surface2Of(context),
             AppColors.surface1Of(context),
-            AppColors.primaryOf(context).withValues(alpha: 0.08),
+            accent.withValues(
+              alpha: AppColors.isDark(context) ? 0.08 : 0.05,
+            ),
           ],
         ),
         border: Border.all(
-          color: AppColors.primaryOf(context).withValues(alpha: 0.34),
+          color: accent.withValues(alpha: 0.34),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+            color: accent.withValues(alpha: 0.10),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -537,37 +522,49 @@ class LoginToSetGoalState extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryOf(context).withValues(alpha: 0.14),
+                  color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.input),
                 ),
-                child: Icon(
-                  Icons.login_rounded,
-                  color: AppColors.primaryOf(context),
-                ),
+                child: Icon(icon, color: accent),
               ),
               const SizedBox(width: AppSpacing.x3),
               Expanded(
                 child: Text(
-                  'Đăng nhập để tạo lịch tập',
+                  title,
                   style: AppTypography.headerMediumFor(context),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.x3),
-          Text(
-            'Lịch tập là tính năng miễn phí, nhưng V-FIT cần biết mục tiêu của bạn để tạo đúng một lịch phù hợp.',
-            style: AppTypography.bodyFor(context),
-          ),
+          Text(body, style: AppTypography.bodyFor(context)),
           const SizedBox(height: AppSpacing.x4),
           AppButton.primary(
-            label: 'Đăng nhập để thiết lập mục tiêu',
-            icon: Icons.login_rounded,
+            label: buttonLabel,
+            icon: buttonIcon,
             fullWidth: true,
-            onPressed: () => context.go('/login'),
+            onPressed: onPressed,
           ),
         ],
       ),
+    );
+  }
+}
+
+class LoginToSetGoalState extends StatelessWidget {
+  const LoginToSetGoalState({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return _CallToActionCard(
+      icon: Icons.login_rounded,
+      accent: AppColors.primaryOf(context),
+      title: 'Đăng nhập để tạo lịch tập',
+      body:
+          'Lịch tập là tính năng miễn phí, nhưng V-FIT cần biết mục tiêu của bạn để tạo đúng một lịch phù hợp.',
+      buttonLabel: 'Đăng nhập để thiết lập mục tiêu',
+      buttonIcon: Icons.login_rounded,
+      onPressed: () => context.go('/login'),
     );
   }
 }
@@ -577,70 +574,15 @@ class GoalRequiredState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.x5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.large),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.surface2Of(context),
-            AppColors.surface1Of(context),
-            AppColors.limePerformance.withValues(alpha: 0.08),
-          ],
-        ),
-        border: Border.all(
-          color: AppColors.limePerformance.withValues(alpha: 0.3),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.limePerformance.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.limePerformance.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.input),
-                ),
-                child: const Icon(
-                  Icons.flag_rounded,
-                  color: AppColors.limePerformance,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.x3),
-              Expanded(
-                child: Text(
-                  'Chưa có lịch tập cá nhân',
-                  style: AppTypography.headerMediumFor(context),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.x2),
-          Text(
-            'Thiết lập mục tiêu luyện tập để V-FIT tạo đúng một lịch theo mục tiêu của bạn.',
-            style: AppTypography.bodyFor(context),
-          ),
-          const SizedBox(height: AppSpacing.x4),
-          AppButton.primary(
-            label: 'Thiết lập mục tiêu luyện tập',
-            icon: Icons.tune_rounded,
-            fullWidth: true,
-            onPressed: () => context.push('/profile/edit'),
-          ),
-        ],
-      ),
+    return _CallToActionCard(
+      icon: Icons.flag_rounded,
+      accent: AppColors.limePerformance,
+      title: 'Chưa có lịch tập cá nhân',
+      body:
+          'Thiết lập mục tiêu luyện tập để V-FIT tạo đúng một lịch theo mục tiêu của bạn.',
+      buttonLabel: 'Thiết lập mục tiêu luyện tập',
+      buttonIcon: Icons.tune_rounded,
+      onPressed: () => context.push('/profile/edit'),
     );
   }
 }

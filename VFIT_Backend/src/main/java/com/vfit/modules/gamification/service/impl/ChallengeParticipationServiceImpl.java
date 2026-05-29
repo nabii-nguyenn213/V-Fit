@@ -181,6 +181,69 @@ public class ChallengeParticipationServiceImpl implements ChallengeParticipation
     }
 
     @Override
+    public void recordWorkoutCheckin(String userId, String date) {
+        List<UserChallengeParticipation> activeParticipations =
+                participationRepo.findByUserIdAndStatus(userId, "IN_PROGRESS");
+        if (activeParticipations.isEmpty()) {
+            log.info("recordWorkoutCheckin: no active challenges for user {}", userId);
+            return;
+        }
+
+        LocalDate checkinDate = LocalDate.parse(date, DATE_FORMATTER);
+        String checkinDateStr = checkinDate.format(DATE_FORMATTER);
+
+        for (UserChallengeParticipation participation : activeParticipations) {
+            try {
+                Challenge challenge = challengeRepo.findById(participation.getChallengeId()).orElse(null);
+                if (challenge == null) continue;
+
+                // Idempotent: skip if already checked in today via any method
+                boolean alreadyToday = checkinDateStr.equals(participation.getLastCheckinDate());
+                if (alreadyToday) {
+                    log.info("recordWorkoutCheckin: user {} already checked in today for challenge {}. Skipping.",
+                            userId, challenge.getId());
+                    continue;
+                }
+
+                // Update streak (same logic as photo check-in)
+                if (participation.getLastCheckinDate() == null) {
+                    participation.setCurrentStreak(1);
+                } else {
+                    LocalDate lastCheckin = LocalDate.parse(participation.getLastCheckinDate(), DATE_FORMATTER);
+                    LocalDate yesterday = checkinDate.minusDays(1);
+                    if (lastCheckin.equals(yesterday)) {
+                        participation.setCurrentStreak(participation.getCurrentStreak() + 1);
+                    } else {
+                        // Streak broken — reset to 1
+                        participation.setCurrentStreak(1);
+                    }
+                }
+                participation.setLastCheckinDate(checkinDateStr);
+                participation.setMaxStreakAchieved(
+                        Math.max(participation.getMaxStreakAchieved(), participation.getCurrentStreak()));
+
+                // Evaluate STREAK challenge completion
+                boolean isCompleted = false;
+                if (challenge.getType() == com.vfit.modules.gamification.document.ChallengeType.STREAK
+                        && participation.getCurrentStreak() >= challenge.getDurationDays()) {
+                    isCompleted = true;
+                }
+
+                participationRepo.save(participation);
+                log.info("recordWorkoutCheckin: streak {} for user {} in challenge {}",
+                        participation.getCurrentStreak(), userId, challenge.getTitle());
+
+                if (isCompleted) {
+                    log.info("Challenge {} completed via workout checkin for user {}.", challenge.getId(), userId);
+                    rewardDistributionService.distributeRewards(participation.getId());
+                }
+            } catch (Exception ex) {
+                log.error("Error in recordWorkoutCheckin for participation {}", participation.getId(), ex);
+            }
+        }
+    }
+
+    @Override
     public UserChallengeParticipation getParticipation(String userId, String challengeId) {
         return participationRepo.findByUserIdAndChallengeId(userId, challengeId)
             .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy thông tin đăng ký thử thách."));

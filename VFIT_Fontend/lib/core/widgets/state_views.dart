@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../presentation/theme/app_colors.dart';
+import '../../presentation/theme/app_typography.dart';
 import 'app_feedback.dart';
 
 class LoadingView extends StatelessWidget {
@@ -13,10 +15,17 @@ class LoadingView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(),
+          CircularProgressIndicator(
+            color: AppColors.primaryOf(context),
+            strokeWidth: 2.4,
+          ),
           if (message != null) ...[
             const SizedBox(height: 16),
-            Text(message!, textAlign: TextAlign.center),
+            Text(
+              message!,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySmallFor(context),
+            ),
           ],
         ],
       ),
@@ -55,10 +64,13 @@ class EmptyView extends StatelessWidget {
   const EmptyView({
     super.key,
     required this.message,
+    this.title,
     this.icon = Icons.inbox_outlined,
   });
 
   final String message;
+  // Optional context-specific title; falls back to the generic 'Chưa có dữ liệu'.
+  final String? title;
   final IconData icon;
 
   @override
@@ -67,7 +79,7 @@ class EmptyView extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: AppFeedbackPanel(
-          title: 'Chưa có dữ liệu',
+          title: title ?? 'Chưa có dữ liệu',
           message: message,
           type: AppFeedbackType.info,
           compact: true,
