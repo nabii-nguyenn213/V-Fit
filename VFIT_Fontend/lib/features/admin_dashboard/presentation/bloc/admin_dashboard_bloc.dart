@@ -1,10 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../data/models/admin_dashboard_models.dart';
+
 import '../../data/repositories/admin_dashboard_repository.dart';
 import 'admin_dashboard_event.dart';
 import 'admin_dashboard_state.dart';
 
-class AdminDashboardBloc extends Bloc<AdminDashboardEvent, AdminDashboardState> {
+class AdminDashboardBloc
+    extends Bloc<AdminDashboardEvent, AdminDashboardState> {
   final AdminDashboardRepository _repository;
 
   AdminDashboardBloc(this._repository) : super(const AdminDashboardInitial()) {
@@ -24,7 +25,8 @@ class AdminDashboardBloc extends Bloc<AdminDashboardEvent, AdminDashboardState> 
         report: report,
         paginatedTransactions: transactions.content,
         currentPage: 0,
-        hasMore: !transactions.last && transactions.page < 49, // limit 50 pages (0 to 49)
+        hasMore: !transactions.last &&
+            transactions.page < 49, // limit 50 pages (0 to 49)
       ));
     } catch (error) {
       emit(AdminDashboardError(error.toString()));
@@ -42,10 +44,12 @@ class AdminDashboardBloc extends Bloc<AdminDashboardEvent, AdminDashboardState> 
 
     emit(currentState.copyWith(isLoadingMore: true));
     try {
-      final transactions = await _repository.getTransactions(page: event.pageIndex, size: 5);
+      final transactions =
+          await _repository.getTransactions(page: event.pageIndex, size: 5);
 
       emit(currentState.copyWith(
-        paginatedTransactions: transactions.content, // REPLACE instead of append
+        paginatedTransactions:
+            transactions.content, // REPLACE instead of append
         currentPage: event.pageIndex,
         hasMore: !transactions.last && event.pageIndex < 49,
         isLoadingMore: false,

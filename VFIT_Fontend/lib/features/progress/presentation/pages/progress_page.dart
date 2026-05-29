@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:camera/camera.dart' show XFile;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_response.dart';
@@ -27,6 +27,7 @@ import '../../data/repositories/progress_repository.dart';
 
 import '../../../challenges/data/models/participation_model.dart';
 import '../../../challenges/presentation/controllers/active_challenge_notifier.dart';
+import '../widgets/progress_camera_capture_page.dart';
 
 class ProgressPage extends ConsumerStatefulWidget {
   const ProgressPage({super.key});
@@ -83,20 +84,25 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
       }
       return;
     }
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-      maxWidth: 1280,
+    if (!mounted) {
+      return;
+    }
+    final capturedFile = await Navigator.of(context).push<XFile>(
+      MaterialPageRoute(
+        builder: (context) => const ProgressCameraCapturePage(),
+        fullscreenDialog: true,
+      ),
     );
 
-    if (pickedFile == null || !mounted) {
+    if (capturedFile == null || !mounted) {
       return;
     }
 
+    final snapFile = File(capturedFile.path);
+
     final action = await showDialog<_JourneySnapAction>(
       context: context,
-      builder: (context) =>
-          _JourneySnapDialog(imageFile: File(pickedFile.path)),
+      builder: (context) => _JourneySnapDialog(imageFile: snapFile),
     );
 
     if (action == null || !mounted) {
@@ -104,12 +110,12 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
     }
 
     if (action.type == _JourneySnapActionType.saveToDevice) {
-      await _saveSnapToDevice(File(pickedFile.path));
+      await _saveSnapToDevice(snapFile);
       return;
     }
 
     final localSnap = _LocalJourneySnap(
-      file: File(pickedFile.path),
+      file: snapFile,
       note: action.note.isEmpty ? null : action.note,
       createdAt: DateTime.now(),
     );

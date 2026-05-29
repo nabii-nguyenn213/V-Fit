@@ -5,11 +5,11 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/config/environment.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/api_response.dart';
 import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/web_socket_url_builder.dart';
 import '../models/payment_models.dart';
 
 final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
@@ -99,13 +99,10 @@ class PaymentRepository {
   }
 
   String _paymentWebSocketUrl(String token) {
-    final baseUri = Uri.parse(Environment.apiBaseUrl);
-    final scheme = baseUri.scheme == 'https' ? 'wss' : 'ws';
-    return baseUri.replace(
-      scheme: scheme,
+    return WebSocketUrlBuilder.build(
       path: '/ws/payments',
       queryParameters: {'token': token},
-    ).toString();
+    );
   }
 
   Future<PaymentQuote> applyVoucher(String voucherCode) async {

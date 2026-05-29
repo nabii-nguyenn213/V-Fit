@@ -1,14 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/enum_parsers.dart';
 import '../../../../core/utils/responsive.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -166,19 +165,8 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
       return;
     }
 
-    try {
-      final image = await ImagePicker().pickImage(source: ImageSource.camera);
-      if (!mounted || image == null) {
-        return;
-      }
-      AppFeedback.success(
-        'Da nhan anh scan form. AI se xu ly o buoc tiep theo.',
-      );
-    } catch (error) {
-      if (mounted) {
-        AppFeedback.error('Khong the mo camera: $error');
-      }
-    }
+    if (!mounted) return;
+    context.push(AppRoutes.aiFormCheckLocation(exerciseId: 'general'));
   }
 }
 

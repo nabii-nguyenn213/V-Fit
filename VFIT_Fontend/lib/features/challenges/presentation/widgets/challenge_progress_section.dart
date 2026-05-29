@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../challenges/data/models/challenge_model.dart';
-import '../../../challenges/data/models/participation_model.dart';
 import '../../../challenges/presentation/controllers/active_challenge_notifier.dart';
-
 
 class ChallengeProgressSection extends ConsumerWidget {
   const ChallengeProgressSection({
@@ -57,7 +55,8 @@ class ChallengeProgressSection extends ConsumerWidget {
 
         return Card(
           elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -90,7 +89,8 @@ class ChallengeProgressSection extends ConsumerWidget {
                     style: Theme.of(context).textTheme.bodySmall),
                 const Divider(),
                 // Join button for challenges not yet participated
-                if (!state.activeParticipations.any((p) => p.challengeId == challenge.id)) ...[
+                if (!state.activeParticipations
+                    .any((p) => p.challengeId == challenge.id)) ...[
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: () async {
@@ -98,9 +98,12 @@ class ChallengeProgressSection extends ConsumerWidget {
                         context: context,
                         builder: (c) => AlertDialog(
                           title: const Text('Tham gia thử thách'),
-                          content: Text('Bạn có muốn tham gia "${challenge.title}"?\nSau khi đồng ý, không thể thay đổi mục tiêu.'),
+                          content: Text(
+                              'Bạn có muốn tham gia "${challenge.title}"?\nSau khi đồng ý, không thể thay đổi mục tiêu.'),
                           actions: [
-                            TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Hủy')),
+                            TextButton(
+                                onPressed: () => Navigator.of(c).pop(false),
+                                child: const Text('Hủy')),
                             FilledButton(
                               onPressed: () => Navigator.of(c).pop(true),
                               child: const Text('Xác nhận'),
@@ -109,7 +112,9 @@ class ChallengeProgressSection extends ConsumerWidget {
                         ),
                       );
                       if (confirm == true) {
-                        await ref.read(activeChallengeNotifierProvider.notifier).joinChallenge(challenge.id);
+                        await ref
+                            .read(activeChallengeNotifierProvider.notifier)
+                            .joinChallenge(challenge.id);
                         // Refresh state automatically via notifier
                       }
                     },
@@ -122,7 +127,9 @@ class ChallengeProgressSection extends ConsumerWidget {
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(
-                      day <= completed ? Icons.check_circle : Icons.radio_button_unchecked,
+                      day <= completed
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
                       color: day <= completed ? Colors.green : Colors.grey,
                     ),
                     title: Text('Ngày $day'),

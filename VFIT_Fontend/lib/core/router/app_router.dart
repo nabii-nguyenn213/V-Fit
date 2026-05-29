@@ -12,6 +12,7 @@ import '../../features/auth/presentation/pages/register_otp_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/deactivated_page.dart';
+import '../../features/ai/presentation/pages/ai_form_check_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 
 import '../../features/nutrition/presentation/pages/nutrition_page.dart';
@@ -24,6 +25,7 @@ import '../../features/workout/presentation/pages/exercise_detail_page.dart';
 import '../../features/workout/presentation/pages/exercises_page.dart';
 import '../../features/workout/presentation/pages/workout_detail_page.dart';
 import '../../features/workout/presentation/pages/workout_page.dart';
+import 'app_routes.dart';
 import '../utils/enum_parsers.dart';
 import '../widgets/app_shell.dart';
 
@@ -170,6 +172,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/exercises',
         builder: (context, state) => const ExercisesPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.aiFormCheck,
+        builder: (context, state) => AiFormCheckPage(
+          exerciseId: state.uri.queryParameters['exerciseId'] ?? 'general',
+        ),
       ),
       GoRoute(
         path: '/exercises/:id',

@@ -14,10 +14,10 @@ class FinancialChart extends StatefulWidget {
   State<FinancialChart> createState() => _FinancialChartState();
 }
 
-class _FinancialChartState extends State<FinancialChart> with SingleTickerProviderStateMixin {
+class _FinancialChartState extends State<FinancialChart>
+    with SingleTickerProviderStateMixin {
   TimeframeFilter _filter = TimeframeFilter.sixMonths;
   int? _selectedIndex;
-  Offset? _touchPosition;
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -75,7 +75,6 @@ class _FinancialChartState extends State<FinancialChart> with SingleTickerProvid
     if (index >= 0 && index < dataCount) {
       setState(() {
         _selectedIndex = index;
-        _touchPosition = localPosition;
       });
     }
   }
@@ -100,9 +99,8 @@ class _FinancialChartState extends State<FinancialChart> with SingleTickerProvid
       );
     }
 
-    final double maxRevenue = filteredData
-        .map((e) => e.totalRevenue)
-        .reduce((a, b) => a > b ? a : b);
+    final double maxRevenue =
+        filteredData.map((e) => e.totalRevenue).reduce((a, b) => a > b ? a : b);
     final double maxY = maxRevenue == 0 ? 100000 : maxRevenue * 1.25;
 
     return Container(
@@ -143,18 +141,22 @@ class _FinancialChartState extends State<FinancialChart> with SingleTickerProvid
                 double? tooltipTop;
                 MonthlyRevenueItemModel? selectedItem;
 
-                if (_selectedIndex != null && _selectedIndex! < filteredData.length) {
+                if (_selectedIndex != null &&
+                    _selectedIndex! < filteredData.length) {
                   selectedItem = filteredData[_selectedIndex!];
                   const double paddingLeft = 40.0;
                   const double paddingRight = 10.0;
                   final double chartWidth = width - paddingLeft - paddingRight;
                   final double cellWidth = chartWidth / filteredData.length;
-                  
+
                   // Compute center x of the bar
                   final double barWidth = cellWidth * 0.45;
-                  final double barX = paddingLeft + _selectedIndex! * cellWidth + (cellWidth - barWidth) / 2;
-                  tooltipLeft = barX + (barWidth / 2) - 80; // Tooltip width is 160
-                  
+                  final double barX = paddingLeft +
+                      _selectedIndex! * cellWidth +
+                      (cellWidth - barWidth) / 2;
+                  tooltipLeft =
+                      barX + (barWidth / 2) - 80; // Tooltip width is 160
+
                   // Keep tooltip inside bounds
                   if (tooltipLeft < 10) tooltipLeft = 10;
                   if (tooltipLeft + 160 > width - 10) tooltipLeft = width - 170;
@@ -163,8 +165,13 @@ class _FinancialChartState extends State<FinancialChart> with SingleTickerProvid
                   const double paddingTop = 20.0;
                   const double paddingBottom = 30.0;
                   final double drawHeight = height - paddingTop - paddingBottom;
-                  final double barHeight = (selectedItem.totalRevenue / maxY) * drawHeight * _animation.value;
-                  tooltipTop = paddingTop + drawHeight - barHeight - 75; // Tooltip height around 65
+                  final double barHeight = (selectedItem.totalRevenue / maxY) *
+                      drawHeight *
+                      _animation.value;
+                  tooltipTop = paddingTop +
+                      drawHeight -
+                      barHeight -
+                      75; // Tooltip height around 65
                   if (tooltipTop < 5) tooltipTop = 5;
                 }
 
@@ -173,15 +180,15 @@ class _FinancialChartState extends State<FinancialChart> with SingleTickerProvid
                   children: [
                     // Gesture Detector over CustomPaint
                     GestureDetector(
-                      onTapDown: (details) => _handleTouch(details.localPosition, width, filteredData.length),
-                      onPanUpdate: (details) => _handleTouch(details.localPosition, width, filteredData.length),
+                      onTapDown: (details) => _handleTouch(
+                          details.localPosition, width, filteredData.length),
+                      onPanUpdate: (details) => _handleTouch(
+                          details.localPosition, width, filteredData.length),
                       onPanEnd: (_) => setState(() {
                         _selectedIndex = null;
-                        _touchPosition = null;
                       }),
                       onTapUp: (_) => setState(() {
                         _selectedIndex = null;
-                        _touchPosition = null;
                       }),
                       child: AnimatedBuilder(
                         animation: _animation,
@@ -200,7 +207,10 @@ class _FinancialChartState extends State<FinancialChart> with SingleTickerProvid
                     ),
 
                     // Interactive Glassmorphism Tooltip
-                    if (_selectedIndex != null && selectedItem != null && tooltipLeft != null && tooltipTop != null)
+                    if (_selectedIndex != null &&
+                        selectedItem != null &&
+                        tooltipLeft != null &&
+                        tooltipTop != null)
                       Positioned(
                         left: tooltipLeft,
                         top: tooltipTop,
@@ -213,15 +223,18 @@ class _FinancialChartState extends State<FinancialChart> with SingleTickerProvid
                                 width: 160,
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xff1C1D24).withValues(alpha: 0.85),
+                                  color: const Color(0xff1C1D24)
+                                      .withValues(alpha: 0.85),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: const Color(0xff00E676).withValues(alpha: 0.4),
+                                    color: const Color(0xff00E676)
+                                        .withValues(alpha: 0.4),
                                     width: 1.5,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.3),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),
@@ -241,7 +254,8 @@ class _FinancialChartState extends State<FinancialChart> with SingleTickerProvid
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      _formatCurrency(selectedItem.totalRevenue),
+                                      _formatCurrency(
+                                          selectedItem.totalRevenue),
                                       style: const TextStyle(
                                         color: Color(0xff00E676),
                                         fontSize: 12,
@@ -285,20 +299,23 @@ class _FinancialChartState extends State<FinancialChart> with SingleTickerProvid
       child: DropdownButtonHideUnderline(
         child: DropdownButton<TimeframeFilter>(
           value: _filter,
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey, size: 16),
+          icon: const Icon(Icons.keyboard_arrow_down,
+              color: Colors.grey, size: 16),
           dropdownColor: const Color(0xff1C1D24),
           style: const TextStyle(color: Colors.white, fontSize: 11),
           items: const [
-            DropdownMenuItem(value: TimeframeFilter.sixMonths, child: Text('6 tháng qua')),
-            DropdownMenuItem(value: TimeframeFilter.thisYear, child: Text('Năm nay')),
-            DropdownMenuItem(value: TimeframeFilter.allTime, child: Text('Toàn bộ')),
+            DropdownMenuItem(
+                value: TimeframeFilter.sixMonths, child: Text('6 tháng qua')),
+            DropdownMenuItem(
+                value: TimeframeFilter.thisYear, child: Text('Năm nay')),
+            DropdownMenuItem(
+                value: TimeframeFilter.allTime, child: Text('Toàn bộ')),
           ],
           onChanged: (TimeframeFilter? newValue) {
             if (newValue != null && newValue != _filter) {
               setState(() {
                 _filter = newValue;
                 _selectedIndex = null;
-                _touchPosition = null;
               });
               _animationController.forward(from: 0.0);
             }
@@ -346,10 +363,11 @@ class ChartPainter extends CustomPainter {
     const int gridLines = 4;
     for (int i = 0; i <= gridLines; i++) {
       final double y = paddingTop + height * (1 - i / gridLines);
-      
+
       // Draw grid line
       if (i == 0) {
-        canvas.drawLine(Offset(paddingLeft, y), Offset(size.width - paddingRight, y), gridPaint);
+        canvas.drawLine(Offset(paddingLeft, y),
+            Offset(size.width - paddingRight, y), gridPaint);
       } else {
         // Draw simple dashed line
         final double lineLength = size.width - paddingRight - paddingLeft;
@@ -357,7 +375,8 @@ class ChartPainter extends CustomPainter {
         const double dashSpace = 4.0;
         double currentX = paddingLeft;
         while (currentX < paddingLeft + lineLength) {
-          canvas.drawLine(Offset(currentX, y), Offset(currentX + dashWidth, y), dashedGridPaint);
+          canvas.drawLine(Offset(currentX, y), Offset(currentX + dashWidth, y),
+              dashedGridPaint);
           currentX += dashWidth + dashSpace;
         }
       }
@@ -376,7 +395,10 @@ class ChartPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      textPainter.paint(canvas, Offset(paddingLeft - textPainter.width - 6, y - textPainter.height / 2));
+      textPainter.paint(
+          canvas,
+          Offset(
+              paddingLeft - textPainter.width - 6, y - textPainter.height / 2));
     }
 
     final double cellWidth = width / data.length;
@@ -385,7 +407,8 @@ class ChartPainter extends CustomPainter {
     // Draw bars
     for (int i = 0; i < data.length; i++) {
       final item = data[i];
-      final double barHeight = (item.totalRevenue / maxY) * height * animationValue;
+      final double barHeight =
+          (item.totalRevenue / maxY) * height * animationValue;
 
       final double x = paddingLeft + i * cellWidth + (cellWidth - barWidth) / 2;
       final double y = paddingTop + height - barHeight;
@@ -437,7 +460,8 @@ class ChartPainter extends CustomPainter {
           style: TextStyle(
             color: i == selectedIndex ? const Color(0xff00E676) : Colors.grey,
             fontSize: 9,
-            fontWeight: i == selectedIndex ? FontWeight.bold : FontWeight.normal,
+            fontWeight:
+                i == selectedIndex ? FontWeight.bold : FontWeight.normal,
           ),
         ),
         textDirection: TextDirection.ltr,
@@ -445,7 +469,8 @@ class ChartPainter extends CustomPainter {
 
       textPainter.paint(
         canvas,
-        Offset(x + barWidth / 2 - textPainter.width / 2, paddingTop + height + 8),
+        Offset(
+            x + barWidth / 2 - textPainter.width / 2, paddingTop + height + 8),
       );
     }
   }
