@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
@@ -151,82 +152,119 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
   Widget build(BuildContext context) {
     final controller = _controller;
     final ready = controller != null && controller.value.isInitialized;
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        leadingWidth: 76,
-        leading: const Padding(
-          padding: EdgeInsets.only(left: 8),
-          child: AppBackButton(),
-        ),
-        title: const Text('Chụp tiến độ'),
-        actions: [
-          IconButton(
-            onPressed: _cameras.length > 1 ? _switchCamera : null,
-            icon: const Icon(Icons.cameraswitch_rounded),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Camera Preview (Edge-to-edge)
+          if (ready)
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: controller.value.previewSize?.height ?? 1,
+                height: controller.value.previewSize?.width ?? 1,
+                child: CameraPreview(controller),
+              ),
+            )
+          else
+            Center(
+              child: _initializing
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Padding(
+                      padding: const EdgeInsets.all(AppSpacing.x5),
+                      child: Text(
+                        _error ?? CameraErrorMessages.cameraUnavailable,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodyFor(context)
+                            .copyWith(color: Colors.white),
+                      ),
+                    ),
+            ),
+          
+          // Top Controls (Glassmorphism)
+          Positioned(
+            top: topPadding + 16,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildGlassButton(
+                  icon: Icons.close_rounded,
+                  onTap: () => Navigator.of(context).pop(),
+                ),
+                if (_cameras.length > 1)
+                  _buildGlassButton(
+                    icon: Icons.cameraswitch_rounded,
+                    onTap: _switchCamera,
+                  ),
+              ],
+            ),
+          ),
+          
+          // Bottom Shutter Button
+          Positioned(
+            bottom: bottomPadding + 32,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: ready && !_capturing ? _capture : null,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: _capturing ? 72 : 84,
+                  height: _capturing ? 72 : 84,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.2),
+                    border: Border.all(
+                      color: Colors.white,
+                      width: _capturing ? 2 : 4,
+                    ),
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: _capturing ? 60 : 70,
+                      height: _capturing ? 60 : 70,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: ready
-                  ? Center(child: CameraPreview(controller))
-                  : Center(
-                      child: _initializing
-                          ? const CircularProgressIndicator()
-                          : Padding(
-                              padding: const EdgeInsets.all(AppSpacing.x5),
-                              child: Text(
-                                _error ?? CameraErrorMessages.cameraUnavailable,
-                                textAlign: TextAlign.center,
-                                style: AppTypography.bodyFor(context)
-                                    .copyWith(color: Colors.white),
-                              ),
-                            ),
-                    ),
-            ),
-            Positioned(
-              left: AppSpacing.x4,
-              right: AppSpacing.x4,
-              bottom: AppSpacing.x5,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: ready ? _capture : null,
-                    child: Container(
-                      width: 76,
-                      height: 76,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        border: Border.all(
-                          color: AppColors.primaryOf(context),
-                          width: 4,
-                        ),
-                      ),
-                      child: _capturing
-                          ? const Padding(
-                              padding: EdgeInsets.all(22),
-                              child: CircularProgressIndicator(strokeWidth: 3),
-                            )
-                          : const Icon(
-                              Icons.camera_alt_rounded,
-                              color: Colors.black,
-                              size: 34,
-                            ),
-                    ),
-                  ),
-                ],
+    );
+  }
+
+  Widget _buildGlassButton({required IconData icon, required VoidCallback onTap}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(99),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
               ),
             ),
-          ],
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
         ),
       ),
     );
