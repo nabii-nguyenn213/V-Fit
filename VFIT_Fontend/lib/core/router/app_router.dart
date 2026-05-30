@@ -106,6 +106,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/home';
       }
 
+      // STRICT GUARD: If user is pending onboarding, they cannot access any other protected route
+      if (auth.isPendingOnboarding && !isOnboardingRoute && !isAuthRoute && !isSplash) {
+        return '/onboarding';
+      }
+
       return null;
     },
     routes: [
