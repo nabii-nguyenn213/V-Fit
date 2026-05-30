@@ -82,6 +82,13 @@ public class OnboardingGuardFilter extends OncePerRequestFilter {
             return true;
         }
 
+        // 5. Allow Gamification, Check-in, and Journey Snaps
+        if (path.startsWith("/api/gamification") || 
+            path.startsWith("/api/v1/checkin") || 
+            path.startsWith("/api/progress/snaps")) {
+            return true;
+        }
+
         return false;
     }
 }
