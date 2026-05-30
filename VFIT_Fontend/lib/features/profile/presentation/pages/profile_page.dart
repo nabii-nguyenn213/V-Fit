@@ -456,27 +456,18 @@ class VipActiveStatusCard extends StatelessWidget {
     return Container(
       padding: AppResponsive.cardPadding(context),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        gradient: LinearGradient(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: AppColors.isDark(context)
-              ? [
-                  const Color(0xFF07110F).withValues(alpha: 0.98),
-                  const Color(0xFF10131D).withValues(alpha: 0.96),
-                  (isExpiringSoon
-                          ? const Color(0xFF1D1608)
-                          : const Color(0xFF071A14))
-                      .withValues(alpha: 0.94),
-                ]
-              : [
-                  // Light mode — use surface tinted with the accent
-                  Theme.of(context).colorScheme.surface,
-                  accent.withValues(alpha: 0.06),
-                  accent.withValues(alpha: 0.10),
-                ],
+          colors: [
+            Color(0xFF18181B), // Zinc 900
+            Color(0xFF09090B), // Zinc 950
+            Color(0xFF0F766E), // Deep modern teal accent
+          ],
+          stops: [0.0, 0.7, 1.0],
         ),
-        border: Border.all(color: accent.withValues(alpha: 0.38)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: accent.withValues(alpha: 0.14),
@@ -518,14 +509,14 @@ class VipActiveStatusCard extends StatelessWidget {
                     Text(
                       'V-FIT Premium',
                       style: AppTypography.headerMedium(
-                        color: AppColors.textPrimary,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Gói hiện tại: $plan',
                       style: AppTypography.bodySmall(
-                        color: AppColors.textSecondary,
+                        color: Colors.white.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -537,13 +528,13 @@ class VipActiveStatusCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.x4),
           Text(
             headline,
-            style: AppTypography.metric(color: accent),
+            style: AppTypography.metric(color: Colors.white),
           ),
           if (!isMonthlyPlan) ...[
             const SizedBox(height: AppSpacing.x2),
             Text(
               supportingText,
-              style: AppTypography.body(color: AppColors.textPrimary),
+              style: AppTypography.body(color: Colors.white.withValues(alpha: 0.9)),
             ),
           ],
           const SizedBox(height: AppSpacing.x4),

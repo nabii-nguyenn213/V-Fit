@@ -14,17 +14,17 @@ class AppTheme {
 
   static ThemeData light() {
     final scheme = ColorScheme.fromSeed(
-      seedColor: _primary,
+      seedColor: const Color(0xFF0F766E), // Modern Teal
       brightness: Brightness.light,
     ).copyWith(
-      primary: const Color(0xFF007A85),
+      primary: const Color(0xFF0F766E),
       onPrimary: const Color(0xFFFFFFFF),
-      secondary: const Color(0xFFB00090),
+      secondary: const Color(0xFF10B981), // Emerald
       surface: _lightSurface,
-      onSurface: const Color(0xFF101321),
-      surfaceContainerHighest: const Color(0xFFEAF1FF),
-      onSurfaceVariant: const Color(0xFF596074),
-      outlineVariant: const Color(0xFFC8D4F3),
+      onSurface: const Color(0xFF09090B), // Zinc 950
+      surfaceContainerHighest: const Color(0xFFF4F4F5), // Zinc 100
+      onSurfaceVariant: const Color(0xFF71717A), // Zinc 500
+      outlineVariant: const Color(0xFFE4E4E7), // Zinc 200
     );
 
     return ThemeData(
@@ -45,23 +45,23 @@ class AppTheme {
   static ThemeData dark() {
     const scheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: _primary,
-      onPrimary: Color(0xFF122000),
+      primary: _primary, // 06B6D4
+      onPrimary: Color(0xFF082F49),
       secondary: _secondary,
       onSecondary: Color(0xFF25001E),
-      error: Color(0xFFFF4D6D),
+      error: Color(0xFFEF4444),
       onError: Color(0xFFFFFFFF),
       surface: _darkSurface,
-      onSurface: Color(0xFFF4F7FF),
-      surfaceContainerHighest: Color(0xFF1B1C36),
-      onSurfaceVariant: Color(0xFFB9C2E6),
-      outline: Color(0xFF6C79AC),
-      outlineVariant: Color(0xFF2F3764),
+      onSurface: Color(0xFFFAFAFA),
+      surfaceContainerHighest: Color(0xFF27272A),
+      onSurfaceVariant: Color(0xFFA1A1AA),
+      outline: Color(0xFF52525B),
+      outlineVariant: Color(0xFF27272A),
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
-      inverseSurface: Color(0xFFF4F7FF),
-      onInverseSurface: Color(0xFF101321),
-      inversePrimary: Color(0xFF007A85),
+      inverseSurface: Color(0xFFFAFAFA),
+      onInverseSurface: Color(0xFF09090B),
+      inversePrimary: Color(0xFF0F766E),
     );
 
     return ThemeData(
@@ -115,11 +115,14 @@ class AppTheme {
   static CardThemeData _cardTheme(ColorScheme scheme) {
     return CardThemeData(
       elevation: 0,
-      color: scheme.surface.withValues(alpha: 0.94),
+      color: scheme.surface,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.72)),
+        borderRadius: BorderRadius.circular(20), // More modern, rounder corners
+        side: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: 0.8),
+          width: 0.8,
+        ),
       ),
       margin: EdgeInsets.zero,
     );
