@@ -115,7 +115,7 @@ class _WorkoutHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Workout Space',
+                  'Không gian tập luyện',
                   style: AppTypography.headerLargeFor(context),
                 ),
                 const SizedBox(height: AppSpacing.x1),
@@ -349,7 +349,7 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Scan Body AI',
+                    'Quét cơ thể AI',
                     style: AppTypography.headerMediumFor(context),
                   ),
                   const SizedBox(height: 4),

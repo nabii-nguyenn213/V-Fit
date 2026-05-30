@@ -558,9 +558,9 @@ class _MuscleHeatmapCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: const [
-              _ComingSoonChip(label: 'Workout logs'),
-              _ComingSoonChip(label: 'Muscle volume'),
-              _ComingSoonChip(label: 'Heat intensity'),
+              _ComingSoonChip(label: 'Nhật ký tập luyện'),
+              _ComingSoonChip(label: 'Khối lượng cơ bắp'),
+              _ComingSoonChip(label: 'Cường độ bài tập'),
             ],
           ),
         ],

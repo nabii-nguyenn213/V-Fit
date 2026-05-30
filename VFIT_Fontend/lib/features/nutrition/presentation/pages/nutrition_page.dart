@@ -67,7 +67,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
               ),
               children: [
                 Text(
-                  'Nutrition Hub',
+                  'Trung tâm dinh dưỡng',
                   style: AppTypography.headerLargeFor(context),
                 ),
                 const SizedBox(height: AppSpacing.x2),
