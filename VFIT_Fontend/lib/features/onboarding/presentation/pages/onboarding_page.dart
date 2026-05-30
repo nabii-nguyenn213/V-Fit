@@ -119,12 +119,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             IconButton(
               onPressed: _savingProfile || _uploadingScan
                   ? null
-                  : () async {
-                      await ref.read(authControllerProvider.notifier).logout();
-                      if (context.mounted) {
-                        context.go('/login');
-                      }
-                    },
+                  : () => context.go('/home'),
               icon: const Icon(Icons.close),
               tooltip: 'Thoát về trang chủ',
             ),

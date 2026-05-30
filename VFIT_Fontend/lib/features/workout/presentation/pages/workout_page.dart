@@ -587,7 +587,7 @@ class GoalRequiredState extends StatelessWidget {
   }
 }
 
-class PersonalizedWorkoutView extends StatelessWidget {
+class PersonalizedWorkoutView extends ConsumerWidget {
   const PersonalizedWorkoutView({super.key});
 
   Future<void> _refresh(BuildContext context) async {
@@ -597,7 +597,15 @@ class PersonalizedWorkoutView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPendingOnboarding = ref.watch(authControllerProvider).isPendingOnboarding;
+    if (isPendingOnboarding) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        child: PendingOnboardingPlaceholder(),
+      );
+    }
+
     return BlocBuilder<PersonalizedWorkoutBloc, PersonalizedWorkoutState>(
       builder: (context, state) {
         if (state is WorkoutInitial || state is WorkoutLoading) {
