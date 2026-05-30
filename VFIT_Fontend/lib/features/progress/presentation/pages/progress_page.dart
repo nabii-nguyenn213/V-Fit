@@ -222,7 +222,9 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
         },
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: AppResponsive.pagePadding(context).copyWith(bottom: 88),
+          padding: AppResponsive.pagePadding(context).copyWith(
+            bottom: AppResponsive.pagePadding(context).bottom + 72,
+          ),
           children: [
             _ProgressHeader(user: user),
             const SizedBox(height: 16),
@@ -938,92 +940,77 @@ class _JourneySnapDialogState extends State<_JourneySnapDialog> {
                   left: AppResponsive.horizontalPadding(context),
                   right: AppResponsive.horizontalPadding(context),
                   bottom: keyboardVisible ? -120 : media.padding.bottom + 28,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton.icon(
                               onPressed: () => Navigator.of(context).pop(),
-                              style: OutlinedButton.styleFrom(
+                              style: TextButton.styleFrom(
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 11,
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                                side: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.24),
+                                  horizontal: 16,
+                                  vertical: 12,
                                 ),
                               ),
-                              icon: const Icon(Icons.close_rounded, size: 18),
-                              label: const Text('Hủy'),
+                              icon: const Icon(Icons.close_rounded, size: 20),
+                              label: const Text(
+                                'Hủy',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: FilledButton.icon(
-                              onPressed: _uploadSnap,
-                              style: FilledButton.styleFrom(
-                                backgroundColor:
-                                    Colors.white.withValues(alpha: 0.14),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 11,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  onPressed: _saveSnapToDevice,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  icon: const Icon(Icons.download_rounded, size: 20),
+                                  tooltip: 'Lưu ảnh vào máy',
                                 ),
-                                textStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
+                                const SizedBox(width: 8),
+                                FilledButton.icon(
+                                  onPressed: _uploadSnap,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: scheme.primary,
+                                    foregroundColor: scheme.onPrimary,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.send_rounded,
+                                    size: 18,
+                                  ),
+                                  label: const Text(
+                                    'Đăng ảnh',
+                                    style: TextStyle(fontWeight: FontWeight.w800),
+                                  ),
                                 ),
-                              ),
-                              icon: const Icon(
-                                Icons.cloud_upload_rounded,
-                                size: 18,
-                              ),
-                              label: const Text('Đăng ảnh'),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _saveSnapToDevice,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: scheme.primary,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 11,
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                                side: BorderSide(
-                                  color: scheme.primary.withValues(alpha: 0.72),
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.save_alt_rounded,
-                                size: 18,
-                              ),
-                              label: const Text('Lưu ảnh'),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1391,31 +1378,45 @@ class _JourneyLocketTimelineState extends State<_JourneyLocketTimeline> {
               children: [
                 Row(
                   children: [
-                    IconButton.filledTonal(
+                    IconButton(
                       onPressed: () => _moveMonth(-1, months.length),
-                      icon: const Icon(Icons.chevron_left),
+                      icon: const Icon(Icons.chevron_left_rounded),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        foregroundColor: Theme.of(context).colorScheme.onSurface,
+                      ),
                       tooltip: 'Tháng mới hơn',
                     ),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        DateFormat('MMMM yyyy').format(month),
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w900),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            DateFormat('MMMM yyyy').format(month),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w900),
+                          ),
+                          Text(
+                            '${monthEntries.length} ảnh',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      '${monthEntries.length} ảnh',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    IconButton.filledTonal(
+                    IconButton(
                       onPressed: () => _moveMonth(1, months.length),
-                      icon: const Icon(Icons.chevron_right),
+                      icon: const Icon(Icons.chevron_right_rounded),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        foregroundColor: Theme.of(context).colorScheme.onSurface,
+                      ),
                       tooltip: 'Tháng cũ hơn',
                     ),
                   ],

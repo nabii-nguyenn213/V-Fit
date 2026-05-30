@@ -62,7 +62,9 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: AppResponsive.pagePadding(context).copyWith(bottom: 96),
+              padding: AppResponsive.pagePadding(context).copyWith(
+                bottom: AppResponsive.pagePadding(context).bottom + 96,
+              ),
               children: [
                 Text(
                   'Nutrition Hub',

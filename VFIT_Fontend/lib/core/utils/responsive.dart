@@ -38,7 +38,9 @@ class AppResponsive {
 
   static EdgeInsets pagePadding(BuildContext context) {
     final horizontal = horizontalPadding(context);
-    return EdgeInsets.fromLTRB(horizontal, 16, horizontal, 20);
+    final wide = isWide(context);
+    // Add extra bottom padding on mobile to account for the floating navigation bar
+    return EdgeInsets.fromLTRB(horizontal, 16, horizontal, wide ? 24 : 110);
   }
 
   static EdgeInsets cardPadding(BuildContext context) {

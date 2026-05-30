@@ -1336,8 +1336,13 @@ class _ThemeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.x4),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: AppCard(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x4,
+          vertical: 12,
+        ),
       child: Row(
         children: [
           Container(
@@ -1356,25 +1361,104 @@ class _ThemeSelector extends StatelessWidget {
               style: AppTypography.headerMediumFor(context),
             ),
           ),
-          SegmentedButton<ThemeMode>(
-            segments: const [
-              ButtonSegment(
-                value: ThemeMode.light,
-                icon: Icon(Icons.light_mode_outlined),
-                label: Text('Sáng'),
+          GestureDetector(
+            onTap: () => onChanged(value == ThemeMode.light ? ThemeMode.dark : ThemeMode.light),
+            child: Container(
+              width: 110,
+              height: 44,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.isDark(context) 
+                    ? Colors.black.withValues(alpha: 0.5) 
+                    : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(99),
+                border: Border.all(
+                  color: AppColors.isDark(context)
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.05),
+                ),
               ),
-              ButtonSegment(
-                value: ThemeMode.dark,
-                icon: Icon(Icons.dark_mode_outlined),
-                label: Text('Tối'),
+              child: Stack(
+                children: [
+                  AnimatedAlign(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    alignment: value == ThemeMode.light
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    child: Container(
+                      width: 50,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.isDark(context)
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(99),
+                        boxShadow: AppColors.isDark(context) ? [] : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 300),
+                            style: TextStyle(
+                              color: value == ThemeMode.light
+                                  ? (AppColors.isDark(context) ? Colors.white : Colors.black)
+                                  : (AppColors.isDark(context) ? Colors.white54 : Colors.black54),
+                              fontWeight: value == ThemeMode.light ? FontWeight.w800 : FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.light_mode_rounded, size: 14),
+                                SizedBox(width: 4),
+                                Text('Sáng'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 300),
+                            style: TextStyle(
+                              color: value == ThemeMode.dark
+                                  ? (AppColors.isDark(context) ? Colors.white : Colors.black)
+                                  : (AppColors.isDark(context) ? Colors.white54 : Colors.black54),
+                              fontWeight: value == ThemeMode.dark ? FontWeight.w800 : FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.dark_mode_rounded, size: 14),
+                                SizedBox(width: 4),
+                                Text('Tối'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-            selected: {value},
-            showSelectedIcon: false,
-            onSelectionChanged: (selected) => onChanged(selected.first),
+            ),
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -1396,11 +1480,11 @@ class _ProfileAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeColor = color ?? AppColors.textPrimaryOf(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.x2),
+      padding: const EdgeInsets.only(bottom: 12),
       child: AppCard(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.x4,
-          vertical: AppSpacing.x3,
+          vertical: 16,
         ),
         onTap: onTap,
         child: Row(

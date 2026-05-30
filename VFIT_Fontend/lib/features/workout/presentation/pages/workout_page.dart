@@ -600,9 +600,9 @@ class PersonalizedWorkoutView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isPendingOnboarding = ref.watch(authControllerProvider).isPendingOnboarding;
     if (isPendingOnboarding) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-        child: PendingOnboardingPlaceholder(),
+      return ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        children: const [PendingOnboardingPlaceholder()],
       );
     }
 

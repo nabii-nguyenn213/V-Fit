@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -77,6 +78,7 @@ class AppShell extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
+      extendBody: true,
       body: wide
           ? Row(
               children: [
@@ -186,64 +188,140 @@ class _ShellNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = AppResponsive.isCompact(context);
-    return NavigationBarTheme(
-      data: NavigationBarThemeData(
-        backgroundColor: AppColors.surface1Of(context),
-        indicatorColor: AppColors.primaryOf(context).withValues(alpha: 0.16),
-        surfaceTintColor: Colors.transparent,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          final selected = states.contains(WidgetState.selected);
-          return IconThemeData(
-            color: selected
-                ? AppColors.primaryOf(context)
-                : AppColors.textSecondaryOf(context),
-            size: compact ? 21 : 23,
-          );
-        }),
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          final selected = states.contains(WidgetState.selected);
-          // Both icon and label use primary — secondary (magenta) created visual noise.
-          return AppTypography.labelFor(
-            context,
-            color: selected
-                ? AppColors.primaryOf(context)
-                : AppColors.textSecondaryOf(context),
-          ).copyWith(fontSize: compact ? 10 : 11);
-        }),
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        bottom: bottomPadding > 0 ? bottomPadding : 24,
       ),
-      child: NavigationBar(
-        height: compact ? 64 : 72,
-        elevation: 0,
-        selectedIndex: selectedIndex,
-        onDestinationSelected: onDestinationSelected,
-        destinations: const [
-          NavigationDestination(
-            selectedIcon: Icon(Icons.dashboard_rounded),
-            icon: Icon(Icons.dashboard_outlined),
-            label: 'Trang chủ',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.isDark(context) 
+                  ? Colors.black.withValues(alpha: 0.45)
+                  : Colors.white.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(
+                color: AppColors.isDark(context)
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.08),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _NavItem(
+                  icon: Icons.dashboard_outlined,
+                  activeIcon: Icons.dashboard_rounded,
+                  label: 'Trang chủ',
+                  isSelected: selectedIndex == 0,
+                  onTap: () => onDestinationSelected(0),
+                  compact: compact,
+                ),
+                _NavItem(
+                  icon: Icons.fitness_center_outlined,
+                  activeIcon: Icons.fitness_center_rounded,
+                  label: 'Tập luyện',
+                  isSelected: selectedIndex == 1,
+                  onTap: () => onDestinationSelected(1),
+                  compact: compact,
+                ),
+                _NavItem(
+                  icon: Icons.restaurant_outlined,
+                  activeIcon: Icons.restaurant_rounded,
+                  label: 'Dinh dưỡng',
+                  isSelected: selectedIndex == 2,
+                  onTap: () => onDestinationSelected(2),
+                  compact: compact,
+                ),
+                _NavItem(
+                  icon: Icons.show_chart_outlined,
+                  activeIcon: Icons.show_chart_rounded,
+                  label: 'Tiến độ',
+                  isSelected: selectedIndex == 3,
+                  onTap: () => onDestinationSelected(3),
+                  compact: compact,
+                ),
+                _NavItem(
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Hồ sơ',
+                  isSelected: selectedIndex == 4,
+                  onTap: () => onDestinationSelected(4),
+                  compact: compact,
+                ),
+              ],
+            ),
           ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.fitness_center_rounded),
-            icon: Icon(Icons.fitness_center_outlined),
-            label: 'Luyện tập',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.restaurant_rounded),
-            icon: Icon(Icons.restaurant_outlined),
-            label: 'Dinh dưỡng',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.show_chart_rounded),
-            icon: Icon(Icons.show_chart_outlined),
-            label: 'Tiến độ',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.person_rounded),
-            icon: Icon(Icons.person_outline_rounded),
-            label: 'Hồ sơ',
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.compact,
+  });
+
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = AppColors.primaryOf(context);
+    final secondary = AppColors.textSecondaryOf(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: compact ? 56 : 64,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, animation) {
+                return ScaleTransition(scale: animation, child: child);
+              },
+              child: Icon(
+                isSelected ? activeIcon : icon,
+                key: ValueKey(isSelected),
+                color: isSelected ? primary : secondary,
+                size: compact ? 22 : 24,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.visible,
+              style: TextStyle(
+                fontSize: compact ? 9 : 10,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? primary : secondary,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

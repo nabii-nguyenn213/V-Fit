@@ -90,58 +90,56 @@ class PendingOnboardingPlaceholder extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: scheme.primary.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.assignment_ind_rounded,
-                size: 38,
-                color: scheme.primary,
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: scheme.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 20),
-            Text(
-              'Vui lòng nhập thông tin để hiển thị',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: scheme.onSurface,
-                letterSpacing: -0.3,
-              ),
+            child: Icon(
+              Icons.assignment_ind_rounded,
+              size: 38,
+              color: scheme.primary,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Hệ thống cần biết các chỉ số cơ thể của bạn (chiều cao, cân nặng...) để có thể tính toán lộ trình và cung cấp dữ liệu cá nhân hóa chính xác nhất.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: scheme.onSurfaceVariant,
-                height: 1.5,
-              ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Vui lòng nhập thông tin để hiển thị',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+              color: scheme.onSurface,
+              letterSpacing: -0.3,
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => context.push('/onboarding'),
-              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-              label: const Text('Cập nhật hồ sơ ngay', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
-              ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Hệ thống cần biết các chỉ số cơ thể của bạn (chiều cao, cân nặng...) để có thể tính toán lộ trình và cung cấp dữ liệu cá nhân hóa chính xác nhất.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: scheme.onSurfaceVariant,
+              height: 1.5,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: () => context.push('/onboarding'),
+            icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+            label: const Text('Cập nhật hồ sơ ngay', style: TextStyle(fontWeight: FontWeight.bold)),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ],
       ),
     );
   }
