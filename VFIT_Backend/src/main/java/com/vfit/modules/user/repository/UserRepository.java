@@ -14,6 +14,9 @@ import org.springframework.data.mongodb.repository.Query;
 public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmail(String email);
 
+    @Query("{ 'socialIdentities': { $elemMatch: { 'provider': ?0, 'subject': ?1 } } }")
+    Optional<User> findBySocialIdentity(String provider, String subject);
+
     boolean existsByEmail(String email);
 
     Page<User> findByRole(RoleName role, Pageable pageable);

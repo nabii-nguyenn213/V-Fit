@@ -5,6 +5,7 @@ import com.vfit.modules.auth.dto.request.LoginRequest;
 import com.vfit.modules.auth.dto.request.RefreshTokenRequest;
 import com.vfit.modules.auth.dto.request.RegisterRequest;
 import com.vfit.modules.auth.dto.request.ResetPasswordRequest;
+import com.vfit.modules.auth.dto.request.SocialLoginRequest;
 import com.vfit.modules.auth.dto.request.VerifyOtpRequest;
 import com.vfit.modules.auth.dto.response.AuthResponse;
 import com.vfit.modules.auth.dto.response.TokenResponse;
@@ -17,6 +18,8 @@ public interface AuthService {
     void resendOtp(com.vfit.modules.auth.dto.request.ResendOtpRequest request);
 
     AuthResponse login(LoginRequest request);
+
+    AuthResponse socialLogin(SocialLoginRequest request);
 
     TokenResponse refresh(RefreshTokenRequest request);
 

@@ -21,6 +21,20 @@ mvn test
 Add provider SDK configuration for Android and web according to the selected
 Flutter packages. iOS configuration is out of scope for v1.
 
+Android native Facebook configuration is read by Gradle from environment or
+Gradle properties.
+
+```powershell
+$env:FACEBOOK_APP_ID="facebook-app-id"
+$env:FACEBOOK_CLIENT_TOKEN="facebook-client-token"
+```
+
+Flutter social login uses dart defines for provider SDK client/app ids.
+
+```powershell
+flutter run --dart-define=GOOGLE_WEB_CLIENT_ID=google-web-client-id --dart-define=FACEBOOK_APP_ID=facebook-app-id
+```
+
 Run Flutter dependency install and analysis from `VFIT_Fontend`.
 
 ```powershell

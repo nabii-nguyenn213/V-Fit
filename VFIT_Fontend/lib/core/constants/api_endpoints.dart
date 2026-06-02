@@ -7,6 +7,7 @@ class ApiEndpoints {
   static const verifyOtp = '/api/auth/verify-otp';
   static const resendOtp = '/api/auth/resend-otp';
   static const login = '/api/auth/login';
+  static const socialLogin = '/api/auth/social-login';
   static const refreshToken = '/api/auth/refresh-token';
   static const logout = '/api/auth/logout';
   static const forgotPassword = '/api/auth/forgot-password';

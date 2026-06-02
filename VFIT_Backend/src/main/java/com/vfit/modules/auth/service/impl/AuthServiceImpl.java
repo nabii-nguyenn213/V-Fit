@@ -1,8 +1,11 @@
 package com.vfit.modules.auth.service.impl;
 
 import com.vfit.common.enums.RoleName;
+import com.vfit.common.enums.OnboardingStatus;
 import com.vfit.common.exception.AppException;
 import com.vfit.common.exception.ErrorCode;
+import com.vfit.modules.auth.dto.SocialLoginProvider;
+import com.vfit.modules.auth.dto.SocialProviderProfile;
 import com.vfit.modules.auth.document.UserSession;
 import com.vfit.modules.auth.document.PasswordResetToken;
 import com.vfit.modules.auth.dto.request.ForgotPasswordRequest;
@@ -10,6 +13,7 @@ import com.vfit.modules.auth.dto.request.LoginRequest;
 import com.vfit.modules.auth.dto.request.RefreshTokenRequest;
 import com.vfit.modules.auth.dto.request.RegisterRequest;
 import com.vfit.modules.auth.dto.request.ResetPasswordRequest;
+import com.vfit.modules.auth.dto.request.SocialLoginRequest;
 import com.vfit.modules.auth.dto.request.VerifyOtpRequest;
 import com.vfit.modules.auth.dto.response.AuthResponse;
 import com.vfit.modules.auth.dto.response.TokenResponse;
@@ -20,6 +24,7 @@ import com.vfit.modules.auth.repository.UserSessionRepository;
 import com.vfit.modules.auth.service.AuthService;
 import com.vfit.modules.auth.service.EmailService;
 import com.vfit.modules.auth.service.OtpService;
+import com.vfit.modules.auth.service.SocialProviderVerifier;
 import com.vfit.modules.user.document.User;
 import com.vfit.modules.user.mapper.UserMapper;
 import com.vfit.modules.user.repository.UserRepository;
@@ -33,9 +38,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +52,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
@@ -57,6 +66,7 @@ public class AuthServiceImpl implements AuthService {
     private final ApplicationEventPublisher eventPublisher;
     private final OtpService otpService;
     private final EmailService emailService;
+    private final List<SocialProviderVerifier> socialProviderVerifiers;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Override
@@ -108,6 +118,27 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Vui lòng xác thực email bằng mã OTP trước khi đăng nhập. Một mã OTP mới đã được gửi.");
         }
 
+        return authMapper.toAuthResponse(userMapper.toResponse(user), issueTokens(user));
+    }
+
+    @Override
+    public AuthResponse socialLogin(SocialLoginRequest request) {
+        SocialProviderProfile profile = verifierFor(request.getProvider())
+                .verify(request.getProviderToken());
+
+        if (!profile.isEmailVerified() || profile.getEmail() == null || profile.getEmail().isBlank()) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Social account must provide a verified email");
+        }
+
+        String provider = profile.getProvider().name();
+        Optional<User> linkedUser = userRepository.findBySocialIdentity(provider, profile.getSubject());
+        User user = linkedUser.orElseGet(() -> resolveUserForNewProviderIdentity(profile));
+
+        rejectDisabledUser(user);
+        linkOrRefreshProviderIdentity(user, profile);
+        user = userRepository.save(user);
+
+        log.info("[SECURITY AUDIT] Social login success. provider={}, userId={}", provider, user.getId());
         return authMapper.toAuthResponse(userMapper.toResponse(user), issueTokens(user));
     }
 
@@ -256,6 +287,98 @@ public class AuthServiceImpl implements AuthService {
                 .tokenType("Bearer")
                 .expiresInMs(jwtProperties.getAccessTokenExpirationMs())
                 .build();
+    }
+
+    private SocialProviderVerifier verifierFor(SocialLoginProvider provider) {
+        return socialProviderVerifiers.stream()
+                .filter(verifier -> verifier.supports(provider))
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.BAD_REQUEST, "Unsupported social login provider"));
+    }
+
+    private User resolveUserForNewProviderIdentity(SocialProviderProfile profile) {
+        Optional<User> existingByEmail = userRepository.findByEmail(profile.getEmail());
+        if (existingByEmail.isPresent()) {
+            User user = existingByEmail.get();
+            rejectDisabledUser(user);
+            rejectProviderConflictOnUser(user, profile);
+            if (!user.isActive()) {
+                user.setActive(true);
+            }
+            fillMissingProfileFields(user, profile);
+            return user;
+        }
+
+        return User.builder()
+                .email(profile.getEmail())
+                .passwordHash(passwordEncoder.encode(randomToken()))
+                .fullName(profile.getDisplayName())
+                .avatarUrl(profile.getAvatarUrl())
+                .role(RoleName.USER)
+                .active(true)
+                .onboardingStatus(OnboardingStatus.PENDING)
+                .build();
+    }
+
+    private void rejectDisabledUser(User user) {
+        if (user.getDeactivatedAt() != null) {
+            throw new AppException(ErrorCode.FORBIDDEN, "ACCOUNT_DEACTIVATED");
+        }
+    }
+
+    private void rejectProviderConflictOnUser(User user, SocialProviderProfile profile) {
+        List<User.SocialProviderIdentity> identities = user.getSocialIdentities();
+        if (identities == null) {
+            return;
+        }
+        boolean sameProviderDifferentSubject = identities.stream()
+                .anyMatch(identity -> profile.getProvider().name().equals(identity.getProvider())
+                        && !profile.getSubject().equals(identity.getSubject()));
+        if (sameProviderDifferentSubject) {
+            throw new AppException(ErrorCode.CONFLICT, "Social provider is already linked to another identity");
+        }
+    }
+
+    private void linkOrRefreshProviderIdentity(User user, SocialProviderProfile profile) {
+        if (user.getSocialIdentities() == null) {
+            user.setSocialIdentities(new ArrayList<>());
+        }
+
+        Instant now = Instant.now();
+        Optional<User.SocialProviderIdentity> existing = user.getSocialIdentities().stream()
+                .filter(identity -> profile.getProvider().name().equals(identity.getProvider())
+                        && profile.getSubject().equals(identity.getSubject()))
+                .findFirst();
+
+        if (existing.isPresent()) {
+            User.SocialProviderIdentity identity = existing.get();
+            identity.setEmail(profile.getEmail());
+            identity.setDisplayName(profile.getDisplayName());
+            identity.setAvatarUrl(profile.getAvatarUrl());
+            identity.setLastLoginAt(now);
+            fillMissingProfileFields(user, profile);
+            return;
+        }
+
+        user.getSocialIdentities().add(User.SocialProviderIdentity.builder()
+                .provider(profile.getProvider().name())
+                .subject(profile.getSubject())
+                .email(profile.getEmail())
+                .displayName(profile.getDisplayName())
+                .avatarUrl(profile.getAvatarUrl())
+                .linkedAt(now)
+                .lastLoginAt(now)
+                .build());
+        fillMissingProfileFields(user, profile);
+    }
+
+    private void fillMissingProfileFields(User user, SocialProviderProfile profile) {
+        if ((user.getFullName() == null || user.getFullName().isBlank()) && profile.getDisplayName() != null) {
+            user.setFullName(profile.getDisplayName().trim());
+        }
+        if ((user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()) && profile.getAvatarUrl() != null) {
+            user.setAvatarUrl(profile.getAvatarUrl());
+        }
     }
 
     @Override

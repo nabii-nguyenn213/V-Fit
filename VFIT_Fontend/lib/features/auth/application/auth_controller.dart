@@ -5,10 +5,14 @@ import '../../../../core/network/api_exception.dart';
 import '../../profile/data/models/user_model.dart';
 import '../data/models/auth_models.dart';
 import '../data/repositories/auth_repository.dart';
+import '../data/services/social_login_client.dart';
 
 final authControllerProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) {
-  final controller = AuthController(ref.watch(authRepositoryProvider));
+  final controller = AuthController(
+    ref.watch(authRepositoryProvider),
+    SocialLoginClient(),
+  );
   final signal = ref.read(authLogoutSignalProvider);
   final sub = signal.onLogout.listen((_) {
     controller.logout();
@@ -60,9 +64,11 @@ class AuthState {
 }
 
 class AuthController extends StateNotifier<AuthState> {
-  AuthController(this._repository) : super(const AuthState.initial());
+  AuthController(this._repository, this._socialLoginClient)
+      : super(const AuthState.initial());
 
   final AuthRepository _repository;
+  final SocialLoginClient _socialLoginClient;
 
   Future<void> bootstrap() async {
     state = const AuthState.initial();
@@ -103,6 +109,18 @@ class AuthController extends StateNotifier<AuthState> {
         error: _loginErrorMessage(error),
       );
     }
+  }
+
+  Future<void> loginWithGoogle() async {
+    await _socialLogin(
+      () => _socialLoginClient.signInWithGoogle(),
+    );
+  }
+
+  Future<void> loginWithFacebook() async {
+    await _socialLogin(
+      () => _socialLoginClient.signInWithFacebook(),
+    );
   }
 
   Future<void> register({
@@ -178,9 +196,43 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
+  Future<void> _socialLogin(
+    Future<SocialLoginCredential?> Function() credentialProvider,
+  ) async {
+    state = const AuthState(
+      status: AuthStatus.unauthenticated,
+      loading: true,
+    );
+    try {
+      final credential = await credentialProvider();
+      if (credential == null) {
+        state = const AuthState(status: AuthStatus.unauthenticated);
+        return;
+      }
+      final auth = await _repository.socialLogin(credential);
+      setUser(auth.user);
+    } catch (error) {
+      await _repository.clearLocalSession();
+      state = AuthState(
+        status: AuthStatus.unauthenticated,
+        error: _socialLoginErrorMessage(error),
+      );
+    }
+  }
+
   String _loginErrorMessage(Object error) {
     if (error is ApiException && error.statusCode == 401) {
       return 'Email hoặc mật khẩu không chính xác.';
+    }
+    return error.toString();
+  }
+
+  String _socialLoginErrorMessage(Object error) {
+    if (error is ApiException) {
+      if (error.message == 'ACCOUNT_DEACTIVATED') {
+        return 'ACCOUNT_DEACTIVATED';
+      }
+      return error.message;
     }
     return error.toString();
   }

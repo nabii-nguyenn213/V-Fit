@@ -50,6 +50,8 @@ public class User {
     private SubscriptionSnapshot subscription = SubscriptionSnapshot.free();
     @Builder.Default
     private List<UserBadgeSnapshot> badges = new ArrayList<>();
+    @Builder.Default
+    private List<SocialProviderIdentity> socialIdentities = new ArrayList<>();
     @CreatedDate
     private Instant createdAt;
     @LastModifiedDate
@@ -110,5 +112,20 @@ public class User {
         private String name;
         private String iconUrl;
         private Instant awardedAt;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SocialProviderIdentity {
+        private String provider;
+        private String subject;
+        private String email;
+        private String displayName;
+        private String avatarUrl;
+        private Instant linkedAt;
+        private Instant lastLoginAt;
     }
 }

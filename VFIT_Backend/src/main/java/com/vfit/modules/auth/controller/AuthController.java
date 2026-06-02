@@ -6,6 +6,7 @@ import com.vfit.modules.auth.dto.request.LoginRequest;
 import com.vfit.modules.auth.dto.request.RefreshTokenRequest;
 import com.vfit.modules.auth.dto.request.RegisterRequest;
 import com.vfit.modules.auth.dto.request.ResetPasswordRequest;
+import com.vfit.modules.auth.dto.request.SocialLoginRequest;
 import com.vfit.modules.auth.dto.request.VerifyOtpRequest;
 import com.vfit.modules.auth.dto.response.AuthResponse;
 import com.vfit.modules.auth.dto.response.TokenResponse;
@@ -51,6 +52,11 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.ok(authService.login(request));
+    }
+
+    @PostMapping("/social-login")
+    public ApiResponse<AuthResponse> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
+        return ApiResponse.ok(authService.socialLogin(request));
     }
 
     @PostMapping("/refresh-token")

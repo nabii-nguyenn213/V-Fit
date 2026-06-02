@@ -12,6 +12,33 @@ class LoginRequest {
       };
 }
 
+enum SocialLoginProvider {
+  google('GOOGLE'),
+  facebook('FACEBOOK');
+
+  const SocialLoginProvider(this.apiValue);
+
+  final String apiValue;
+}
+
+class SocialLoginRequest {
+  const SocialLoginRequest({
+    required this.provider,
+    required this.providerToken,
+    required this.platform,
+  });
+
+  final SocialLoginProvider provider;
+  final String providerToken;
+  final String platform;
+
+  Map<String, dynamic> toJson() => {
+        'provider': provider.apiValue,
+        'providerToken': providerToken,
+        'platform': platform,
+      };
+}
+
 class RegisterRequest {
   const RegisterRequest({
     required this.email,
@@ -63,7 +90,8 @@ class AuthResponse {
     return AuthResponse(
       user: UserModel.fromJson(Map<String, dynamic>.from(json['user'] as Map)),
       tokens: TokenResponse.fromJson(
-          Map<String, dynamic>.from(json['tokens'] as Map)),
+        Map<String, dynamic>.from(json['tokens'] as Map),
+      ),
     );
   }
 }

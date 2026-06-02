@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +17,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   final preferences = await SharedPreferences.getInstance();
+  await _initializeSocialLogin();
   runApp(
     ProviderScope(
       overrides: [
@@ -22,6 +25,19 @@ Future<void> main() async {
       ],
       child: const VFitApp(),
     ),
+  );
+}
+
+Future<void> _initializeSocialLogin() async {
+  const facebookAppId = String.fromEnvironment('FACEBOOK_APP_ID');
+  if (!kIsWeb || facebookAppId.isEmpty) {
+    return;
+  }
+  await FacebookAuth.i.webAndDesktopInitialize(
+    appId: facebookAppId,
+    cookie: true,
+    xfbml: true,
+    version: 'v19.0',
   );
 }
 

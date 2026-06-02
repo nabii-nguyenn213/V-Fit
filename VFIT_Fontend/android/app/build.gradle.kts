@@ -14,6 +14,13 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+fun configValue(name: String): String {
+    return providers.gradleProperty(name)
+        .orElse(providers.environmentVariable(name))
+        .orElse("")
+        .get()
+}
+
 android {
     namespace = "com.vfit.vfit_frontend"
     compileSdk = flutter.compileSdkVersion
@@ -38,6 +45,10 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["usesCleartextTraffic"] = "false"
+        val facebookAppId = configValue("FACEBOOK_APP_ID")
+        resValue("string", "facebook_app_id", facebookAppId)
+        resValue("string", "facebook_client_token", configValue("FACEBOOK_CLIENT_TOKEN"))
+        resValue("string", "fb_login_protocol_scheme", "fb$facebookAppId")
     }
 
     signingConfigs {

@@ -8,6 +8,7 @@ import '../../../../core/network/network_providers.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../profile/data/models/user_model.dart';
 import '../models/auth_models.dart';
+import '../services/social_login_client.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
@@ -27,6 +28,27 @@ class AuthRepository {
       final response = await _dio.post<dynamic>(
         ApiEndpoints.login,
         data: request.toJson(),
+      );
+      final auth = ApiResponseParser.unwrap(
+        response,
+        (json) => AuthResponse.fromJson(Map<String, dynamic>.from(json as Map)),
+      );
+      await _persistTokens(auth.tokens);
+      return auth;
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  Future<AuthResponse> socialLogin(SocialLoginCredential credential) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        ApiEndpoints.socialLogin,
+        data: SocialLoginRequest(
+          provider: credential.provider,
+          providerToken: credential.providerToken,
+          platform: credential.platform,
+        ).toJson(),
       );
       final auth = ApiResponseParser.unwrap(
         response,
