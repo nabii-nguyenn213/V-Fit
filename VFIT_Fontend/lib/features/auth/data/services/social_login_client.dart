@@ -29,8 +29,12 @@ class SocialLoginClient {
             ),
         _facebookAuth = facebookAuth ?? FacebookAuth.instance;
 
-  static const _googleWebClientId =
-      String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+  static const _defaultGoogleWebClientId =
+      '82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com';
+  static const _googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: _defaultGoogleWebClientId,
+  );
   static String? get _googleClientId =>
       kIsWeb && _googleWebClientId.isNotEmpty ? _googleWebClientId : null;
   static String? get _googleServerClientId =>
