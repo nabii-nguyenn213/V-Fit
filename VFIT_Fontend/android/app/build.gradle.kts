@@ -14,6 +14,15 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val defaultDebugKeystorePath = providers.environmentVariable("USERPROFILE")
+    .map { "$it\\.android\\debug.keystore" }
+    .orElse("${System.getProperty("user.home")}\\.android\\debug.keystore")
+val debugKeystoreFile = file(
+    providers.environmentVariable("ANDROID_DEBUG_KEYSTORE")
+        .orElse(defaultDebugKeystorePath)
+        .get()
+)
+
 fun configValue(name: String): String {
     return providers.gradleProperty(name)
         .orElse(providers.environmentVariable(name))
@@ -52,6 +61,14 @@ android {
     }
 
     signingConfigs {
+        getByName("debug") {
+            if (debugKeystoreFile.exists()) {
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+                storeFile = debugKeystoreFile
+                storePassword = "android"
+            }
+        }
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String?
             keyPassword = keystoreProperties["keyPassword"] as String?
@@ -63,9 +80,11 @@ android {
     buildTypes {
         debug {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
+            signingConfig = signingConfigs.getByName("debug")
         }
         getByName("profile") {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
+            signingConfig = signingConfigs.getByName("debug")
         }
         release {
             manifestPlaceholders["usesCleartextTraffic"] = "false"
