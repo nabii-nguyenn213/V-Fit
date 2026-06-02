@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/config/environment.dart';
 import '../models/auth_models.dart';
 
 class SocialLoginCredential {
@@ -29,16 +30,14 @@ class SocialLoginClient {
             ),
         _facebookAuth = facebookAuth ?? FacebookAuth.instance;
 
-  static const _defaultGoogleWebClientId =
-      '82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com';
-  static const _googleWebClientId = String.fromEnvironment(
-    'GOOGLE_WEB_CLIENT_ID',
-    defaultValue: _defaultGoogleWebClientId,
-  );
   static String? get _googleClientId =>
-      kIsWeb && _googleWebClientId.isNotEmpty ? _googleWebClientId : null;
+      kIsWeb && Environment.googleWebClientId.isNotEmpty
+          ? Environment.googleWebClientId
+          : null;
   static String? get _googleServerClientId =>
-      _googleWebClientId.isNotEmpty ? _googleWebClientId : null;
+      Environment.googleWebClientId.isNotEmpty
+          ? Environment.googleWebClientId
+          : null;
 
   final GoogleSignIn _googleSignIn;
   final FacebookAuth _facebookAuth;
@@ -52,8 +51,10 @@ class SocialLoginClient {
           error.message?.contains('ApiException: 10') == true) {
         throw Exception(
           'Google login is not configured for this Android app. Check '
-          'GOOGLE_WEB_CLIENT_ID and the Android OAuth client package/SHA '
-          'certificate in Google Cloud or Firebase.',
+          'Google Cloud or Firebase has an Android OAuth client for package '
+          '${Environment.googleAndroidPackageName} with SHA-1 '
+          '${Environment.googleDebugSha1}, and that backend GOOGLE_CLIENT_ID '
+          'matches Web OAuth client ${Environment.googleWebClientId}.',
         );
       }
       rethrow;
