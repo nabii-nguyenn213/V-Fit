@@ -52,9 +52,10 @@ class SocialLoginClient {
         throw Exception(
           'Google login is not configured for this Android app. Check '
           'Google Cloud or Firebase has an Android OAuth client for package '
-          '${Environment.googleAndroidPackageName} with SHA-1 '
-          '${Environment.googleDebugSha1}, and that backend GOOGLE_CLIENT_ID '
-          'matches Web OAuth client ${Environment.googleWebClientId}.',
+          '${Environment.googleAndroidPackageName}, client id '
+          '${Environment.defaultGoogleAndroidClientId}, and SHA-1 '
+          '${Environment.googleDebugSha1}. Backend GOOGLE_CLIENT_ID must '
+          'match Web OAuth client ${Environment.googleWebClientId}.',
         );
       }
       rethrow;

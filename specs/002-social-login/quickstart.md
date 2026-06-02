@@ -20,11 +20,14 @@ mvn test
 
 The frontend has the V-FIT Web OAuth client configured by default. Override
 `GOOGLE_WEB_CLIENT_ID` only when switching Google Cloud or Firebase projects.
-iOS configuration is out of scope for v1.
+Use the Web OAuth client for both Flutter `GOOGLE_WEB_CLIENT_ID` and backend
+`GOOGLE_CLIENT_ID`. iOS configuration is out of scope for v1.
 
 For Android, Google Cloud or Firebase must contain an Android OAuth client with:
 
 ```text
+Web OAuth client id: 82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com
+Android OAuth client id: 82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com
 Package name: com.vfit.vfit_frontend
 Debug SHA-1: 1A:87:A8:3D:41:96:5D:2E:19:A5:D1:32:7D:98:71:A8:B6:33:D3:72
 Debug SHA-256: DF:93:48:4A:FA:17:C9:6C:3D:C3:88:AD:A1:E0:40:5A:04:E3:66:61:8F:9C:EC:61:D1:5A:F3:DA:60:98:BC:96
