@@ -98,5 +98,5 @@ bd close <id>         # Complete work
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read
-`specs/001-ai-native-baseline/plan.md`.
+`specs/002-social-login/plan.md`.
 <!-- SPECKIT END -->
