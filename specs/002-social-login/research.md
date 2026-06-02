@@ -30,6 +30,15 @@ Alternatives considered: Separate `/google-login` and `/facebook-login`
 endpoints. Rejected because they would duplicate response handling and token
 issuance code.
 
+## Decision: Scope V1 To Android And Web
+
+Rationale: The requested v1 platform scope is Android and web. Keeping iOS out
+of scope avoids provider SDK and OAuth configuration work that is not required
+for the first implementation.
+
+Alternatives considered: Support Android, iOS, and web in v1. Rejected because
+the user explicitly selected Android and web for v1.
+
 ## Decision: Store Provider Link Metadata Without Raw Tokens
 
 Rationale: The system only needs provider, provider subject, verified email,

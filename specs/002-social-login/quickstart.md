@@ -18,8 +18,8 @@ mvn test
 
 ## Frontend Configuration
 
-Add provider SDK configuration for Android, iOS, and web according to the
-selected Flutter packages.
+Add provider SDK configuration for Android and web according to the selected
+Flutter packages. iOS configuration is out of scope for v1.
 
 Run Flutter dependency install and analysis from `VFIT_Fontend`.
 

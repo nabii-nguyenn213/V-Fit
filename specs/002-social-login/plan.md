@@ -29,9 +29,8 @@ client token storage for V-FIT JWTs; no raw provider tokens persisted.
 **Testing**: Maven tests for backend auth service/controller/provider verifier;
 Flutter widget/unit tests for login UI, repository, controller, and routing.
 
-**Target Platform**: Mobile-first Flutter app for Android, iOS, and web where
-provider SDK support is available; Spring Boot API deployed by Docker Compose
-behind Nginx.
+**Target Platform**: Flutter app for Android and web in v1 where provider SDK
+support is available; Spring Boot API deployed by Docker Compose behind Nginx.
 
 **Project Type**: Mobile app plus API modular monolith.
 
@@ -43,9 +42,10 @@ blocking unrelated auth flows during provider outage.
 issue only V-FIT JWTs; provider token failure MUST NOT create, link, disable, or
 merge accounts; existing auth endpoints MUST remain compatible.
 
-**Scale/Scope**: Covers login with Google and Facebook, canonical account
-linking, provider conflict handling, auth audit events, Flutter login UI, and
-API contract updates.
+**Scale/Scope**: Covers login with Google and Facebook on Android and web,
+canonical account linking, provider conflict handling, auth audit events,
+Flutter login UI, and API contract updates. iOS provider configuration is out
+of scope for v1.
 
 ## Constitution Check
 
@@ -134,7 +134,7 @@ Flutter LoginPage
 ## Phase 0: Research
 
 1. Confirm Flutter packages for Google and Facebook provider login across
-   Android, iOS, and web.
+   Android and web.
 2. Confirm backend verification strategy for Google ID tokens and Facebook
    access tokens.
 3. Decide provider identity persistence shape: embedded user provider links vs
@@ -158,7 +158,7 @@ Flutter LoginPage
 6. Persist provider identity links without raw provider tokens in MongoDB.
 7. Extend Flutter `ApiEndpoints`, `AuthRepository`, `AuthController`, auth
    models, auth events/states, and `LoginPage` for social login.
-8. Add provider SDK configuration for Android, iOS, and web as required by the
+8. Add provider SDK configuration for Android and web as required by the
    selected packages.
 9. Add backend and Flutter tests for success, disabled user, invalid token,
    missing email, duplicate provider, and existing email/password compatibility.

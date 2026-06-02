@@ -52,8 +52,8 @@ Rules:
 - Backend MUST issue V-FIT JWTs only after verification succeeds.
 - Backend MUST NOT return raw provider tokens.
 - Provider plus provider subject MUST resolve to at most one V-FIT user.
-- Existing email/password users MAY be linked by verified email when no
-  conflicting provider link exists.
+- Existing email/password users MUST be linked by verified email when the user
+  is active and no conflicting provider link exists.
 - Disabled users MUST be rejected even when provider verification succeeds.
 
 Error cases:

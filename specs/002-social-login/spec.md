@@ -8,12 +8,25 @@
 
 **Input**: User description: "Add Google and Facebook login methods."
 
+## Clarifications
+
+### Session 2026-06-02
+
+- Q: Where should Google and Facebook login controls appear? -> A: Show two
+  buttons below the existing login form on the login page.
+- Q: How should social login handle an existing V-FIT account with the same
+  verified provider email? -> A: Automatically link the provider to the
+  existing account when there is no provider identity conflict.
+- Q: Which platforms are in scope for v1 social login? -> A: Android and web
+  only.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Sign In With Google (Priority: P1)
 
-A user taps the Google login button, completes Google consent, and enters V-FIT
-with a canonical V-FIT account and V-FIT JWT tokens.
+A user taps the Google login button shown below the existing login form,
+completes Google consent, and enters V-FIT with a canonical V-FIT account and
+V-FIT JWT tokens.
 
 **Why this priority**: Google sign-in is the most common social login path and
 reduces onboarding friction without replacing existing email/password login.
@@ -38,8 +51,9 @@ the returned user state.
 
 ### User Story 2 - Sign In With Facebook (Priority: P1)
 
-A user taps the Facebook login button, completes Facebook consent, and enters
-V-FIT with a canonical V-FIT account and V-FIT JWT tokens.
+A user taps the Facebook login button shown below the existing login form,
+completes Facebook consent, and enters V-FIT with a canonical V-FIT account and
+V-FIT JWT tokens.
 
 **Why this priority**: Facebook login is required alongside Google by the user
 request and must follow the same identity boundary rules.
@@ -77,9 +91,10 @@ onboarding status.
 
 **Acceptance Scenarios**:
 
-1. **Given** an existing email/password account with a verified provider email,
-   **When** the user logs in with that provider, **Then** the provider identity
-   MAY be linked to the existing account and V-FIT JWTs are issued.
+1. **Given** an existing email/password account with a verified provider email
+   and no conflicting provider identity, **When** the user logs in with that
+   provider, **Then** the provider identity MUST be linked to the existing
+   account and V-FIT JWTs are issued.
 2. **Given** a disabled V-FIT user, **When** any social login provider succeeds,
    **Then** V-FIT MUST reject the login and route the client to the disabled
    account experience.
@@ -104,24 +119,29 @@ onboarding status.
 
 - **FR-001**: System MUST add Google and Facebook sign-in as additional login
   methods without removing email/password login.
-- **FR-002**: Flutter MUST obtain provider credentials using platform SDKs and
+- **FR-002**: The login page MUST show two separate social login buttons below
+  the existing email/password login form: one for Google and one for Facebook.
+- **FR-003**: Flutter MUST obtain provider credentials using platform SDKs and
   send only provider type plus provider token to the V-FIT backend.
-- **FR-003**: Backend MUST verify Google and Facebook tokens server-side before
+- **FR-004**: Backend MUST verify Google and Facebook tokens server-side before
   account creation, login, or linking.
-- **FR-004**: Backend MUST map provider identity to one canonical V-FIT user by
-  provider subject and verified email rules.
-- **FR-005**: Backend MUST issue only V-FIT JWT access and refresh tokens to the
+- **FR-005**: Backend MUST map provider identity to one canonical V-FIT user by
+  provider subject first, then automatically link by verified email when the
+  existing user is active and no provider identity conflict exists.
+- **FR-006**: Backend MUST issue only V-FIT JWT access and refresh tokens to the
   Flutter client after provider verification succeeds.
-- **FR-006**: System MUST persist provider link metadata without exposing raw
+- **FR-007**: System MUST persist provider link metadata without exposing raw
   provider tokens in user-facing responses.
-- **FR-007**: System MUST audit social login success, failure, link, and
+- **FR-008**: System MUST audit social login success, failure, link, and
   duplicate-provider rejection events.
-- **FR-008**: System MUST return API responses through the existing success and
+- **FR-009**: System MUST return API responses through the existing success and
   error envelope conventions.
-- **FR-009**: System MUST route authenticated social-login users to onboarding
+- **FR-010**: System MUST route authenticated social-login users to onboarding
   or home using the same `AuthStatus` behavior as email/password login.
-- **FR-010**: System MUST reject disabled users and already-linked provider
+- **FR-011**: System MUST reject disabled users and already-linked provider
   conflicts without destructive account merges.
+- **FR-012**: V1 social login MUST support Android and web. iOS provider
+  configuration is out of scope for v1 unless a later spec amendment adds it.
 
 ### Key Entities
 
@@ -153,10 +173,11 @@ onboarding status.
 ## Assumptions
 
 - Flutter remains the only client for this feature.
+- V1 social login supports Android and web only.
 - Google sign-in uses `google_sign_in` or a current Flutter-compatible Google
-  provider SDK.
+  provider SDK that supports Android and web.
 - Facebook sign-in uses `flutter_facebook_auth` or a current
-  Flutter-compatible Facebook provider SDK.
+  Flutter-compatible Facebook provider SDK that supports Android and web.
 - Backend provider verification uses official provider token verification
   endpoints or libraries, with configured client/app ids from environment.
 - New social users remain subject to the existing onboarding guard.
