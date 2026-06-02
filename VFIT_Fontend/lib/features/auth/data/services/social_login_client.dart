@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -23,20 +24,36 @@ class SocialLoginClient {
   })  : _googleSignIn = googleSignIn ??
             GoogleSignIn(
               scopes: const ['email', 'profile'],
-              clientId: _googleWebClientId.isEmpty ? null : _googleWebClientId,
-              serverClientId:
-                  _googleWebClientId.isEmpty ? null : _googleWebClientId,
+              clientId: _googleClientId,
+              serverClientId: _googleServerClientId,
             ),
         _facebookAuth = facebookAuth ?? FacebookAuth.instance;
 
   static const _googleWebClientId =
       String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+  static String? get _googleClientId =>
+      kIsWeb && _googleWebClientId.isNotEmpty ? _googleWebClientId : null;
+  static String? get _googleServerClientId =>
+      _googleWebClientId.isNotEmpty ? _googleWebClientId : null;
 
   final GoogleSignIn _googleSignIn;
   final FacebookAuth _facebookAuth;
 
   Future<SocialLoginCredential?> signInWithGoogle() async {
-    final account = await _googleSignIn.signIn();
+    final GoogleSignInAccount? account;
+    try {
+      account = await _googleSignIn.signIn();
+    } on PlatformException catch (error) {
+      if (error.code == 'sign_in_failed' &&
+          error.message?.contains('ApiException: 10') == true) {
+        throw Exception(
+          'Google login is not configured for this Android app. Check '
+          'GOOGLE_WEB_CLIENT_ID and the Android OAuth client package/SHA '
+          'certificate in Google Cloud or Firebase.',
+        );
+      }
+      rethrow;
+    }
     if (account == null) {
       return null;
     }
