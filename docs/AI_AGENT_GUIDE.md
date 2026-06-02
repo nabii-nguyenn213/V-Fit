@@ -30,16 +30,17 @@ Flutter source structure.
 2. Read project context before changing anything: `AGENTS.md`,
    `specs/001-ai-native-baseline/plan.md`, `specs/constitution.md`, and
    `skills/tech-decision/decision.md`.
-3. Do not modify source code for documentation-only requests.
-4. Do not bypass the V-FIT AI boundary. All intelligent backend work MUST go
+3. For deploy-sensitive code, read `docs/DEPLOY_ARCHITECTURE_RULES.md`.
+4. Do not modify source code for documentation-only requests.
+5. Do not bypass the V-FIT AI boundary. All intelligent backend work MUST go
    through `com.vfit.infrastructure.external.ai.AiClient`.
-5. Do not scatter prompts. Prompts, output schemas, context rules, and fallback
+6. Do not scatter prompts. Prompts, output schemas, context rules, and fallback
    rules belong under `skills/conversation/`.
-6. Do not change core technology choices without first updating
+7. Do not change core technology choices without first updating
    `skills/tech-decision/decision.md`.
-7. Treat body metrics, progress photos, food images, AI analysis, payment data,
+8. Treat body metrics, progress photos, food images, AI analysis, payment data,
    tokens, and account state as sensitive.
-8. Verify before claiming completion. Fresh command output is required for any
+9. Verify before claiming completion. Fresh command output is required for any
    statement that tests, lint, build, or behavior pass.
 
 ## Project Mental Model

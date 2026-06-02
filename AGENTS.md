@@ -100,3 +100,9 @@ For additional context about technologies to be used, project structure,
 shell commands, and other important information, read
 `specs/002-social-login/plan.md`.
 <!-- SPECKIT END -->
+
+## Deploy Architecture Rules
+
+Before changing deploy-sensitive code, OAuth config, Android signing, runtime
+environment variables, or production setup, read
+`docs/DEPLOY_ARCHITECTURE_RULES.md`.

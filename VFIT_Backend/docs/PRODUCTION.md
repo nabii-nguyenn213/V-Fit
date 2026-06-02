@@ -1,5 +1,9 @@
 # V-FIT Production Deployment
 
+Read `../../docs/DEPLOY_ARCHITECTURE_RULES.md` before changing production
+deployment, OAuth, Android signing, frontend runtime config, or backend env
+contracts.
+
 ## Recommended Layout
 
 Use this layout when the app is heading toward real mobile release:
