@@ -29,8 +29,8 @@ For Android, Google Cloud or Firebase must contain an Android OAuth client with:
 Web OAuth client id: 82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com
 Android OAuth client id: 82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com
 Package name: com.vfit.vfit_frontend
-Debug SHA-1: 1A:87:A8:3D:41:96:5D:2E:19:A5:D1:32:7D:98:71:A8:B6:33:D3:72
-Debug SHA-256: DF:93:48:4A:FA:17:C9:6C:3D:C3:88:AD:A1:E0:40:5A:04:E3:66:61:8F:9C:EC:61:D1:5A:F3:DA:60:98:BC:96
+Debug SHA-1: 86:79:18:F7:F0:B4:F7:01:92:12:52:29:6D:03:E0:B3:8E:88:5A:B2
+Debug SHA-256: 7F:6F:AB:86:A3:30:5E:5C:A4:E4:B7:0E:CD:B2:58:38:80:53:5A:0A:23:F4:21:DD:55:01:69:B0:70:C7:E8:54
 ```
 
 Android native Facebook configuration is read by Gradle from environment or
