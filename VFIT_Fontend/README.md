@@ -27,6 +27,8 @@ flutter pub get
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080
 ```
 
+## Google OAuth
+
 Google Sign-In uses the V-FIT Web OAuth client by default, so local runs do not
 need `GOOGLE_WEB_CLIENT_ID` unless switching Google Cloud or Firebase projects.
 Use the Web OAuth client for both Flutter `GOOGLE_WEB_CLIENT_ID` and backend
@@ -36,18 +38,33 @@ Use the Web OAuth client for both Flutter `GOOGLE_WEB_CLIENT_ID` and backend
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080 --dart-define=GOOGLE_WEB_CLIENT_ID=82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com
 ```
 
-For Android, Google Cloud or Firebase must also contain an Android OAuth client
-with these values. Do not pass this Android client id as `GOOGLE_WEB_CLIENT_ID`.
+For Android, Google Cloud or Firebase must also contain Android OAuth clients for
+each signing certificate used by the app. Do not pass an Android client id as
+`GOOGLE_WEB_CLIENT_ID`.
 
 ```text
 Web OAuth client id: 82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com
-Android OAuth client id: 82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com
 Package name: com.vfit.vfit_frontend
+Debug Android OAuth client id: 82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com
 Debug SHA-1: 86:79:18:F7:F0:B4:F7:01:92:12:52:29:6D:03:E0:B3:8E:88:5A:B2
 Debug SHA-256: 7F:6F:AB:86:A3:30:5E:5C:A4:E4:B7:0E:CD:B2:58:38:80:53:5A:0A:23:F4:21:DD:55:01:69:B0:70:C7:E8:54
+Release Android OAuth client id: create one per release signing SHA-1
 ```
 
 The backend must use the same Web OAuth client id as `GOOGLE_CLIENT_ID`.
+
+For release builds, generate the signed APK/AAB, get the release certificate
+fingerprint, create a matching Android OAuth client in Google Cloud/Firebase,
+then pass these diagnostic values at build time:
+
+```bash
+flutter build apk --release \
+  --dart-define=API_BASE_URL=https://api.your-domain.com \
+  --dart-define=GOOGLE_ANDROID_SIGNING_VARIANT=release \
+  --dart-define=GOOGLE_ANDROID_CLIENT_ID=<release-android-oauth-client-id> \
+  --dart-define=GOOGLE_ANDROID_SHA1=<release-sha-1> \
+  --dart-define=GOOGLE_ANDROID_SHA256=<release-sha-256>
+```
 
 If this folder was created without platform folders because Flutter CLI was unavailable, run this once inside this directory:
 

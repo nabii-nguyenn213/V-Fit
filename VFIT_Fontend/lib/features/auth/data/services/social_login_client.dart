@@ -100,10 +100,10 @@ class SocialLoginClient {
     final message = StringBuffer(
       'Google login is not configured for this Android app. Check '
       'Google Cloud or Firebase has an Android OAuth client for package '
-      '${Environment.googleAndroidPackageName}, client id '
-      '${Environment.defaultGoogleAndroidClientId}, and SHA-1 '
-      '${Environment.googleDebugSha1}. Backend GOOGLE_CLIENT_ID must '
-      'match Web OAuth client ${Environment.googleWebClientId}.',
+      '${Environment.googleAndroidPackageName}, ${Environment.googleAndroidSigningVariant} '
+      'client id ${Environment.googleAndroidClientId}, and SHA-1 '
+      '${Environment.googleAndroidSha1}. Backend GOOGLE_CLIENT_ID must match '
+      'Web OAuth client ${Environment.googleWebClientId}.',
     );
 
     if (kDebugMode) {
@@ -111,6 +111,19 @@ class SocialLoginClient {
         ..writeln()
         ..writeln()
         ..writeln('Debug details:')
+        ..writeln(
+          'Google Android package: ${Environment.googleAndroidPackageName}',
+        )
+        ..writeln(
+          'Google Android signing variant: '
+          '${Environment.googleAndroidSigningVariant}',
+        )
+        ..writeln(
+          'Google Android client id: ${Environment.googleAndroidClientId}',
+        )
+        ..writeln('Google Android SHA-1: ${Environment.googleAndroidSha1}')
+        ..writeln('Google Android SHA-256: ${Environment.googleAndroidSha256}')
+        ..writeln('Google Web client id: ${Environment.googleWebClientId}')
         ..writeln('PlatformException.code: ${error.code}')
         ..writeln('PlatformException.message: ${error.message}')
         ..write('PlatformException.details: ${error.details}');

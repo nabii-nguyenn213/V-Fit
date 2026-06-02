@@ -23,14 +23,17 @@ The frontend has the V-FIT Web OAuth client configured by default. Override
 Use the Web OAuth client for both Flutter `GOOGLE_WEB_CLIENT_ID` and backend
 `GOOGLE_CLIENT_ID`. iOS configuration is out of scope for v1.
 
-For Android, Google Cloud or Firebase must contain an Android OAuth client with:
+For Android, Google Cloud or Firebase must contain Android OAuth clients for
+each signing certificate used by the app. Do not pass an Android client id as
+`GOOGLE_WEB_CLIENT_ID`.
 
 ```text
 Web OAuth client id: 82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com
-Android OAuth client id: 82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com
 Package name: com.vfit.vfit_frontend
+Debug Android OAuth client id: 82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com
 Debug SHA-1: 86:79:18:F7:F0:B4:F7:01:92:12:52:29:6D:03:E0:B3:8E:88:5A:B2
 Debug SHA-256: 7F:6F:AB:86:A3:30:5E:5C:A4:E4:B7:0E:CD:B2:58:38:80:53:5A:0A:23:F4:21:DD:55:01:69:B0:70:C7:E8:54
+Release Android OAuth client id: create one per release signing SHA-1
 ```
 
 Android native Facebook configuration is read by Gradle from environment or
@@ -46,6 +49,18 @@ overrides are needed.
 
 ```powershell
 flutter run --dart-define=FACEBOOK_APP_ID=facebook-app-id
+```
+
+Release builds can override Google Android diagnostic values without changing
+code:
+
+```powershell
+flutter build apk --release `
+  --dart-define=API_BASE_URL=https://api.your-domain.com `
+  --dart-define=GOOGLE_ANDROID_SIGNING_VARIANT=release `
+  --dart-define=GOOGLE_ANDROID_CLIENT_ID=release-android-oauth-client-id `
+  --dart-define=GOOGLE_ANDROID_SHA1=release-sha-1 `
+  --dart-define=GOOGLE_ANDROID_SHA256=release-sha-256
 ```
 
 Run Flutter dependency install and analysis from `VFIT_Fontend`.
