@@ -18,6 +18,15 @@ class SocialLoginCredential {
   final String platform;
 }
 
+class SocialLoginConfigurationException implements Exception {
+  const SocialLoginConfigurationException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class SocialLoginClient {
   SocialLoginClient({
     GoogleSignIn? googleSignIn,
@@ -49,13 +58,8 @@ class SocialLoginClient {
     } on PlatformException catch (error) {
       if (error.code == 'sign_in_failed' &&
           error.message?.contains('ApiException: 10') == true) {
-        throw Exception(
-          'Google login is not configured for this Android app. Check '
-          'Google Cloud or Firebase has an Android OAuth client for package '
-          '${Environment.googleAndroidPackageName}, client id '
-          '${Environment.defaultGoogleAndroidClientId}, and SHA-1 '
-          '${Environment.googleDebugSha1}. Backend GOOGLE_CLIENT_ID must '
-          'match Web OAuth client ${Environment.googleWebClientId}.',
+        throw SocialLoginConfigurationException(
+          _googleAndroidConfigurationError(error),
         );
       }
       rethrow;
@@ -90,6 +94,29 @@ class SocialLoginClient {
       providerToken: result.accessToken!.tokenString,
       platform: _platform,
     );
+  }
+
+  String _googleAndroidConfigurationError(PlatformException error) {
+    final message = StringBuffer(
+      'Google login is not configured for this Android app. Check '
+      'Google Cloud or Firebase has an Android OAuth client for package '
+      '${Environment.googleAndroidPackageName}, client id '
+      '${Environment.defaultGoogleAndroidClientId}, and SHA-1 '
+      '${Environment.googleDebugSha1}. Backend GOOGLE_CLIENT_ID must '
+      'match Web OAuth client ${Environment.googleWebClientId}.',
+    );
+
+    if (kDebugMode) {
+      message
+        ..writeln()
+        ..writeln()
+        ..writeln('Debug details:')
+        ..writeln('PlatformException.code: ${error.code}')
+        ..writeln('PlatformException.message: ${error.message}')
+        ..write('PlatformException.details: ${error.details}');
+    }
+
+    return message.toString();
   }
 
   String get _platform {
