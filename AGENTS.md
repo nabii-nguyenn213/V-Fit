@@ -98,7 +98,7 @@ bd close <id>         # Complete work
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read
-`specs/002-social-login/plan.md`.
+`specs/003-google-login-select-account/plan.md`.
 <!-- SPECKIT END -->
 
 ## Deploy Architecture Rules

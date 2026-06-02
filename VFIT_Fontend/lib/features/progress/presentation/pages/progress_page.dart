@@ -29,6 +29,7 @@ import '../../data/repositories/progress_repository.dart';
 import '../../../challenges/data/models/participation_model.dart';
 import '../../../challenges/presentation/controllers/active_challenge_notifier.dart';
 import '../widgets/progress_camera_capture_page.dart';
+import '../../../../core/widgets/draggable_camera_button.dart';
 
 class ProgressPage extends ConsumerStatefulWidget {
   const ProgressPage({super.key});
@@ -190,78 +191,66 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
     }
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isUploading ? null : _takeSnap,
-        backgroundColor: AppColors.primaryOf(context),
-        foregroundColor: AppColors.onAccentOf(context),
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        icon: _isUploading
-            ? SizedBox.square(
-                dimension: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.onAccentOf(context),
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(bodyMetricsProvider);
+              ref.invalidate(badgesProvider);
+              ref.invalidate(challengesProvider);
+              ref.invalidate(journeySnapsProvider);
+              ref.invalidate(activeChallengeNotifierProvider);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: AppResponsive.pagePadding(context).copyWith(
+                bottom: AppResponsive.pagePadding(context).bottom + 96,
+              ),
+              children: [
+                _ProgressHeader(user: user),
+                const SizedBox(height: 16),
+                _WeeklyFocusCard(
+                  user: user,
+                  snaps: snaps.valueOrNull,
+                  badges: badges.valueOrNull,
+                  challenges: challenges.valueOrNull,
                 ),
-              )
-            : const Icon(Icons.add_photo_alternate_rounded),
-        label: Text(
-          'Chụp tiến độ',
-          style: AppTypography.label(color: AppColors.onAccentOf(context)),
-        ),
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(bodyMetricsProvider);
-          ref.invalidate(badgesProvider);
-          ref.invalidate(challengesProvider);
-          ref.invalidate(journeySnapsProvider);
-          ref.invalidate(activeChallengeNotifierProvider);
-        },
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: AppResponsive.pagePadding(context).copyWith(
-            bottom: AppResponsive.pagePadding(context).bottom + 72,
+                const SizedBox(height: 16),
+                metrics.when(
+                  data: (metric) => _BodyMetricsSection(metric: metric),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (error, _) => ErrorView(message: error.toString()),
+                ),
+
+                _JourneySection(
+                  snaps: snaps,
+                  localSnaps: _localSnaps,
+                  registeredAt: user.createdAt ?? DateTime.now(),
+                  showAllDays: _showAllJourneyDays,
+                  isUploading: _isUploading,
+                  onDelete: _deleteSnap,
+                  onToggleAllDays: () {
+                    setState(() => _showAllJourneyDays = !_showAllJourneyDays);
+                  },
+                ),
+                const SizedBox(height: 20),
+                _BadgesSection(badges: badges),
+                const SizedBox(height: 20),
+                _ChallengesSection(challenges: ref.watch(challengesProvider)),
+                const SizedBox(height: 20),
+                const _AiInsightCard(),
+              ],
+            ),
           ),
-          children: [
-            _ProgressHeader(user: user),
-            const SizedBox(height: 16),
-            _WeeklyFocusCard(
-              user: user,
-              snaps: snaps.valueOrNull,
-              badges: badges.valueOrNull,
-              challenges: challenges.valueOrNull,
-            ),
-            const SizedBox(height: 16),
-            metrics.when(
-              data: (metric) => _BodyMetricsSection(metric: metric),
-              loading: () => const LinearProgressIndicator(),
-              error: (error, _) => ErrorView(message: error.toString()),
-            ),
-            const SizedBox(height: 16),
-            const _MuscleHeatmapCard(),
-            const SizedBox(height: 20),
-            _JourneySection(
-              snaps: snaps,
-              localSnaps: _localSnaps,
-              registeredAt: user.createdAt ?? DateTime.now(),
-              showAllDays: _showAllJourneyDays,
-              isUploading: _isUploading,
-              onDelete: _deleteSnap,
-              onToggleAllDays: () {
-                setState(() => _showAllJourneyDays = !_showAllJourneyDays);
-              },
-            ),
-            const SizedBox(height: 20),
-            _BadgesSection(badges: badges),
-            const SizedBox(height: 20),
-            _ChallengesSection(challenges: ref.watch(challengesProvider)),
-            const SizedBox(height: 20),
-            const _AiInsightCard(),
-          ],
-        ),
+          // Draggable floating camera button — free to move like iPhone AssistiveTouch.
+          // bottomObstacleHeight accounts for the floating bottom nav bar so the
+          // button auto-snaps above it and they never overlap.
+          DraggableCameraButton(
+            onPressed: _takeSnap,
+            isUploading: _isUploading,
+            bottomObstacleHeight: 80 + MediaQuery.of(context).padding.bottom,
+          ),
+        ],
       ),
     );
   }
@@ -438,6 +427,14 @@ class _WeeklyFocusCard extends StatelessWidget {
             value: '$activeChallenges',
           ),
         ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _MetricTile(
+            icon: Icons.photo_library_outlined,
+            label: 'Ảnh hành trình',
+            value: '$snapCount',
+          ),
+        ),
       ],
     );
   }
@@ -450,155 +447,35 @@ class _BodyMetricsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _MetricTile(
-            icon: Icons.monitor_weight_outlined,
-            label: 'Cân nặng',
-            value: metric.weightKg == null
-                ? '-'
-                : '${metric.weightKg!.toStringAsFixed(1)} kg',
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _MetricTile(
-            icon: Icons.speed,
-            label: 'BMI',
-            value: metric.bmi?.toStringAsFixed(1) ?? '-',
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _MetricTile(
-            icon: Icons.percent,
-            label: 'Body fat',
-            value: metric.bodyFatPercent == null
-                ? '-'
-                : '${metric.bodyFatPercent!.toStringAsFixed(1)}%',
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MuscleHeatmapCard extends StatelessWidget {
-  const _MuscleHeatmapCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return AppCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.accessibility_new, color: scheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                'Muscle Progress Heatmap',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w900),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Tính năng đang được phát triển để hiển thị volume tập luyện thực tế theo từng nhóm cơ.',
-            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            height: 180,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHighest.withValues(alpha: 0.52),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: scheme.outlineVariant),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.construction_rounded,
-                  color: scheme.primary,
-                  size: 42,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Đang được phát triển',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-                const SizedBox(height: 6),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    'Heatmap sẽ được mở khi dữ liệu workout logs sẵn sàng.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: scheme.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: const [
-              _ComingSoonChip(label: 'Nhật ký tập luyện'),
-              _ComingSoonChip(label: 'Khối lượng cơ bắp'),
-              _ComingSoonChip(label: 'Cường độ bài tập'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ComingSoonChip extends StatelessWidget {
-  const _ComingSoonChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
+      padding: const EdgeInsets.all(AppSpacing.x4),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.pending_actions_rounded,
-            size: 14,
-            color: scheme.onSurfaceVariant,
+          Expanded(
+            child: _MetricTile(
+              icon: Icons.monitor_weight_outlined,
+              label: 'Cân nặng',
+              value: metric.weightKg == null
+                  ? '-'
+                  : '${metric.weightKg!.toStringAsFixed(1)} kg',
+            ),
           ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: scheme.onSurfaceVariant,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
+          const SizedBox(width: 12),
+          Expanded(
+            child: _MetricTile(
+              icon: Icons.speed,
+              label: 'BMI',
+              value: metric.bmi?.toStringAsFixed(1) ?? '-',
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _MetricTile(
+              icon: Icons.percent,
+              label: 'Body fat',
+              value: metric.bodyFatPercent == null
+                  ? '-'
+                  : '${metric.bodyFatPercent!.toStringAsFixed(1)}%',
             ),
           ),
         ],
@@ -606,6 +483,7 @@ class _ComingSoonChip extends StatelessWidget {
     );
   }
 }
+
 
 class _LocalJourneySnap {
   const _LocalJourneySnap({
@@ -1462,23 +1340,32 @@ class _JourneyInlineNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: scheme.secondaryContainer.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: scheme.secondary.withValues(alpha: 0.18)),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x3,
+        vertical: AppSpacing.x2,
       ),
-      child: Text(
-        message,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: scheme.onSecondaryContainer,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-        ),
+      decoration: BoxDecoration(
+        color: AppColors.surface2Of(context),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        border: Border.all(color: AppColors.borderSubtleOf(context)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 15,
+            color: AppColors.textSecondaryOf(context),
+          ),
+          const SizedBox(width: AppSpacing.x2),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTypography.bodySmallFor(context),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1613,98 +1500,190 @@ class _JourneyMonthViewerState extends State<_JourneyMonthViewer> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final entry = widget.entries[_index];
+    final total = widget.entries.length;
 
     return Dialog.fullscreen(
       backgroundColor: Colors.black,
-      child: SafeArea(
-        child: Stack(
-          children: [
-            Center(
-              child: AspectRatio(
-                aspectRatio: 3 / 4,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: _JourneyEntryImage(entry: entry),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Full-bleed image
+          GestureDetector(
+            onHorizontalDragEnd: (details) {
+              if (details.primaryVelocity == null) return;
+              if (details.primaryVelocity! < -200) _move(1);
+              if (details.primaryVelocity! > 200) _move(-1);
+            },
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: child,
+              ),
+              child: SizedBox.expand(
+                key: ValueKey(_index),
+                child: _JourneyEntryImage(
+                  entry: entry,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
-            Positioned(
-              top: 12,
-              left: 12,
-              right: 12,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      DateFormat('dd/MM/yyyy').format(entry.createdAt),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
+          ),
+
+          // Top bar — glassmorphism
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    // Close button
+                    _ViewerGlassButton(
+                      icon: Icons.close_rounded,
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            DateFormat('dd/MM/yyyy').format(entry.createdAt),
+                            style: AppTypography.headerMedium(
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            '${ _index + 1 } / $total',
+                            style: AppTypography.bodySmall(
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  IconButton.filledTonal(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              left: 10,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: IconButton.filled(
-                  onPressed: () => _move(-1),
-                  icon: const Icon(Icons.chevron_left),
+                  ],
                 ),
               ),
             ),
-            Positioned(
-              right: 10,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: IconButton.filled(
-                  onPressed: () => _move(1),
-                  icon: const Icon(Icons.chevron_right),
-                ),
+          ),
+
+          // Navigation — left
+          Positioned(
+            left: 12,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _ViewerGlassButton(
+                icon: Icons.chevron_left_rounded,
+                onTap: () => _move(-1),
               ),
             ),
-            if (_notice != null)
-              Positioned(
-                top: 68,
-                left: 24,
-                right: 24,
-                child: _JourneyViewerNotice(message: _notice!),
+          ),
+
+          // Navigation — right
+          Positioned(
+            right: 12,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _ViewerGlassButton(
+                icon: Icons.chevron_right_rounded,
+                onTap: () => _move(1),
               ),
-            if (entry.note != null && entry.note!.isNotEmpty)
-              Positioned(
-                left: 24,
-                right: 24,
-                bottom: 24,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: scheme.surface.withValues(alpha: 0.82),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      entry.note!,
-                      style: TextStyle(
-                        color: scheme.onSurface,
-                        fontWeight: FontWeight.w700,
+            ),
+          ),
+
+          // Inline notice toast
+          if (_notice != null)
+            Positioned(
+              bottom: 100,
+              left: 40,
+              right: 40,
+              child: _JourneyViewerNotice(message: _notice!),
+            ),
+
+          // Note pill — bottom
+          if (entry.note != null && entry.note!.isNotEmpty)
+            Positioned(
+              left: 24,
+              right: 24,
+              bottom: MediaQuery.of(context).padding.bottom + 24,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
                       ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.notes_rounded,
+                          color: Colors.white70,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            entry.note!,
+                            style: AppTypography.body(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-          ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// Glass icon button used inside the fullscreen image viewer.
+class _ViewerGlassButton extends StatelessWidget {
+  const _ViewerGlassButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.20),
+              ),
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
         ),
       ),
     );
@@ -1718,21 +1697,23 @@ class _JourneyViewerNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(40),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.50),
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+          ),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySmall(color: Colors.white),
           ),
         ),
       ),
@@ -1741,9 +1722,13 @@ class _JourneyViewerNotice extends StatelessWidget {
 }
 
 class _JourneyEntryImage extends StatelessWidget {
-  const _JourneyEntryImage({required this.entry});
+  const _JourneyEntryImage({
+    required this.entry,
+    this.fit = BoxFit.cover,
+  });
 
   final _JourneySnapEntry entry;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -1751,7 +1736,7 @@ class _JourneyEntryImage extends StatelessWidget {
     if (localSnap != null) {
       return Image.file(
         localSnap.file,
-        fit: BoxFit.cover,
+        fit: fit,
         width: double.infinity,
         height: double.infinity,
       );
@@ -1760,7 +1745,7 @@ class _JourneyEntryImage extends StatelessWidget {
     final remoteSnap = entry.remoteSnap!;
     return Image.network(
       MediaUrlResolver.resolve(remoteSnap.photoUrl),
-      fit: BoxFit.cover,
+      fit: fit,
       width: double.infinity,
       height: double.infinity,
       loadingBuilder: (context, child, loadingProgress) {
@@ -2588,8 +2573,8 @@ class _ProgressRing extends StatelessWidget {
       child: CustomPaint(
         painter: _ProgressRingPainter(
           progress: progress,
-          color: Theme.of(context).colorScheme.primary,
-          trackColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: AppColors.primaryOf(context),
+          trackColor: AppColors.surface2Of(context),
         ),
         child: Center(
           child: Column(
@@ -2597,14 +2582,15 @@ class _ProgressRing extends StatelessWidget {
             children: [
               Text(
                 center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: AppTypography.label(
+                  color: AppColors.textPrimary,
+                ).copyWith(fontSize: 15, fontWeight: FontWeight.w900),
               ),
               Text(
                 caption,
-                style: const TextStyle(fontSize: 10),
+                style: AppTypography.bodySmall(
+                  color: AppColors.textSecondary,
+                ).copyWith(fontSize: 10),
               ),
             ],
           ),

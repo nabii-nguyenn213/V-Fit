@@ -1318,8 +1318,15 @@ class _Value extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(value, style: Theme.of(context).textTheme.titleMedium),
-        Text(label),
+        Text(
+          label,
+          style: AppTypography.bodySmallFor(context),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: AppTypography.headerMediumFor(context),
+        ),
       ],
     );
   }

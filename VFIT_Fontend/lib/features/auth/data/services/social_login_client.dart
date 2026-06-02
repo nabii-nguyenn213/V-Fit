@@ -55,6 +55,11 @@ class SocialLoginClient {
     final GoogleSignInAccount? account;
     try {
       _debugLogGoogleSignInStart();
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        debugPrint('[GoogleSignIn] Pre-signin signOut error: $e');
+      }
       account = await _googleSignIn.signIn();
     } on PlatformException catch (error) {
       if (error.code == 'sign_in_failed' &&
