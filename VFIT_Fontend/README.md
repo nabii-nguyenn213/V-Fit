@@ -31,7 +31,7 @@ Google Sign-In uses the V-FIT Web OAuth client by default. Override it only
 when switching Google Cloud projects:
 
 ```bash
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080 --dart-define=GOOGLE_WEB_CLIENT_ID=82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080 --dart-define=GOOGLE_WEB_CLIENT_ID=82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com
 ```
 
 If this folder was created without platform folders because Flutter CLI was unavailable, run this once inside this directory:

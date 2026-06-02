@@ -5,7 +5,7 @@
 Add provider configuration to the backend runtime environment.
 
 ```powershell
-$env:GOOGLE_CLIENT_ID="82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com"
+$env:GOOGLE_CLIENT_ID="82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com"
 $env:FACEBOOK_APP_ID="facebook-app-id"
 $env:FACEBOOK_APP_SECRET="facebook-app-secret"
 ```
@@ -32,7 +32,7 @@ $env:FACEBOOK_CLIENT_TOKEN="facebook-client-token"
 Flutter social login uses dart defines for provider SDK client/app ids.
 
 ```powershell
-flutter run --dart-define=GOOGLE_WEB_CLIENT_ID=82528745694-cd0qsn1gl8jgb6usahfnmbgn6oshebaf.apps.googleusercontent.com --dart-define=FACEBOOK_APP_ID=facebook-app-id
+flutter run --dart-define=GOOGLE_WEB_CLIENT_ID=82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com --dart-define=FACEBOOK_APP_ID=facebook-app-id
 ```
 
 Run Flutter dependency install and analysis from `VFIT_Fontend`.
