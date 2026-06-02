@@ -54,10 +54,12 @@ class SocialLoginClient {
   Future<SocialLoginCredential?> signInWithGoogle() async {
     final GoogleSignInAccount? account;
     try {
+      _debugLogGoogleSignInStart();
       account = await _googleSignIn.signIn();
     } on PlatformException catch (error) {
       if (error.code == 'sign_in_failed' &&
           error.message?.contains('ApiException: 10') == true) {
+        _debugLogGoogleSignInFailure(error);
         throw SocialLoginConfigurationException(
           _googleAndroidConfigurationError(error),
         );
@@ -130,6 +132,34 @@ class SocialLoginClient {
     }
 
     return message.toString();
+  }
+
+  void _debugLogGoogleSignInStart() {
+    if (!kDebugMode) {
+      return;
+    }
+    debugPrint(
+      '[GoogleSignIn] Starting provider SDK flow. Backend has not been called.',
+    );
+    debugPrint(
+      '[GoogleSignIn] Android package=${Environment.googleAndroidPackageName}, '
+      'variant=${Environment.googleAndroidSigningVariant}, '
+      'androidClientId=${Environment.googleAndroidClientId}, '
+      'sha1=${Environment.googleAndroidSha1}, '
+      'webClientId=${Environment.googleWebClientId}',
+    );
+  }
+
+  void _debugLogGoogleSignInFailure(PlatformException error) {
+    if (!kDebugMode) {
+      return;
+    }
+    debugPrint(
+      '[GoogleSignIn] Provider SDK failed before backend social-login request.',
+    );
+    debugPrint('[GoogleSignIn] PlatformException.code=${error.code}');
+    debugPrint('[GoogleSignIn] PlatformException.message=${error.message}');
+    debugPrint('[GoogleSignIn] PlatformException.details=${error.details}');
   }
 
   String get _platform {

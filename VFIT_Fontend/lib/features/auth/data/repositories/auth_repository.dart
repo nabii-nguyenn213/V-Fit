@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
@@ -42,6 +43,12 @@ class AuthRepository {
 
   Future<AuthResponse> socialLogin(SocialLoginCredential credential) async {
     try {
+      if (kDebugMode) {
+        debugPrint(
+          '[AuthRepository] POST ${ApiEndpoints.socialLogin} '
+          'provider=${credential.provider.name} platform=${credential.platform}',
+        );
+      }
       final response = await _dio.post<dynamic>(
         ApiEndpoints.socialLogin,
         data: SocialLoginRequest(
