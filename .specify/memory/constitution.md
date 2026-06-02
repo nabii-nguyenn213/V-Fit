@@ -1,15 +1,15 @@
 <!--
 Sync Impact Report
-Version change: template -> 1.0.0
+Version change: 1.0.0 -> 1.1.0
 Modified principles:
-- Template principle 1 -> I. AI-Native Control Plane
-- Template principle 2 -> II. Prompt Governance
-- Template principle 3 -> III. Data Boundary Discipline
-- Template principle 4 -> IV. Observable Modular Monolith
-- Template principle 5 -> V. Premium Safety Gates
+- I. AI-Native Control Plane: unchanged
+- II. Prompt Governance: unchanged
+- III. Data Boundary Discipline: unchanged
+- IV. Observable Modular Monolith: unchanged
+- V. Premium Safety Gates: unchanged
+- New principle -> VI. Authentication Identity Integrity
 Added sections:
-- Runtime Architecture Rules
-- Development Workflow
+- None
 Removed sections:
 - None
 Templates requiring updates:
@@ -17,7 +17,11 @@ Templates requiring updates:
 - .specify/templates/spec-template.md: reviewed, no change required
 - .specify/templates/tasks-template.md: updated
 - .specify/templates/checklist-template.md: reviewed, no change required
-- .specify/extensions/git/commands/*.md: reviewed, no change required
+- .specify/templates/commands/*.md: not present
+- .specify/extensions.yml: reviewed, no change required
+- AGENTS.md: reviewed, no change required
+- CLAUDE.md: reviewed, no change required
+- FEATURES.md: reviewed, no change required
 Follow-up TODOs:
 - None
 -->
@@ -73,6 +77,19 @@ limits, and graceful fallback when external AI is unavailable.
 Rationale: AI features are costly, sensitive, and central to paid value.
 Access control and failure behavior must be non-negotiable.
 
+### VI. Authentication Identity Integrity
+The authentication surface MUST support email/password plus Google and Facebook
+sign-in as first-class login methods. External provider tokens MUST be verified
+server-side before account creation, login, or linking. The backend MUST map
+provider identities to one canonical V-FIT user, issue only V-FIT JWTs to
+clients, audit login/link/unlink events, and prevent duplicate accounts for the
+same verified email or provider subject. Provider outages, denied consent,
+missing email claims, disabled users, and already-linked identities MUST return
+explicit, non-destructive error responses.
+
+Rationale: Social login reduces onboarding friction, but identity providers must
+not become uncontrolled account authorities inside the product.
+
 ## Runtime Architecture Rules
 
 - Keep Flutter as the primary mobile client and Spring Boot as the API gateway.
@@ -84,6 +101,8 @@ Access control and failure behavior must be non-negotiable.
 - Keep REST contracts for auth, onboarding, profile, workouts, nutrition,
   progress, payments, gamification, admin, and app config.
 - Keep all prompt-chain definitions in `skills/conversation/`.
+- Keep Google and Facebook login behind backend provider verification, canonical
+  account linking, V-FIT JWT issuance, and security audit events.
 
 ## Development Workflow
 
@@ -104,4 +123,4 @@ principle changes, MINOR for new or materially expanded principles, and PATCH
 for clarification. Compliance MUST be checked during specification, planning,
 review, and release handoff.
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-28 | **Last Amended**: 2026-05-28
+**Version**: 1.1.0 | **Ratified**: 2026-05-28 | **Last Amended**: 2026-06-02

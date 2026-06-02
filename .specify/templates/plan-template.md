@@ -48,6 +48,9 @@ Validate the active plan against the V-FIT constitution:
 - Backend module boundaries, observability, and error envelopes remain intact.
 - Premium AI paths enforce onboarding, JWT, subscription gates, rate limits, and
   fallback behavior.
+- Authentication changes preserve canonical V-FIT user identity, verify Google
+  and Facebook provider tokens server-side, issue V-FIT JWTs only, and audit
+  login/link/unlink events.
 
 ## Project Structure
 
