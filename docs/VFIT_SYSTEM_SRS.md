@@ -124,40 +124,260 @@ flowchart TB
 | Admin | User with `ADMIN` role | Admin dashboard, users, app config, revenue |
 | External provider | Google/Facebook/SePay/AI/Email | Supplies verified identity, payment events, AI outputs, email delivery |
 
-## 7. Use Case Diagram
+## 7. Use Case Model
 
-```mermaid
-flowchart LR
-    Guest((Guest))
-    User((Active User))
-    VIP((VIP User))
-    Admin((Admin))
+The use case diagrams below use UML notation:
 
-    UC1["UC-01 Register & verify OTP"]
-    UC2["UC-02 Login / social login"]
-    UC3["UC-03 Complete onboarding"]
-    UC4["UC-04 Browse workouts & exercises"]
-    UC5["UC-05 Get personalized workout"]
-    UC6["UC-06 Search nutrition / estimate calories"]
-    UC7["UC-07 Upload progress photo"]
-    UC8["UC-08 Join and progress challenge"]
-    UC9["UC-09 Buy VIP / check payment"]
-    UC10["UC-10 AI form check"]
-    UC11["UC-11 Manage profile and sessions"]
-    UC12["UC-12 Admin manage users/config/revenue"]
+- Stick actors are external roles or external systems.
+- Ellipses are user-goal use cases inside the V-FIT system boundary.
+- Solid lines are actor associations.
+- `<<include>>` means the base use case always invokes the included behavior.
+- `<<extend>>` means optional or conditional behavior extends the base use case.
+- Generalization shows a specialized actor inheriting a broader actor's use cases.
 
-    Guest --> UC1
-    Guest --> UC2
-    User --> UC3
-    User --> UC4
-    User --> UC5
-    User --> UC6
-    User --> UC7
-    User --> UC8
-    User --> UC9
-    VIP --> UC10
-    User --> UC11
-    Admin --> UC12
+### 7.1 Overall Use Case Diagram
+
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Guest" as Guest
+actor "Pending User" as Pending
+actor "Active User" as User
+actor "VIP User" as VIP
+actor "Admin" as Admin
+actor "Google/Facebook\nProvider" as Provider
+actor "Email Service" as Email
+actor "AI Core" as AI
+actor "SePay/VietQR" as PayProvider
+
+Pending --|> Guest
+User --|> Pending
+VIP --|> User
+Admin --|> User
+
+rectangle "V-FIT Platform" {
+  usecase "UC-01\nRegister Account" as UC01
+  usecase "UC-02\nVerify Email OTP" as UC02
+  usecase "UC-03\nAuthenticate" as UC03
+  usecase "UC-04\nComplete Onboarding" as UC04
+  usecase "UC-05\nManage Profile & Sessions" as UC05
+  usecase "UC-06\nBrowse Workout & Exercise Catalog" as UC06
+  usecase "UC-07\nGet Personalized Workout" as UC07
+  usecase "UC-08\nSearch Nutrition / Estimate Calories" as UC08
+  usecase "UC-09\nUpload Progress Photo" as UC09
+  usecase "UC-10\nJoin & Progress Challenge" as UC10
+  usecase "UC-11\nBuy VIP / Check Payment" as UC11
+  usecase "UC-12\nUse AI Form Check" as UC12
+  usecase "UC-13\nAdmin Manage Users, Config, Revenue" as UC13
+
+  usecase "Send OTP Email" as INC_OTP
+  usecase "Issue V-FIT JWT" as INC_JWT
+  usecase "Verify Social Token" as INC_SOCIAL
+  usecase "Check Onboarding Gate" as INC_ONB
+  usecase "Check Premium Gate" as INC_PREMIUM
+  usecase "Apply Voucher" as EXT_VOUCHER
+  usecase "Process Payment Webhook" as INC_WEBHOOK
+}
+
+Guest --> UC01
+Guest --> UC03
+Pending --> UC02
+Pending --> UC04
+User --> UC05
+User --> UC06
+User --> UC07
+User --> UC08
+User --> UC09
+User --> UC10
+User --> UC11
+VIP --> UC12
+Admin --> UC13
+
+UC01 ..> INC_OTP : <<include>>
+UC02 ..> INC_JWT : <<include>>
+UC03 ..> INC_JWT : <<include>>
+UC03 ..> INC_SOCIAL : <<include>>
+UC07 ..> INC_ONB : <<include>>
+UC08 ..> INC_ONB : <<include>>
+UC09 ..> INC_ONB : <<include>>
+UC10 ..> INC_ONB : <<include>>
+UC12 ..> INC_PREMIUM : <<include>>
+UC11 <.. EXT_VOUCHER : <<extend>>
+UC11 ..> INC_WEBHOOK : <<include>>
+
+Email --> INC_OTP
+Provider --> INC_SOCIAL
+AI --> UC04
+AI --> UC08
+AI --> UC12
+PayProvider --> INC_WEBHOOK
+@enduml
+```
+
+### 7.2 Authentication and Onboarding Use Cases
+
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor Guest
+actor "Pending User" as Pending
+actor "Active User" as User
+actor "Google/Facebook\nProvider" as Provider
+actor "Email Service" as Email
+actor "AI Core" as AI
+
+Pending --|> Guest
+User --|> Pending
+
+rectangle "V-FIT Auth & Onboarding" {
+  usecase "Register Account" as Register
+  usecase "Resend OTP" as Resend
+  usecase "Verify OTP" as VerifyOtp
+  usecase "Login with Email" as Login
+  usecase "Login with Social Provider" as SocialLogin
+  usecase "Refresh Session" as Refresh
+  usecase "Logout" as Logout
+  usecase "Reset Password" as Reset
+  usecase "Complete Body Metrics" as Metrics
+  usecase "Complete Body Scan" as BodyScan
+  usecase "Issue V-FIT JWT" as Jwt
+  usecase "Send Email Code" as EmailCode
+  usecase "Verify Provider Token" as VerifyProvider
+  usecase "Analyze Body Scan" as AnalyzeBody
+}
+
+Guest --> Register
+Guest --> Login
+Guest --> SocialLogin
+Guest --> Reset
+Pending --> Resend
+Pending --> VerifyOtp
+Pending --> Metrics
+Pending --> BodyScan
+User --> Refresh
+User --> Logout
+
+Register ..> EmailCode : <<include>>
+Resend ..> EmailCode : <<include>>
+VerifyOtp ..> Jwt : <<include>>
+Login ..> Jwt : <<include>>
+SocialLogin ..> VerifyProvider : <<include>>
+SocialLogin ..> Jwt : <<include>>
+BodyScan ..> AnalyzeBody : <<include>>
+BodyScan ..> Metrics : <<include>>
+
+Email --> EmailCode
+Provider --> VerifyProvider
+AI --> AnalyzeBody
+@enduml
+```
+
+### 7.3 Fitness, Progress, Nutrition, and AI Use Cases
+
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Active User" as User
+actor "VIP User" as VIP
+actor "AI Core" as AI
+
+VIP --|> User
+
+rectangle "V-FIT Fitness Experience" {
+  usecase "Browse Workouts" as BrowseWorkout
+  usecase "Browse Exercises" as BrowseExercise
+  usecase "View Exercise Library" as Library
+  usecase "Get Personalized Workout" as Personalized
+  usecase "Search Food Catalog" as FoodSearch
+  usecase "Estimate Food Calories" as FoodAI
+  usecase "Upload Progress Photo" as Progress
+  usecase "Join Challenge" as JoinChallenge
+  usecase "Record Challenge Check-in" as ChallengeCheckin
+  usecase "Revive Challenge Streak" as Revive
+  usecase "Use AI Form Check" as FormCheck
+  usecase "Check Onboarding Gate" as OnboardingGate
+  usecase "Check Premium Gate" as PremiumGate
+  usecase "Distribute Rewards" as Rewards
+}
+
+User --> BrowseWorkout
+User --> BrowseExercise
+User --> Library
+User --> Personalized
+User --> FoodSearch
+User --> FoodAI
+User --> Progress
+User --> JoinChallenge
+User --> ChallengeCheckin
+User --> Revive
+VIP --> FormCheck
+
+Personalized ..> OnboardingGate : <<include>>
+FoodAI ..> OnboardingGate : <<include>>
+Progress ..> OnboardingGate : <<include>>
+JoinChallenge ..> OnboardingGate : <<include>>
+ChallengeCheckin ..> JoinChallenge : <<include>>
+ChallengeCheckin ..> Rewards : <<extend>>
+Progress ..> ChallengeCheckin : <<extend>>
+FormCheck ..> PremiumGate : <<include>>
+FoodAI ..> AI : <<include>>
+FormCheck ..> AI : <<include>>
+@enduml
+```
+
+### 7.4 Payment and Admin Use Cases
+
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Active User" as User
+actor "VIP User" as VIP
+actor Admin
+actor "SePay/VietQR" as PayProvider
+
+VIP --|> User
+Admin --|> User
+
+rectangle "V-FIT Payment & Administration" {
+  usecase "View VIP Status" as VipStatus
+  usecase "Create VIP Payment" as CreatePayment
+  usecase "Apply Voucher" as Voucher
+  usecase "Checkout VIP Order" as Checkout
+  usecase "Check Payment Status" as PaymentStatus
+  usecase "Process SePay Webhook" as Webhook
+  usecase "Unlock VIP Subscription" as UnlockVip
+  usecase "View Revenue Dashboard" as Revenue
+  usecase "Manage Users" as ManageUsers
+  usecase "Manage App Config" as AppConfig
+}
+
+User --> VipStatus
+User --> CreatePayment
+User --> Checkout
+User --> PaymentStatus
+Admin --> Revenue
+Admin --> ManageUsers
+Admin --> AppConfig
+PayProvider --> Webhook
+
+CreatePayment <.. Voucher : <<extend>>
+Checkout <.. Voucher : <<extend>>
+Checkout ..> PaymentStatus : <<include>>
+Webhook ..> UnlockVip : <<include>>
+PaymentStatus ..> UnlockVip : <<extend>>
+@enduml
 ```
 
 ## 8. Primary Business Flows
