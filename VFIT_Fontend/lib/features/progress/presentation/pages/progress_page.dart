@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_response.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/utils/media_url_resolver.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -217,11 +218,13 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
                 ),
                 const SizedBox(height: 16),
                 metrics.when(
-                  data: (metric) => _BodyMetricsSection(metric: metric),
+                  data: (metric) => _BodyMetricsSection(
+                    metric: metric,
+                    onBodyCheck: () => _handleBodyCheck(user),
+                  ),
                   loading: () => const LinearProgressIndicator(),
                   error: (error, _) => ErrorView(message: error.toString()),
                 ),
-
                 _JourneySection(
                   snaps: snaps,
                   localSnaps: _localSnaps,
@@ -289,6 +292,18 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
         AppFeedback.error(error.toString(), title: 'Xóa ảnh thất bại');
       }
     }
+  }
+
+  void _handleBodyCheck(UserModel user) {
+    if (!user.isVipActive) {
+      AppFeedback.warning(
+        'AI Body Check yêu cầu gói VIP đang hoạt động.',
+        title: 'Cần nâng cấp VIP',
+      );
+      context.go('/premium');
+      return;
+    }
+    context.push(AppRoutes.aiBodyAnalysis);
   }
 }
 
@@ -441,41 +456,58 @@ class _WeeklyFocusCard extends StatelessWidget {
 }
 
 class _BodyMetricsSection extends StatelessWidget {
-  const _BodyMetricsSection({required this.metric});
+  const _BodyMetricsSection({
+    required this.metric,
+    required this.onBodyCheck,
+  });
 
   final BodyMetricModel metric;
+  final VoidCallback onBodyCheck;
 
   @override
   Widget build(BuildContext context) {
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.x4),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: _MetricTile(
-              icon: Icons.monitor_weight_outlined,
-              label: 'Cân nặng',
-              value: metric.weightKg == null
-                  ? '-'
-                  : '${metric.weightKg!.toStringAsFixed(1)} kg',
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _MetricTile(
+                  icon: Icons.monitor_weight_outlined,
+                  label: 'Cân nặng',
+                  value: metric.weightKg == null
+                      ? '-'
+                      : '${metric.weightKg!.toStringAsFixed(1)} kg',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _MetricTile(
+                  icon: Icons.speed,
+                  label: 'BMI',
+                  value: metric.bmi?.toStringAsFixed(1) ?? '-',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _MetricTile(
+                  icon: Icons.percent,
+                  label: 'Body fat',
+                  value: metric.bodyFatPercent == null
+                      ? '-'
+                      : '${metric.bodyFatPercent!.toStringAsFixed(1)}%',
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _MetricTile(
-              icon: Icons.speed,
-              label: 'BMI',
-              value: metric.bmi?.toStringAsFixed(1) ?? '-',
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _MetricTile(
-              icon: Icons.percent,
-              label: 'Body fat',
-              value: metric.bodyFatPercent == null
-                  ? '-'
-                  : '${metric.bodyFatPercent!.toStringAsFixed(1)}%',
+          const SizedBox(height: AppSpacing.x3),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onBodyCheck,
+              icon: const Icon(Icons.accessibility_new_rounded),
+              label: const Text('AI Body Check realtime'),
             ),
           ),
         ],
@@ -483,7 +515,6 @@ class _BodyMetricsSection extends StatelessWidget {
     );
   }
 }
-
 
 class _LocalJourneySnap {
   const _LocalJourneySnap({
@@ -859,10 +890,14 @@ class _JourneySnapDialogState extends State<_JourneySnapDialog> {
                                 IconButton(
                                   onPressed: _saveSnapToDevice,
                                   style: IconButton.styleFrom(
-                                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                                    backgroundColor:
+                                        Colors.white.withValues(alpha: 0.15),
                                     foregroundColor: Colors.white,
                                   ),
-                                  icon: const Icon(Icons.download_rounded, size: 20),
+                                  icon: const Icon(
+                                    Icons.download_rounded,
+                                    size: 20,
+                                  ),
                                   tooltip: 'Lưu ảnh vào máy',
                                 ),
                                 const SizedBox(width: 8),
@@ -882,7 +917,8 @@ class _JourneySnapDialogState extends State<_JourneySnapDialog> {
                                   ),
                                   label: const Text(
                                     'Đăng ảnh',
-                                    style: TextStyle(fontWeight: FontWeight.w800),
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.w800),
                                   ),
                                 ),
                               ],
@@ -1260,8 +1296,12 @@ class _JourneyLocketTimelineState extends State<_JourneyLocketTimeline> {
                       onPressed: () => _moveMonth(-1, months.length),
                       icon: const Icon(Icons.chevron_left_rounded),
                       style: IconButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                        foregroundColor: Theme.of(context).colorScheme.onSurface,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest
+                            .withValues(alpha: 0.5),
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onSurface,
                       ),
                       tooltip: 'Tháng mới hơn',
                     ),
@@ -1292,8 +1332,12 @@ class _JourneyLocketTimelineState extends State<_JourneyLocketTimeline> {
                       onPressed: () => _moveMonth(1, months.length),
                       icon: const Icon(Icons.chevron_right_rounded),
                       style: IconButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                        foregroundColor: Theme.of(context).colorScheme.onSurface,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest
+                            .withValues(alpha: 0.5),
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onSurface,
                       ),
                       tooltip: 'Tháng cũ hơn',
                     ),
@@ -1539,7 +1583,8 @@ class _JourneyMonthViewerState extends State<_JourneyMonthViewer> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     // Close button
@@ -1559,7 +1604,7 @@ class _JourneyMonthViewerState extends State<_JourneyMonthViewer> {
                             ),
                           ),
                           Text(
-                            '${ _index + 1 } / $total',
+                            '${_index + 1} / $total',
                             style: AppTypography.bodySmall(
                               color: Colors.white70,
                             ),
@@ -1889,7 +1934,8 @@ class _JourneyPhotoTile extends StatelessWidget {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(12),
@@ -1937,7 +1983,10 @@ class _JourneyPhotoTile extends StatelessWidget {
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.5),
                         border: Border.all(

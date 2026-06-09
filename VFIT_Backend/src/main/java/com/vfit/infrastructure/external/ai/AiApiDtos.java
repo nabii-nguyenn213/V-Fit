@@ -26,29 +26,34 @@ record FormCheckResponse(
         @JsonProperty("metrics") java.util.Map<String, Object> metrics) {
     
     public AiFormCheckFeedback toAiFeedback() {
-        List<AiFormCheckFeedback.FormError> formErrors = errors.stream()
+        List<FormErrorDto> safeErrors = errors == null ? List.of() : errors;
+        List<AiFormCheckFeedback.FormError> formErrors = safeErrors.stream()
                 .map(e -> new AiFormCheckFeedback.FormError(
-                        e.code,
-                        e.severity,
-                        e.message,
-                        e.landmarks))
+                        valueOrDefault(e.code(), "FORM_CHECK"),
+                        valueOrDefault(e.severity(), "WARN"),
+                        valueOrDefault(e.message(), "Form check needs attention."),
+                        e.landmarks() == null ? List.of() : e.landmarks()))
                 .toList();
         
-        List<String> affectedLandmarks = errors.stream()
-                .flatMap(e -> e.landmarks.stream())
+        List<String> affectedLandmarks = safeErrors.stream()
+                .flatMap(e -> (e.landmarks() == null ? List.<String>of() : e.landmarks()).stream())
                 .distinct()
                 .toList();
         
-        String severity = errors.isEmpty() ? "OK" : errors.get(0).severity;
+        String severity = safeErrors.isEmpty() ? "OK" : valueOrDefault(safeErrors.get(0).severity(), "WARN");
         
         return new AiFormCheckFeedback(
                 score,
-                feedback,
+                valueOrDefault(feedback, "No form feedback available."),
                 formErrors,
                 affectedLandmarks,
-                feedback,
+                valueOrDefault(feedback, "Keep moving under control."),
                 severity,
                 false);
+    }
+
+    private static String valueOrDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
     }
 }
 
@@ -78,8 +83,10 @@ record BodyAnalysisResponse(
         String postureDesc = determinePostureFromBodyType(bodyType);
         
         // Map imbalances
-        String imbalanceDesc = imbalances.isEmpty() ? "No significant imbalances" : imbalances.get(0);
-        String imbalanceSeverity = imbalances.isEmpty() ? "OK" : "LOW";
+        List<String> safeImbalances = imbalances == null ? List.of() : imbalances;
+        List<String> safeRecommendations = recommendations == null ? List.of() : recommendations;
+        String imbalanceDesc = safeImbalances.isEmpty() ? "No significant imbalances" : safeImbalances.get(0);
+        String imbalanceSeverity = safeImbalances.isEmpty() ? "OK" : "LOW";
         
         // Extract metrics (simplified)
         double bmi = extractMetric(metrics, "bmi", 22.0);
@@ -91,12 +98,15 @@ record BodyAnalysisResponse(
                 new AiBodyAnalysisResult.Imbalance(imbalanceDesc, imbalanceSeverity),
                 new AiBodyAnalysisResult.BodyEstimate(bmi, fatPercentage, symmetryScore),
                 new AiBodyAnalysisResult.Recommendation(
-                        recommendations.isEmpty() ? "Continue current routine" : recommendations.get(0),
+                        safeRecommendations.isEmpty() ? "Continue current routine" : safeRecommendations.get(0),
                         3),
                 false);
     }
     
     private String determinePostureFromBodyType(String bodyType) {
+        if (bodyType == null || bodyType.isBlank()) {
+            return "Body type analysis pending";
+        }
         return switch (bodyType.toUpperCase()) {
             case "CHU V" -> "V-shaped upper body - well-developed shoulders";
             case "QUA LE" -> "Pear-shaped - weight distributed to lower body";

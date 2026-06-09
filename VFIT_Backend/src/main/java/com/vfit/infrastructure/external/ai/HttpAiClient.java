@@ -38,7 +38,7 @@ public class HttpAiClient implements AiClient {
         try {
             // Extract frame data from request
             // In real-time WebSocket, frame comes as part of the message
-            byte[] frameBytes = (byte[]) metadata.getOrDefault("frameBytes", new byte[0]);
+            byte[] frameBytes = frameBytes(metadata);
             String exercise = (String) metadata.getOrDefault("exercise", "squat");
             String cameraView = (String) metadata.getOrDefault("cameraView", "side");
             
@@ -58,7 +58,7 @@ public class HttpAiClient implements AiClient {
                     .retrieve()
                     .body(FormCheckResponse.class);
             
-            if (response == null || !response.success) {
+            if (response == null || !response.success()) {
                 return AiFormCheckFeedback.safeFallback();
             }
             
@@ -74,7 +74,7 @@ public class HttpAiClient implements AiClient {
     public AiBodyAnalysisResult analyzeBody(String userId, String imageUrl, Map<String, Object> metadata) {
         try {
             // Extract frame data
-            byte[] frameBytes = (byte[]) metadata.getOrDefault("frameBytes", new byte[0]);
+            byte[] frameBytes = frameBytes(metadata);
             
             if (frameBytes == null || frameBytes.length == 0) {
                 return AiBodyAnalysisResult.safeFallback();
@@ -92,7 +92,7 @@ public class HttpAiClient implements AiClient {
                     .retrieve()
                     .body(BodyAnalysisResponse.class);
             
-            if (response == null || !response.success) {
+            if (response == null || !response.success()) {
                 return AiBodyAnalysisResult.safeFallback();
             }
             
@@ -209,5 +209,14 @@ public class HttpAiClient implements AiClient {
         public String getFilename() {
             return filename;
         }
+    }
+
+    private byte[] frameBytes(Map<String, Object> metadata) {
+        Object value = metadata.get("frameBytes");
+        if (value instanceof byte[] bytes) {
+            return bytes;
+        }
+        log.warn("AI frame payload has invalid type: {}", value == null ? "null" : value.getClass().getSimpleName());
+        return new byte[0];
     }
 }

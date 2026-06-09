@@ -14,10 +14,10 @@ import org.springframework.stereotype.Component;
 public class AiWebSocketFrameRateLimiter {
     private final StringRedisTemplate redisTemplate;
 
-    @Value("${app.rate-limit.ai.max-requests:60}")
+    @Value("${app.rate-limit.ai-ws.max-frames:${app.rate-limit.ai.max-requests:60}}")
     private long maxFrames;
 
-    @Value("${app.rate-limit.ai.window-seconds:60}")
+    @Value("${app.rate-limit.ai-ws.window-seconds:${app.rate-limit.ai.window-seconds:60}}")
     private long windowSeconds;
 
     @Value("${app.rate-limit.ai.fail-open:true}")

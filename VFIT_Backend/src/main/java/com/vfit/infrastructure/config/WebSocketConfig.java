@@ -1,6 +1,7 @@
 package com.vfit.infrastructure.config;
 
 import com.vfit.modules.ai.websocket.FormCheckWebSocketHandler;
+import com.vfit.modules.ai.websocket.BodyAnalysisWebSocketHandler;
 import com.vfit.modules.ai.websocket.JwtPremiumHandshakeInterceptor;
 import com.vfit.modules.payment.websocket.PaymentHandshakeInterceptor;
 import com.vfit.modules.payment.websocket.PaymentWebSocketHandler;
@@ -15,6 +16,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
     private final FormCheckWebSocketHandler formCheckWebSocketHandler;
+    private final BodyAnalysisWebSocketHandler bodyAnalysisWebSocketHandler;
     private final JwtPremiumHandshakeInterceptor jwtPremiumHandshakeInterceptor;
     private final PaymentWebSocketHandler paymentWebSocketHandler;
     private final PaymentHandshakeInterceptor paymentHandshakeInterceptor;
@@ -22,6 +24,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(formCheckWebSocketHandler, "/ws/ai/form-check")
+                .addInterceptors(jwtPremiumHandshakeInterceptor)
+                .setAllowedOriginPatterns("*");
+        registry.addHandler(bodyAnalysisWebSocketHandler, "/ws/ai/body-analysis")
                 .addInterceptors(jwtPremiumHandshakeInterceptor)
                 .setAllowedOriginPatterns("*");
         registry.addHandler(paymentWebSocketHandler, "/ws/payments")

@@ -3,6 +3,7 @@ package com.vfit.modules.ai.websocket;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vfit.infrastructure.external.ai.AiClient;
 import com.vfit.infrastructure.external.ai.dto.AiFormCheckFeedback;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
         String userId = session.getAttributes().get("userId").toString();
         String exerciseId = session.getAttributes().get("exerciseId").toString();
+        String cameraView = session.getAttributes().getOrDefault("cameraView", "side").toString();
         if (!frameRateLimiter.allow(userId)) {
             session.sendMessage(new TextMessage(objectMapper.writeValueAsString(rateLimitedFeedback())));
             session.close(CloseStatus.POLICY_VIOLATION.withReason("AI rate limit exceeded"));
@@ -32,8 +34,26 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
         AiFormCheckFeedback feedback = aiClient.analyzeForm(
                 userId,
                 "realtime-frame",
-                Map.of("exerciseId", exerciseId, "frameBytes", message.getPayloadLength()));
+                Map.of(
+                        "exerciseId", exerciseId,
+                        "exercise", normalizeExercise(exerciseId),
+                        "cameraView", cameraView,
+                        "frameBytes", payloadBytes(message)));
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(feedback)));
+    }
+
+    private byte[] payloadBytes(BinaryMessage message) {
+        ByteBuffer payload = message.getPayload().asReadOnlyBuffer();
+        byte[] bytes = new byte[payload.remaining()];
+        payload.get(bytes);
+        return bytes;
+    }
+
+    private String normalizeExercise(String exerciseId) {
+        if (exerciseId == null || exerciseId.isBlank() || "general".equalsIgnoreCase(exerciseId)) {
+            return "squat";
+        }
+        return exerciseId;
     }
 
     private AiFormCheckFeedback rateLimitedFeedback() {

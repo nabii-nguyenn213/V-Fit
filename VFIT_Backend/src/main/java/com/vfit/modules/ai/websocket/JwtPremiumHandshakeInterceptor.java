@@ -53,13 +53,16 @@ public class JwtPremiumHandshakeInterceptor implements HandshakeInterceptor {
                 response.setStatusCode(HttpStatus.FORBIDDEN);
                 return false;
             }
+            String path = request.getURI().getPath();
             String exerciseId = queryParam(request.getURI(), "exerciseId");
-            if (!StringUtils.hasText(exerciseId)) {
+            if (path.endsWith("/form-check") && !StringUtils.hasText(exerciseId)) {
                 response.setStatusCode(HttpStatus.BAD_REQUEST);
                 return false;
             }
+            String cameraView = queryParam(request.getURI(), "cameraView");
             attributes.put("userId", jwtTokenProvider.getUserId(token));
-            attributes.put("exerciseId", exerciseId);
+            attributes.put("exerciseId", StringUtils.hasText(exerciseId) ? exerciseId : "general");
+            attributes.put("cameraView", StringUtils.hasText(cameraView) ? cameraView : "side");
             return true;
         } catch (RuntimeException ex) {
             response.setStatusCode(HttpStatus.UNAUTHORIZED);

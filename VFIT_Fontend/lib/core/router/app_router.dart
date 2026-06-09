@@ -12,6 +12,7 @@ import '../../features/auth/presentation/pages/register_otp_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/deactivated_page.dart';
+import '../../features/ai/presentation/pages/ai_body_analysis_page.dart';
 import '../../features/ai/presentation/pages/ai_form_check_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 
@@ -178,6 +179,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => AiFormCheckPage(
           exerciseId: state.uri.queryParameters['exerciseId'] ?? 'general',
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.aiBodyAnalysis,
+        builder: (context, state) => const AiBodyAnalysisPage(),
       ),
       GoRoute(
         path: '/exercises/:id',

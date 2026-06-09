@@ -72,6 +72,7 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/uploads/**",
                                 "/ws/ai/form-check",
+                                "/ws/ai/body-analysis",
                                 "/ws/payments")
                         .permitAll()
                         .requestMatchers(
