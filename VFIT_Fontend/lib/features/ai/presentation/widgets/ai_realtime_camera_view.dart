@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +51,8 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
   CameraController? _cameraController;
   WebSocket? _socket;
   Timer? _captureTimer;
+  List<CameraDescription> _cameras = const [];
+  int _selectedCameraIndex = 0;
   bool _initializing = true;
   bool _streaming = false;
   bool _capturing = false;
@@ -92,16 +95,47 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
       if (cameras.isEmpty) {
         throw StateError(CameraErrorMessages.noCameraFound);
       }
-      final camera = cameras.firstWhere(
+      _cameras = cameras;
+      final backIndex = cameras.indexWhere(
         (camera) => camera.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
       );
-      final controller = CameraController(
-        camera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
-      );
+      _selectedCameraIndex = backIndex >= 0 ? backIndex : 0;
+      await _openCamera(_selectedCameraIndex, autoStartStreaming: true);
+    } on CameraException catch (error) {
+      _showSetupError(CameraErrorMessages.fromCameraException(error));
+    } catch (error) {
+      _showSetupError(error.toString());
+    }
+  }
+
+  Future<void> _openCamera(int index, {bool autoStartStreaming = false}) async {
+    if (index < 0 || index >= _cameras.length) {
+      return;
+    }
+    setState(() {
+      _initializing = true;
+      _statusText = 'Đang chuẩn bị camera...';
+    });
+
+    final wasStreaming = _streaming;
+    if (wasStreaming) {
+      await _stopStreaming();
+    }
+
+    final oldController = _cameraController;
+    _cameraController = null;
+    if (oldController != null) {
+      await oldController.dispose();
+    }
+
+    final controller = CameraController(
+      _cameras[index],
+      ResolutionPreset.medium,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+
+    try {
       await controller.initialize();
       if (!mounted) {
         await controller.dispose();
@@ -109,15 +143,26 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
       }
       setState(() {
         _cameraController = controller;
+        _selectedCameraIndex = index;
         _initializing = false;
         _statusText = widget.readyText;
       });
-      unawaited(_startStreaming());
+      if (wasStreaming || autoStartStreaming) {
+        unawaited(_startStreaming());
+      }
     } on CameraException catch (error) {
       _showSetupError(CameraErrorMessages.fromCameraException(error));
     } catch (error) {
       _showSetupError(error.toString());
     }
+  }
+
+  Future<void> _switchCamera() async {
+    if (_cameras.length < 2 || _capturing || _initializing) {
+      return;
+    }
+    final nextIndex = (_selectedCameraIndex + 1) % _cameras.length;
+    await _openCamera(nextIndex);
   }
 
   Future<void> _startStreaming() async {
@@ -303,6 +348,15 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
                               label: 'LIVE',
                             ),
                           ),
+                        if (cameraReady && _cameras.length > 1)
+                          Positioned(
+                            bottom: AppSpacing.x3,
+                            right: AppSpacing.x3,
+                            child: _buildGlassButton(
+                              icon: Icons.cameraswitch_rounded,
+                              onTap: _switchCamera,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -340,6 +394,33 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(99),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
         ),
       ),
     );
