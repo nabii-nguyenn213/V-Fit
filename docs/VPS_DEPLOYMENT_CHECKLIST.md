@@ -20,6 +20,7 @@ Fill these values before building production artifacts.
 ```text
 API domain: https://api.<your-domain>
 Web/app domain: https://<your-domain> or https://app.<your-domain>
+AI API domain: https://ai.<your-domain>
 Android package: com.vfit.vfit_frontend
 Release keystore path: <private-keystore-path>
 Release SHA-1: <release-signing-sha1>
@@ -69,6 +70,10 @@ SEPAY_WEBHOOK_SECRET=<production-sepay-webhook-secret>
 SEPAY_BANK_CODE=<bank-code>
 SEPAY_ACCOUNT_NUMBER=<account-number>
 SEPAY_ACCOUNT_NAME=<account-name>
+
+AI_CLIENT_MODE=http
+AI_BASE_URL=https://ai.<your-domain>
+AI_FOOD_SCANNER_PATH=/api/v1/food-scanner/
 ```
 
 Bootstrap rule:
@@ -123,25 +128,76 @@ Do not expose MongoDB or Redis publicly.
 
 Production Flutter must use the public HTTPS API URL:
 
+### Web artifact
+
 ```powershell
 cd D:\EXE_PRM\VFIT_Fontend
-flutter build apk --release `
+$env:PUB_CACHE="D:\EXE_PRM\PubCache"
+flutter clean
+flutter pub get
+flutter build web --release `
   --dart-define=API_BASE_URL=https://api.<your-domain> `
   --dart-define=GOOGLE_WEB_CLIENT_ID=<google-web-oauth-client-id> `
-  --dart-define=GOOGLE_ANDROID_SIGNING_VARIANT=release `
-  --dart-define=GOOGLE_ANDROID_CLIENT_ID=<release-android-oauth-client-id> `
-  --dart-define=GOOGLE_ANDROID_SHA1=<release-sha1> `
-  --dart-define=GOOGLE_ANDROID_SHA256=<release-sha256>
+  --dart-define=ENABLE_CRASHLYTICS=true
 ```
 
+Deploy this generated folder to the static web host:
+
+```text
+VFIT_Fontend/build/web
+```
+
+The web host must serve HTTPS and route unknown paths back to `index.html`
+because Flutter uses client-side routing.
+
+### Android Play Store artifact
+
+Play Store release artifacts must be Android App Bundles (`.aab`) signed with
+the release upload key. Do not use the debug signing fallback for Play Store.
+
+Create `VFIT_Fontend/android/key.properties` locally only:
+
+```properties
+storePassword=<upload-keystore-password>
+keyPassword=<upload-key-password>
+keyAlias=<upload-key-alias>
+storeFile=<absolute-or-android-relative-path-to-upload-keystore.jks>
+```
+
+The `key.properties`, `.jks`, and `.keystore` files are ignored by git and must
+stay outside source control.
+
 For Facebook Android native configuration, set environment variables before the
-build. These are read by Gradle, not by `--dart-define`:
+build. These are read by Gradle, not by `--dart-define`.
 
 ```powershell
+cd D:\EXE_PRM\VFIT_Fontend
+$env:PUB_CACHE="D:\EXE_PRM\PubCache"
 $env:FACEBOOK_APP_ID="<facebook-app-id>"
 $env:FACEBOOK_CLIENT_TOKEN="<facebook-client-token>"
 flutter clean
 flutter pub get
+flutter build appbundle --release `
+  --build-name=1.0.0 `
+  --build-number=1 `
+  --dart-define=API_BASE_URL=https://api.<your-domain> `
+  --dart-define=GOOGLE_WEB_CLIENT_ID=<google-web-oauth-client-id> `
+  --dart-define=GOOGLE_ANDROID_SIGNING_VARIANT=release `
+  --dart-define=GOOGLE_ANDROID_CLIENT_ID=<release-android-oauth-client-id> `
+  --dart-define=GOOGLE_ANDROID_SHA1=<release-sha1> `
+  --dart-define=GOOGLE_ANDROID_SHA256=<release-sha256>
+```
+
+Output:
+
+```text
+VFIT_Fontend/build/app/outputs/bundle/release/app-release.aab
+```
+
+For local sideload testing, APK is still useful but it is not the Play Store
+upload artifact:
+
+```powershell
 flutter build apk --release `
   --dart-define=API_BASE_URL=https://api.<your-domain> `
   --dart-define=GOOGLE_WEB_CLIENT_ID=<google-web-oauth-client-id> `
@@ -151,11 +207,27 @@ flutter build apk --release `
   --dart-define=GOOGLE_ANDROID_SHA256=<release-sha256>
 ```
 
-If building an AAB for Play Store, use the same defines with:
+Google Play requires new apps and updates to target Android 15/API 35 or higher
+from August 31, 2025. Verify the generated Android target SDK before uploading
+to Play Console.
 
-```powershell
-flutter build appbundle --release ...
+## AI Service Production
+
+The current production AI integration calls the FastAPI food scanner service.
+Run the AI service separately from Spring Boot and point backend config to it:
+
+```bash
+cd AI-VFIT/V-Fit/RecommendationSystem
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
+
+Recommended deployment shape:
+
+- Put the AI service behind HTTPS, for example `https://ai.<your-domain>`.
+- Set backend `AI_CLIENT_MODE=http`.
+- Set backend `AI_BASE_URL=https://ai.<your-domain>`.
+- Keep Gemini/API provider keys in the AI service environment, not in Flutter.
+- Do not let Flutter call the AI service directly; Flutter calls Spring Boot.
 
 ## Google OAuth Console
 
@@ -245,16 +317,22 @@ For SePay or payment webhooks:
 - [ ] T004 Set `JWT_SECRET` and `OTP_PEPPER` in `VFIT_Backend/.env.production`.
 - [ ] T005 Set Google and Facebook backend credentials in `VFIT_Backend/.env.production`.
 - [ ] T006 Set Cloudinary and payment secrets in `VFIT_Backend/.env.production`.
-- [ ] T007 Start backend with `docker compose -f docker-compose.prod.yml up -d --build` from `VFIT_Backend`.
-- [ ] T008 Configure Nginx HTTPS proxy from `https://api.<your-domain>` to `http://127.0.0.1:8080`.
-- [ ] T009 Verify backend health with `curl https://api.<your-domain>/actuator/health`.
-- [ ] T010 Build release APK/AAB from `VFIT_Fontend` with production `API_BASE_URL`.
-- [ ] T011 Register release SHA-1 in Google Android OAuth client.
-- [ ] T012 Register Android package and key hash in Meta Facebook app.
-- [ ] T013 Test email/password login against production API.
-- [ ] T014 Test Google login and confirm backend receives `/api/auth/social-login`.
-- [ ] T015 Test Facebook login and confirm backend receives `/api/auth/social-login`.
-- [ ] T016 Disable `BOOTSTRAP_ADMIN_ENABLED` after first admin account exists.
+- [ ] T007 Set `AI_CLIENT_MODE=http`, `AI_BASE_URL`, and `AI_FOOD_SCANNER_PATH`.
+- [ ] T008 Start backend with `docker compose -f docker-compose.prod.yml up -d --build` from `VFIT_Backend`.
+- [ ] T009 Configure Nginx HTTPS proxy from `https://api.<your-domain>` to `http://127.0.0.1:8080`.
+- [ ] T010 Deploy the AI FastAPI service behind `https://ai.<your-domain>`.
+- [ ] T011 Verify backend health with `curl https://api.<your-domain>/actuator/health`.
+- [ ] T012 Build web artifact from `VFIT_Fontend/build/web` with production `API_BASE_URL`.
+- [ ] T013 Create local Android release upload keystore and `android/key.properties`.
+- [ ] T014 Build Play Store AAB from `VFIT_Fontend` with production `API_BASE_URL`.
+- [ ] T015 Verify Play Store AAB targets Android 15/API 35 or higher.
+- [ ] T016 Register release SHA-1 in Google Android OAuth client.
+- [ ] T017 Register Android package and key hash in Meta Facebook app.
+- [ ] T018 Test email/password login against production API.
+- [ ] T019 Test Google login and confirm backend receives `/api/auth/social-login`.
+- [ ] T020 Test Facebook login and confirm backend receives `/api/auth/social-login`.
+- [ ] T021 Test nutrition food scanner and confirm backend reaches the AI service.
+- [ ] T022 Disable `BOOTSTRAP_ADMIN_ENABLED` after first admin account exists.
 
 ## Deployment Is Not Complete Until
 
@@ -263,5 +341,6 @@ For SePay or payment webhooks:
 - Google login succeeds with release signing SHA-1.
 - Facebook login succeeds with release key hash and correct Client Token.
 - Email/password login still works.
+- AI food scanner succeeds through Spring Boot, not direct Flutter-to-AI calls.
 - Admin bootstrap is disabled after first production setup.
 - Secrets are not committed to git.

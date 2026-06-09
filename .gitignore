@@ -28,6 +28,11 @@ VFIT_Backend/backend-dev.log
 VFIT_Backend/.env
 VFIT_Backend/secrets.local.md
 
+# Android release signing secrets (NEVER commit)
+VFIT_Fontend/android/key.properties
+VFIT_Fontend/android/*.jks
+VFIT_Fontend/android/*.keystore
+
 # ── Frontend build artifacts ──
 VFIT_Fontend/build/
 VFIT_Fontend/.dart_tool/
