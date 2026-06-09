@@ -1,6 +1,7 @@
 package com.vfit.modules.user.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vfit.common.enums.GoalType;
 import com.vfit.common.enums.OnboardingStatus;
 import com.vfit.common.exception.AppException;
 import com.vfit.common.exception.ErrorCode;
@@ -99,11 +100,15 @@ public class OnboardingServiceImpl implements OnboardingService {
                 user.getId(),
                 scanUrl,
                 Map.of("heightCm", metrics.getHeightCm(), "weightKg", metrics.getWeightKg()));
+        GoalType inferredGoal = inferGoalType(metrics, aiResult);
 
         bodyAnalysisRepository.save(BodyAnalysisResult.builder()
                 .userId(user.getId())
                 .imageUrl(scanPath)
-                .metadata(Map.of("source", "onboarding", "scanUrl", scanUrl))
+                .metadata(Map.of(
+                        "source", "onboarding",
+                        "scanUrl", scanUrl,
+                        "inferredGoalType", inferredGoal.name()))
                 .posture(aiResultMapper.toMap(objectMapper, aiResult.posture()))
                 .imbalance(aiResultMapper.toMap(objectMapper, aiResult.imbalance()))
                 .estimate(aiResultMapper.toMap(objectMapper, aiResult.estimate()))
@@ -111,6 +116,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 .result(aiResultMapper.toMap(objectMapper, aiResult))
                 .build());
 
+        user.setGoalType(inferredGoal);
         user.setOnboardingStatus(OnboardingStatus.COMPLETED);
         user.setActive(true);
         User saved = userRepository.save(user);
@@ -132,5 +138,45 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
         double meters = heightCm / 100.0;
         return Math.round((weightKg / (meters * meters)) * 10.0) / 10.0;
+    }
+
+    private GoalType inferGoalType(User.BodyMetrics metrics, AiBodyAnalysisResult aiResult) {
+        Double bodyFatPercent = firstNonNull(
+                metrics.getBodyFatPercent(),
+                aiResult.estimate() == null ? null : aiResult.estimate().bodyFatPercent());
+        if (bodyFatPercent != null) {
+            if (bodyFatPercent >= 25.0) {
+                return GoalType.LOSE_WEIGHT;
+            }
+            if (bodyFatPercent <= 18.0) {
+                return GoalType.GAIN_MUSCLE;
+            }
+        }
+
+        Double bmi = metrics.getBmi();
+        if (bmi != null) {
+            if (bmi >= 23.0) {
+                return GoalType.LOSE_WEIGHT;
+            }
+            if (bmi < 18.5) {
+                return GoalType.GAIN_MUSCLE;
+            }
+        }
+
+        String focus = aiResult.recommendation() == null ? "" : aiResult.recommendation().focus();
+        if (focus != null) {
+            String normalizedFocus = focus.toLowerCase();
+            if (normalizedFocus.contains("weight")
+                    || normalizedFocus.contains("fat")
+                    || normalizedFocus.contains("cut")) {
+                return GoalType.LOSE_WEIGHT;
+            }
+        }
+
+        return GoalType.GAIN_MUSCLE;
+    }
+
+    private Double firstNonNull(Double primary, Double fallback) {
+        return primary != null ? primary : fallback;
     }
 }
