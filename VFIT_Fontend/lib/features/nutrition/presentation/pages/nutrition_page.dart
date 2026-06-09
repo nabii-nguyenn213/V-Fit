@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -137,17 +138,17 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
     }
     setState(() => _scanLoading = true);
     try {
-      final image = await ImagePicker().pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
+      final estimate = await showModalBottomSheet<FoodCalorieEstimateModel>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        builder: (context) => _FoodScanSheet(
+          onAnalyze: (image) =>
+              ref.read(nutritionRepositoryProvider).estimateFoodCalories(image),
+        ),
       );
-      if (!mounted || image == null) {
-        return;
-      }
-      final estimate = await ref
-          .read(nutritionRepositoryProvider)
-          .estimateFoodCalories(image);
-      if (!mounted) {
+      if (!mounted || estimate == null) {
         return;
       }
       await showModalBottomSheet<void>(
@@ -165,6 +166,197 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
         setState(() => _scanLoading = false);
       }
     }
+  }
+}
+
+class _FoodScanSheet extends StatefulWidget {
+  const _FoodScanSheet({required this.onAnalyze});
+
+  final Future<FoodCalorieEstimateModel> Function(XFile image) onAnalyze;
+
+  @override
+  State<_FoodScanSheet> createState() => _FoodScanSheetState();
+}
+
+class _FoodScanSheetState extends State<_FoodScanSheet> {
+  XFile? _image;
+  Uint8List? _previewBytes;
+  bool _loading = false;
+
+  Future<void> _pick(ImageSource source) async {
+    if (_loading) {
+      return;
+    }
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 85,
+      maxWidth: 1280,
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    final bytes = await picked.readAsBytes();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _image = picked;
+      _previewBytes = bytes;
+    });
+  }
+
+  Future<void> _analyze() async {
+    final image = _image;
+    if (image == null || _loading) {
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final estimate = await widget.onAnalyze(image);
+      if (mounted) {
+        Navigator.of(context).pop(estimate);
+      }
+    } catch (error) {
+      if (mounted) {
+        AppFeedback.error(
+          error.toString(),
+          title: 'Khong quet duoc mon an',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final previewBytes = _previewBytes;
+    return SafeArea(
+      child: Padding(
+        padding: AppResponsive.pagePadding(context).copyWith(top: 0),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: scheme.primary.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.document_scanner_rounded,
+                      color: scheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Quet calo mon an',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        Text(
+                          'Chup hoac chon anh ro mon an de AI uoc tinh macro.',
+                          style: TextStyle(color: scheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              AspectRatio(
+                aspectRatio: 4 / 3,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest.withValues(
+                      alpha: 0.52,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: scheme.outlineVariant),
+                  ),
+                  child: previewBytes == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.restaurant_menu_rounded,
+                              size: 54,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Chua co anh mon an',
+                              style: TextStyle(
+                                color: scheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.memory(
+                            previewBytes,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _loading ? null : () => _pick(ImageSource.camera),
+                      icon: const Icon(Icons.photo_camera_outlined),
+                      label: const Text('Camera'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _loading ? null : () => _pick(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: const Text('Thu vien'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              FilledButton.icon(
+                onPressed: _image == null || _loading ? null : _analyze,
+                icon: _loading
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.auto_awesome_rounded),
+                label: Text(_loading ? 'Dang phan tich...' : 'Phan tich calo'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
