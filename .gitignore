@@ -6,6 +6,8 @@
 
 # ── Pub/Flutter Cache (should NOT be in repo) ──
 PubCache/
+GradleCache/
+AndroidUserHome/
 
 # ── IDE ──
 .idea/

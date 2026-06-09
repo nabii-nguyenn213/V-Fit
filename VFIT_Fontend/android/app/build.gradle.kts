@@ -14,20 +14,17 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-val defaultDebugKeystorePath = providers.environmentVariable("USERPROFILE")
-    .map { "$it\\.android\\debug.keystore" }
-    .orElse("${System.getProperty("user.home")}\\.android\\debug.keystore")
-val debugKeystoreFile = file(
-    providers.environmentVariable("ANDROID_DEBUG_KEYSTORE")
-        .orElse(defaultDebugKeystorePath)
-        .get()
-)
+val debugKeystorePath = System.getenv("ANDROID_DEBUG_KEYSTORE")
+    ?: System.getenv("USERPROFILE")?.let { "$it\\.android\\debug.keystore" }
+    ?: "${System.getProperty("user.home")}\\.android\\debug.keystore"
+val debugKeystoreFile = file(debugKeystorePath)
 
 fun configValue(name: String): String {
-    return providers.gradleProperty(name)
-        .orElse(providers.environmentVariable(name))
-        .orElse("")
-        .get()
+    val propertyValue = project.findProperty(name) as String?
+    if (propertyValue != null) return propertyValue
+    val envValue = System.getenv(name)
+    if (envValue != null) return envValue
+    return ""
 }
 
 android {
