@@ -112,6 +112,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
         _initializing = false;
         _statusText = widget.readyText;
       });
+      unawaited(_startStreaming());
     } on CameraException catch (error) {
       _showSetupError(CameraErrorMessages.fromCameraException(error));
     } catch (error) {

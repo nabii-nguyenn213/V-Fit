@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
@@ -291,7 +289,7 @@ class ScanBodyButton extends StatefulWidget {
 }
 
 class _ScanBodyButtonState extends State<ScanBodyButton> {
-  bool _openingCamera = false;
+  bool _openingAiTools = false;
 
   @override
   Widget build(BuildContext context) {
@@ -300,7 +298,7 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
 
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.large),
-      onTap: _openingCamera ? null : _handlePressed,
+      onTap: _openingAiTools ? null : _handlePressed,
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.x4),
         decoration: BoxDecoration(
@@ -333,7 +331,7 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
                 borderRadius: BorderRadius.circular(AppRadius.input),
                 border: Border.all(color: accent.withValues(alpha: 0.36)),
               ),
-              child: _openingCamera
+              child: _openingAiTools
                   ? Padding(
                       padding: const EdgeInsets.all(14),
                       child: CircularProgressIndicator(
@@ -386,24 +384,134 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
       return;
     }
 
-    setState(() => _openingCamera = true);
+    setState(() => _openingAiTools = true);
     try {
-      final image = await ImagePicker().pickImage(source: ImageSource.camera);
-      if (!mounted || image == null) {
-        return;
-      }
-      AppFeedback.success(
-        'Da nhan anh scan. AI analysis se xu ly o buoc tiep theo.',
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (context) => const _AiRealtimeActionSheet(),
       );
-    } catch (error) {
-      if (mounted) {
-        AppFeedback.error('Không thể mở camera: $error');
-      }
     } finally {
       if (mounted) {
-        setState(() => _openingCamera = false);
+        setState(() => _openingAiTools = false);
       }
     }
+  }
+}
+
+class _AiRealtimeActionSheet extends StatelessWidget {
+  const _AiRealtimeActionSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.x4,
+          0,
+          AppSpacing.x4,
+          AppSpacing.x4,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'AI realtime',
+              style: AppTypography.headerMediumFor(context),
+            ),
+            const SizedBox(height: AppSpacing.x2),
+            Text(
+              'Mở camera trực tiếp để AI phản hồi liên tục trong lúc tập.',
+              style: AppTypography.bodySmallFor(context),
+            ),
+            const SizedBox(height: AppSpacing.x4),
+            _AiRealtimeActionTile(
+              icon: Icons.directions_run_rounded,
+              title: 'Kiểm tra form tập',
+              subtitle:
+                  'Nhận điểm đúng sai và cue sửa động tác theo thời gian thực.',
+              onTap: () {
+                final router = GoRouter.of(context);
+                Navigator.of(context).pop();
+                router.push(
+                  AppRoutes.aiFormCheckLocation(exerciseId: 'squat'),
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.x2),
+            _AiRealtimeActionTile(
+              icon: Icons.accessibility_new_rounded,
+              title: 'Phân tích dáng người',
+              subtitle:
+                  'Cập nhật posture, imbalance và gợi ý cá nhân liên tục.',
+              onTap: () {
+                final router = GoRouter.of(context);
+                Navigator.of(context).pop();
+                router.push(AppRoutes.aiBodyAnalysis);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AiRealtimeActionTile extends StatelessWidget {
+  const _AiRealtimeActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppColors.primaryOf(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.input),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.x3),
+        decoration: BoxDecoration(
+          color: AppColors.surface1Of(context),
+          borderRadius: BorderRadius.circular(AppRadius.input),
+          border: Border.all(color: AppColors.borderSubtleOf(context)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.small),
+              ),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: AppSpacing.x3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTypography.label()),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: AppTypography.bodySmallFor(context)),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.x2),
+            Icon(Icons.chevron_right_rounded, color: color),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -598,7 +706,8 @@ class PersonalizedWorkoutView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isPendingOnboarding = ref.watch(authControllerProvider).isPendingOnboarding;
+    final isPendingOnboarding =
+        ref.watch(authControllerProvider).isPendingOnboarding;
     if (isPendingOnboarding) {
       return ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
