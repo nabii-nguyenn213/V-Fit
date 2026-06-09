@@ -25,10 +25,13 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
 final appTokenStorage = SecureTokenStorage(const FlutterSecureStorage());
 
 final dioProvider = Provider<Dio>((ref) {
+  final connectTimeout = _localApiFallbackEnabled
+      ? const Duration(seconds: 5)
+      : const Duration(seconds: 15);
   final dio = Dio(
     BaseOptions(
       baseUrl: Environment.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 15),
+      connectTimeout: connectTimeout,
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),
       headers: const {
@@ -37,6 +40,7 @@ final dioProvider = Provider<Dio>((ref) {
       },
     ),
   );
+  _configureLocalApiFallback(dio);
   dio.interceptors.add(
     AuthInterceptor(
       appTokenStorage,
@@ -74,14 +78,18 @@ class AuthInterceptor extends Interceptor {
       : _refreshDio = Dio(
           BaseOptions(
             baseUrl: Environment.apiBaseUrl,
-            connectTimeout: const Duration(seconds: 15),
+            connectTimeout: _localApiFallbackEnabled
+                ? const Duration(seconds: 5)
+                : const Duration(seconds: 15),
             receiveTimeout: const Duration(seconds: 30),
             headers: const {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
             },
           ),
-        );
+        ) {
+    _configureLocalApiFallback(_refreshDio);
+  }
 
   final TokenStorage _tokenStorage;
   final VoidCallback onLogout;
@@ -181,5 +189,66 @@ class AuthInterceptor extends Interceptor {
             options.path.startsWith('${ApiEndpoints.exercises}/') ||
             options.path.startsWith('${ApiEndpoints.workouts}/'));
     return _publicPaths.contains(options.path) || isPublicGet;
+  }
+}
+
+void _configureLocalApiFallback(Dio dio) {
+  final candidates = Environment.apiBaseUrlCandidates;
+  if (!_localApiFallbackEnabled) {
+    return;
+  }
+  dio.interceptors.add(LocalApiFallbackInterceptor(dio, candidates));
+}
+
+bool get _localApiFallbackEnabled {
+  return kDebugMode &&
+      !kIsWeb &&
+      defaultTargetPlatform == TargetPlatform.android &&
+      Environment.apiBaseUrlCandidates.length > 1;
+}
+
+class LocalApiFallbackInterceptor extends Interceptor {
+  LocalApiFallbackInterceptor(this._dio, this._baseUrls);
+
+  final Dio _dio;
+  final List<String> _baseUrls;
+
+  static const _retryIndexKey = 'vfitLocalApiFallbackIndex';
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    if (!_isConnectionFailure(err)) {
+      handler.next(err);
+      return;
+    }
+
+    final request = err.requestOptions;
+    final currentIndex = request.extra[_retryIndexKey] as int? ??
+        _baseUrls.indexOf(request.baseUrl);
+    final nextIndex = currentIndex + 1;
+    if (nextIndex >= _baseUrls.length) {
+      handler.next(err);
+      return;
+    }
+
+    try {
+      request.baseUrl = _baseUrls[nextIndex];
+      request.extra[_retryIndexKey] = nextIndex;
+      final response = await _dio.fetch<dynamic>(request);
+      handler.resolve(response);
+    } catch (_) {
+      handler.next(err);
+    }
+  }
+
+  bool _isConnectionFailure(DioException err) {
+    return err.response == null &&
+        (err.type == DioExceptionType.connectionError ||
+            err.type == DioExceptionType.connectionTimeout ||
+            err.type == DioExceptionType.sendTimeout ||
+            err.type == DioExceptionType.receiveTimeout);
   }
 }

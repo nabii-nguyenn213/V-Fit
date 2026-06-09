@@ -43,15 +43,23 @@ class Environment {
   );
 
   static String get apiBaseUrl {
+    return apiBaseUrlCandidates.first;
+  }
+
+  static List<String> get apiBaseUrlCandidates {
     if (_apiBaseUrlOverride.isNotEmpty) {
-      return _apiBaseUrlOverride;
+      return [_apiBaseUrlOverride];
     }
     if (kIsWeb) {
-      return 'http://localhost:8080';
+      return ['http://localhost:8080'];
     }
     return switch (defaultTargetPlatform) {
-      TargetPlatform.android => 'http://192.168.1.93:8080',
-      _ => 'http://localhost:8080',
+      TargetPlatform.android => [
+          'http://192.168.1.93:8080',
+          'http://10.0.2.2:8080',
+          'http://127.0.0.1:8080',
+        ],
+      _ => ['http://localhost:8080'],
     };
   }
 
