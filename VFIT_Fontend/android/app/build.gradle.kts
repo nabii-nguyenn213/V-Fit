@@ -13,6 +13,11 @@ val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
+val hasReleaseSigningConfig =
+    keystoreProperties["keyAlias"] != null &&
+        keystoreProperties["keyPassword"] != null &&
+        keystoreProperties["storeFile"] != null &&
+        keystoreProperties["storePassword"] != null
 
 val debugKeystorePath = System.getenv("ANDROID_DEBUG_KEYSTORE")
     ?: System.getenv("USERPROFILE")?.let { "$it\\.android\\debug.keystore" }
@@ -66,11 +71,13 @@ android {
                 storePassword = "android"
             }
         }
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String?
-            keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as String?
+        if (hasReleaseSigningConfig) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
         }
     }
 
@@ -85,7 +92,7 @@ android {
         }
         release {
             manifestPlaceholders["usesCleartextTraffic"] = "false"
-            if (keystorePropertiesFile.exists()) {
+            if (hasReleaseSigningConfig) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
                 signingConfig = signingConfigs.getByName("debug")
