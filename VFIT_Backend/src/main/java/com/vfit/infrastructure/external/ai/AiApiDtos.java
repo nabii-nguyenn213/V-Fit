@@ -24,7 +24,8 @@ record FormCheckResponse(
         @JsonProperty("score") int score,
         @JsonProperty("errors") List<FormErrorDto> errors,
         @JsonProperty("feedback") Object feedback,
-        @JsonProperty("metrics") Map<String, Object> metrics) {
+        @JsonProperty("metrics") Map<String, Object> metrics,
+        @JsonProperty("rep_count") int repCount) {
     
     public AiFormCheckFeedback toAiFeedback() {
         List<FormErrorDto> safeErrors = errors == null ? List.of() : errors;
@@ -51,7 +52,8 @@ record FormCheckResponse(
                 affectedLandmarks,
                 feedbackPayload.cue(),
                 severity,
-                false);
+                false,
+                repCount);
     }
 
     private static String valueOrDefault(String value, String fallback) {

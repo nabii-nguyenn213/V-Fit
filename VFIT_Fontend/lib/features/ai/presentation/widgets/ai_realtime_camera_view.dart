@@ -71,7 +71,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _stopStreaming();
+    _stopStreaming(fromDispose: true);
     _cameraController?.dispose();
     super.dispose();
   }
@@ -172,7 +172,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     }
 
     try {
-      final token = await appTokenStorage.readAccessToken();
+      final token = await getOrRefreshAccessToken();
       if (token == null || token.isEmpty) {
         AppFeedback.error('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.');
         return;
@@ -199,7 +199,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     }
   }
 
-  Future<void> _stopStreaming() async {
+  Future<void> _stopStreaming({bool fromDispose = false}) async {
     _captureTimer?.cancel();
     _captureTimer = null;
     _streaming = false;
@@ -209,7 +209,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     if (socket != null) {
       await socket.close();
     }
-    if (mounted) {
+    if (mounted && !fromDispose) {
       setState(() => _statusText = widget.stoppedText);
     }
   }
@@ -235,9 +235,11 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     try {
       final image = await controller.takePicture();
       final bytes = await image.readAsBytes();
+      print('[AI CAMERA] Successfully captured frame, size: ${bytes.length} bytes');
       socket.add(bytes);
     } catch (error) {
       _waitingForFeedback = false;
+      print('[AI CAMERA] Error capturing frame: $error');
       if (mounted) {
         setState(() => _statusText = 'Bỏ qua một khung hình: $error');
       }

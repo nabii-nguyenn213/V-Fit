@@ -75,7 +75,7 @@ class PaymentRepository {
   }
 
   Stream<PremiumPaymentRealtimeEvent> watchPremiumPayments() async* {
-    final token = await appTokenStorage.readAccessToken();
+    final token = await getOrRefreshAccessToken();
     if (token == null || token.isEmpty) {
       return;
     }

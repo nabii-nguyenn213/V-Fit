@@ -26,7 +26,8 @@ public class MockAiClient implements AiClient {
                 List.of("left_knee", "right_knee"),
                 "Keep knees tracking over toes.",
                 "WARN",
-                false);
+                false,
+                3);
     }
 
     @Override

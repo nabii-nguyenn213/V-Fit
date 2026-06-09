@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
@@ -14,6 +15,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
@@ -22,24 +24,49 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
     private final AiWebSocketFrameRateLimiter frameRateLimiter;
 
     @Override
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        log.info("[AI WS] Connection established. Session ID: {}, attributes: {}", session.getId(), session.getAttributes());
+        super.afterConnectionEstablished(session);
+    }
+
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        log.info("[AI WS] Connection closed. Session ID: {}, Close status: {}", session.getId(), status);
+        super.afterConnectionClosed(session, status);
+    }
+
+    @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
         String userId = session.getAttributes().get("userId").toString();
         String exerciseId = session.getAttributes().get("exerciseId").toString();
         String cameraView = session.getAttributes().getOrDefault("cameraView", "side").toString();
+        byte[] bytes = payloadBytes(message);
+        log.info("[AI WS] Received binary frame. Session ID: {}, Size: {} bytes, user: {}, exercise: {}, view: {}",
+                session.getId(), bytes.length, userId, exerciseId, cameraView);
+        
         if (!frameRateLimiter.allow(userId)) {
+            log.warn("[AI WS] Rate limit exceeded for user: {}. Closing session.", userId);
             session.sendMessage(new TextMessage(objectMapper.writeValueAsString(rateLimitedFeedback())));
             session.close(CloseStatus.POLICY_VIOLATION.withReason("AI rate limit exceeded"));
             return;
         }
-        AiFormCheckFeedback feedback = aiClient.analyzeForm(
-                userId,
-                "realtime-frame",
-                Map.of(
-                        "exerciseId", exerciseId,
-                        "exercise", normalizeExercise(exerciseId),
-                        "cameraView", cameraView,
-                        "frameBytes", payloadBytes(message)));
-        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(feedback)));
+        
+        try {
+            AiFormCheckFeedback feedback = aiClient.analyzeForm(
+                    userId,
+                    "realtime-frame",
+                    Map.of(
+                            "exerciseId", exerciseId,
+                            "exercise", normalizeExercise(exerciseId),
+                            "cameraView", cameraView,
+                            "frameBytes", bytes));
+            log.info("[AI WS] AI analysis response received: success={}, feedback='{}'", 
+                    feedback != null, feedback != null ? feedback.summary() : "null");
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(feedback)));
+        } catch (Exception e) {
+            log.error("[AI WS] Error calling AI analysis: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     private byte[] payloadBytes(BinaryMessage message) {
@@ -71,6 +98,7 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
                 List.of(),
                 "Giữ máy ổn định và gửi lại sau ít giây.",
                 "RATE_LIMITED",
-                true);
+                true,
+                0);
     }
 }

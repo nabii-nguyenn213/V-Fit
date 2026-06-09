@@ -72,12 +72,30 @@ class _FeedbackPanel extends StatelessWidget {
               Icon(Icons.auto_awesome_rounded, color: color),
               const SizedBox(width: AppSpacing.x2),
               Expanded(
-                child: Text(
-                  feedback == null
-                      ? 'Đang chờ phản hồi AI'
-                      : 'Điểm ${feedback!.score}/100',
-                  style: AppTypography.headerMediumFor(context),
-                ),
+                child: feedback == null
+                    ? Text(
+                        'Đang chờ phản hồi AI',
+                        style: AppTypography.headerMediumFor(context),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Số lần: ${feedback!.repCount}',
+                            style: AppTypography.headerMediumFor(context).copyWith(
+                              color: AppColors.energyMagenta,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Điểm: ${feedback!.score}/100',
+                            style: AppTypography.headerMediumFor(context).copyWith(
+                              color: color,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ],
           ),
@@ -114,6 +132,7 @@ class _FormCheckFeedback {
     required this.message,
     required this.severity,
     required this.fallback,
+    required this.repCount,
     this.coachingCue,
   });
 
@@ -121,6 +140,7 @@ class _FormCheckFeedback {
   final String message;
   final String severity;
   final bool fallback;
+  final int repCount;
   final String? coachingCue;
 
   factory _FormCheckFeedback.fromJson(Map<String, dynamic> json) {
@@ -131,6 +151,7 @@ class _FormCheckFeedback {
           'Chưa có phản hồi.',
       severity: json['severity']?.toString() ?? 'INFO',
       fallback: json['fallback'] == true,
+      repCount: (json['rep_count'] as num?)?.toInt() ?? 0,
       coachingCue: json['cue']?.toString() ?? json['coachingCue']?.toString(),
     );
   }

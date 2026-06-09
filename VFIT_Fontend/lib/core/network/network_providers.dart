@@ -252,3 +252,47 @@ class LocalApiFallbackInterceptor extends Interceptor {
             err.type == DioExceptionType.receiveTimeout);
   }
 }
+
+Future<String?> getOrRefreshAccessToken() async {
+  final stored = await appTokenStorage.read();
+  if (stored == null) {
+    return null;
+  }
+  if (stored.isAccessTokenValid) {
+    return stored.accessToken;
+  }
+  // Token is expired, try to refresh
+  try {
+    final dio = Dio(BaseOptions(
+      baseUrl: Environment.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    ));
+    final response = await dio.post<dynamic>(
+      ApiEndpoints.refreshToken,
+      data: {'refreshToken': stored.refreshToken},
+    );
+    final tokenData = ApiResponseParser.unwrap(response, (json) {
+      final data = Map<String, dynamic>.from(json as Map);
+      return (
+        accessToken: data['accessToken'] as String,
+        refreshToken: data['refreshToken'] as String,
+        expiresInMs: (data['expiresInMs'] as num).toInt(),
+      );
+    });
+    await appTokenStorage.write(
+      accessToken: tokenData.accessToken,
+      refreshToken: tokenData.refreshToken,
+      expiresInMs: tokenData.expiresInMs,
+    );
+    return tokenData.accessToken;
+  } catch (e) {
+    // If refresh fails, clear token and return null
+    await appTokenStorage.clear();
+    return null;
+  }
+}

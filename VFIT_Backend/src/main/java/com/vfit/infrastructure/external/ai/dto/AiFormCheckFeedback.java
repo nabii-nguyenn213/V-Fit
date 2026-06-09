@@ -9,7 +9,8 @@ public record AiFormCheckFeedback(
         List<String> affectedJoints,
         String cue,
         String severity,
-        boolean fallback) {
+        boolean fallback,
+        int repCount) {
 
     public record FormError(String code, String severity, String message, List<String> affectedJoints) {
     }
@@ -22,6 +23,7 @@ public record AiFormCheckFeedback(
                 List.of(),
                 "Pause and retry when the camera view is clear.",
                 "UNKNOWN",
-                true);
+                true,
+                0);
     }
 }
