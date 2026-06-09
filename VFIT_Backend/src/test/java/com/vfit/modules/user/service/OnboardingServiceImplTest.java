@@ -166,7 +166,7 @@ class OnboardingServiceImplTest {
         return new AiBodyAnalysisResult(
                 new AiBodyAnalysisResult.Posture("Neutral", 10),
                 new AiBodyAnalysisResult.Imbalance("Balanced", "LOW"),
-                new AiBodyAnalysisResult.BodyEstimate(bodyFatPercent, 50.0, 0.8),
+                new AiBodyAnalysisResult.BodyEstimate(bodyFatPercent, 50.0, 0.8, null),
                 new AiBodyAnalysisResult.Recommendation(focus, 4),
                 false);
     }

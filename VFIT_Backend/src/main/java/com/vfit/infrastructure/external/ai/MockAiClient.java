@@ -35,7 +35,7 @@ public class MockAiClient implements AiClient {
         return new AiBodyAnalysisResult(
                 new AiBodyAnalysisResult.Posture("Neutral posture baseline", 18),
                 new AiBodyAnalysisResult.Imbalance("Minor left-right shoulder imbalance", "LOW"),
-                new AiBodyAnalysisResult.BodyEstimate(22.0, 58.5, 0.78),
+                new AiBodyAnalysisResult.BodyEstimate(22.0, 58.5, 0.78, null),
                 new AiBodyAnalysisResult.Recommendation("mobility and recomposition", 4),
                 false);
     }

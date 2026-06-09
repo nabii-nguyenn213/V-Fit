@@ -13,7 +13,7 @@ public record AiBodyAnalysisResult(
     public record Imbalance(String summary, String severity) {
     }
 
-    public record BodyEstimate(Double bodyFatPercent, Double leanMassKg, double confidence) {
+    public record BodyEstimate(Double bodyFatPercent, Double leanMassKg, double confidence, Double waistShoulderRatio) {
     }
 
     public record Recommendation(String focus, int weeklySessions) {
@@ -23,7 +23,7 @@ public record AiBodyAnalysisResult(
         return new AiBodyAnalysisResult(
                 new Posture("Body analysis is temporarily unavailable.", 0),
                 new Imbalance("No imbalance estimate available.", "UNKNOWN"),
-                new BodyEstimate(null, null, 0.0),
+                new BodyEstimate(null, null, 0.0, null),
                 new Recommendation("general fitness", 3),
                 true);
     }

@@ -82,16 +82,14 @@ class _BodyAnalysisPanel extends StatelessWidget {
               runSpacing: AppSpacing.x2,
               children: [
                 _MetricChip(
-                  label: 'Body fat',
-                  value: result!.bodyFatPercent == null
+                  label: 'Eo/Vai',
+                  value: result!.waistShoulderRatio == null
                       ? '-'
-                      : '${result!.bodyFatPercent!.toStringAsFixed(1)}%',
+                      : result!.waistShoulderRatio!.toStringAsFixed(2),
                 ),
                 _MetricChip(
-                  label: 'Lean mass',
-                  value: result!.leanMassKg == null
-                      ? '-'
-                      : '${result!.leanMassKg!.toStringAsFixed(1)} kg',
+                  label: 'AI',
+                  value: result!.fallback ? 'Fallback' : 'Live',
                 ),
                 _MetricChip(
                   label: 'Confidence',
@@ -146,8 +144,7 @@ class _BodyAnalysisFeedback {
     required this.recommendation,
     required this.confidence,
     required this.fallback,
-    this.bodyFatPercent,
-    this.leanMassKg,
+    this.waistShoulderRatio,
   });
 
   final String posture;
@@ -155,8 +152,7 @@ class _BodyAnalysisFeedback {
   final String recommendation;
   final double confidence;
   final bool fallback;
-  final double? bodyFatPercent;
-  final double? leanMassKg;
+  final double? waistShoulderRatio;
 
   factory _BodyAnalysisFeedback.fromJson(Map<String, dynamic> json) {
     final posture = _asMap(json['posture']);
@@ -171,8 +167,7 @@ class _BodyAnalysisFeedback {
           recommendation['focus']?.toString() ?? 'Continue current routine.',
       confidence: (estimate['confidence'] as num?)?.toDouble() ?? 0,
       fallback: json['fallback'] == true,
-      bodyFatPercent: (estimate['bodyFatPercent'] as num?)?.toDouble(),
-      leanMassKg: (estimate['leanMassKg'] as num?)?.toDouble(),
+      waistShoulderRatio: (estimate['waistShoulderRatio'] as num?)?.toDouble(),
     );
   }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult;
 import com.vfit.infrastructure.external.ai.dto.AiFormCheckFeedback;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DTOs for communicating with Python AI API
@@ -22,16 +23,17 @@ record FormCheckResponse(
         @JsonProperty("success") boolean success,
         @JsonProperty("score") int score,
         @JsonProperty("errors") List<FormErrorDto> errors,
-        @JsonProperty("feedback") String feedback,
-        @JsonProperty("metrics") java.util.Map<String, Object> metrics) {
+        @JsonProperty("feedback") Object feedback,
+        @JsonProperty("metrics") Map<String, Object> metrics) {
     
     public AiFormCheckFeedback toAiFeedback() {
         List<FormErrorDto> safeErrors = errors == null ? List.of() : errors;
+        FeedbackPayload feedbackPayload = parseFeedback(feedback);
         List<AiFormCheckFeedback.FormError> formErrors = safeErrors.stream()
                 .map(e -> new AiFormCheckFeedback.FormError(
                         valueOrDefault(e.code(), "FORM_CHECK"),
-                        valueOrDefault(e.severity(), "WARN"),
-                        valueOrDefault(e.message(), "Form check needs attention."),
+                        normalizeSeverity(e.severity()),
+                        valueOrDefault(e.message(), feedbackPayload.summary()),
                         e.landmarks() == null ? List.of() : e.landmarks()))
                 .toList();
         
@@ -40,14 +42,14 @@ record FormCheckResponse(
                 .distinct()
                 .toList();
         
-        String severity = safeErrors.isEmpty() ? "OK" : valueOrDefault(safeErrors.get(0).severity(), "WARN");
+        String severity = safeErrors.isEmpty() ? "OK" : normalizeSeverity(safeErrors.get(0).severity());
         
         return new AiFormCheckFeedback(
                 score,
-                valueOrDefault(feedback, "No form feedback available."),
+                feedbackPayload.summary(),
                 formErrors,
                 affectedLandmarks,
-                valueOrDefault(feedback, "Keep moving under control."),
+                feedbackPayload.cue(),
                 severity,
                 false);
     }
@@ -55,6 +57,41 @@ record FormCheckResponse(
     private static String valueOrDefault(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
     }
+
+    private static FeedbackPayload parseFeedback(Object feedback) {
+        if (feedback instanceof String value && !value.isBlank()) {
+            return new FeedbackPayload(value, value);
+        }
+        if (feedback instanceof List<?> values && !values.isEmpty()) {
+            Object first = values.get(0);
+            if (first instanceof Map<?, ?> map) {
+                String warning = stringValue(map.get("warning"));
+                String correction = stringValue(map.get("correction"));
+                return new FeedbackPayload(
+                        valueOrDefault(warning, "Form check needs attention."),
+                        valueOrDefault(correction, "Keep moving under control."));
+            }
+        }
+        return new FeedbackPayload("No form feedback available.", "Keep moving under control.");
+    }
+
+    private static String stringValue(Object value) {
+        return value == null ? null : value.toString();
+    }
+
+    private static String normalizeSeverity(String value) {
+        if (value == null || value.isBlank()) {
+            return "WARN";
+        }
+        return switch (value.toLowerCase()) {
+            case "high", "error" -> "ERROR";
+            case "medium", "low", "warn", "warning" -> "WARN";
+            case "ok", "info" -> value.toUpperCase();
+            default -> "WARN";
+        };
+    }
+
+    private record FeedbackPayload(String summary, String cue) {}
 }
 
 record FormErrorDto(
@@ -75,54 +112,45 @@ record BodyAnalysisResponse(
         @JsonProperty("body_type") String bodyType,
         @JsonProperty("body_description") String bodyDescription,
         @JsonProperty("imbalances") List<String> imbalances,
-        @JsonProperty("metrics") java.util.Map<String, Object> metrics,
+        @JsonProperty("metrics") Map<String, Object> metrics,
         @JsonProperty("recommendations") List<String> recommendations) {
     
     public AiBodyAnalysisResult toAiResult() {
-        // Map body type to posture assessment
-        String postureDesc = determinePostureFromBodyType(bodyType);
+        String postureDesc = valueOrDefault(bodyType, "Body type analysis pending");
+        if (bodyDescription != null && !bodyDescription.isBlank()) {
+            postureDesc = postureDesc + " - " + bodyDescription;
+        }
         
-        // Map imbalances
         List<String> safeImbalances = imbalances == null ? List.of() : imbalances;
         List<String> safeRecommendations = recommendations == null ? List.of() : recommendations;
         String imbalanceDesc = safeImbalances.isEmpty() ? "No significant imbalances" : safeImbalances.get(0);
         String imbalanceSeverity = safeImbalances.isEmpty() ? "OK" : "LOW";
         
-        // Extract metrics (simplified)
-        double bmi = extractMetric(metrics, "bmi", 22.0);
-        double fatPercentage = extractMetric(metrics, "fat_percentage", 20.0);
-        double symmetryScore = extractMetric(metrics, "symmetry_score", 0.85);
+        Double waistShoulderRatio = extractMetric(metrics, "fat_ratio");
+        double confidence = waistShoulderRatio == null ? 0.0 : 0.85;
         
         return new AiBodyAnalysisResult(
-                new AiBodyAnalysisResult.Posture(postureDesc, 85),
+                new AiBodyAnalysisResult.Posture(postureDesc, 15),
                 new AiBodyAnalysisResult.Imbalance(imbalanceDesc, imbalanceSeverity),
-                new AiBodyAnalysisResult.BodyEstimate(bmi, fatPercentage, symmetryScore),
+                new AiBodyAnalysisResult.BodyEstimate(null, null, confidence, waistShoulderRatio),
                 new AiBodyAnalysisResult.Recommendation(
                         safeRecommendations.isEmpty() ? "Continue current routine" : safeRecommendations.get(0),
                         3),
                 false);
     }
-    
-    private String determinePostureFromBodyType(String bodyType) {
-        if (bodyType == null || bodyType.isBlank()) {
-            return "Body type analysis pending";
-        }
-        return switch (bodyType.toUpperCase()) {
-            case "CHU V" -> "V-shaped upper body - well-developed shoulders";
-            case "QUA LE" -> "Pear-shaped - weight distributed to lower body";
-            case "CHU NHAT" -> "Rectangular shape - athletic build";
-            default -> "Body type analysis pending";
-        };
+
+    private static String valueOrDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
     }
-    
-    private double extractMetric(java.util.Map<String, Object> metrics, String key, double defaultValue) {
+
+    private Double extractMetric(Map<String, Object> metrics, String key) {
         if (metrics == null || !metrics.containsKey(key)) {
-            return defaultValue;
+            return null;
         }
         Object value = metrics.get(key);
         if (value instanceof Number) {
             return ((Number) value).doubleValue();
         }
-        return defaultValue;
+        return null;
     }
 }

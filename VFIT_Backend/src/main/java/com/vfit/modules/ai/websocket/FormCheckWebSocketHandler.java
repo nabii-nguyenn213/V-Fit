@@ -53,7 +53,14 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
         if (exerciseId == null || exerciseId.isBlank() || "general".equalsIgnoreCase(exerciseId)) {
             return "squat";
         }
-        return exerciseId;
+        String normalized = exerciseId.toLowerCase().replace("_", "-").trim();
+        if (normalized.contains("push") || normalized.contains("chong-day")) {
+            return "pushup";
+        }
+        if (normalized.contains("squat") || normalized.contains("ngoi-xom")) {
+            return "squat";
+        }
+        return "squat";
     }
 
     private AiFormCheckFeedback rateLimitedFeedback() {

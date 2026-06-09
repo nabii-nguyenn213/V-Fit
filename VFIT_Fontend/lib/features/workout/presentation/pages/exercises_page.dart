@@ -166,7 +166,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
     }
 
     if (!mounted) return;
-    context.push(AppRoutes.aiFormCheckLocation(exerciseId: 'general'));
+    context.push(AppRoutes.aiFormCheckLocation(exerciseId: 'squat'));
   }
 }
 
