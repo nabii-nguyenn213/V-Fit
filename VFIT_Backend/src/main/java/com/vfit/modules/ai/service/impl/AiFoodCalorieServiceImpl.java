@@ -5,6 +5,7 @@ import com.vfit.infrastructure.external.ai.dto.AiFoodCalorieEstimate;
 import com.vfit.modules.ai.dto.response.FoodCalorieEstimateResponse;
 import com.vfit.modules.ai.mapper.AiResultMapper;
 import com.vfit.modules.ai.service.AiFoodCalorieService;
+import java.io.IOException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,19 @@ public class AiFoodCalorieServiceImpl implements AiFoodCalorieService {
                 "contentType", contentType,
                 "sizeBytes", image == null ? 0L : image.getSize());
 
-        AiFoodCalorieEstimate result = aiClient.estimateFoodCalories("realtime-camera-frame", metadata);
+        AiFoodCalorieEstimate result =
+                aiClient.estimateFoodCalories(fileName, readImageBytes(image), metadata);
         return aiResultMapper.toFoodCalorieEstimateResponse(result);
+    }
+
+    private byte[] readImageBytes(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            return new byte[0];
+        }
+        try {
+            return image.getBytes();
+        } catch (IOException e) {
+            return new byte[0];
+        }
     }
 }

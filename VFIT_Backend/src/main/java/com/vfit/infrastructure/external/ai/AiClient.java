@@ -10,5 +10,5 @@ public interface AiClient {
 
     AiBodyAnalysisResult analyzeBody(String userId, String imageUrl, Map<String, Object> metadata);
 
-    AiFoodCalorieEstimate estimateFoodCalories(String imageReference, Map<String, Object> metadata);
+    AiFoodCalorieEstimate estimateFoodCalories(String imageReference, byte[] imageBytes, Map<String, Object> metadata);
 }

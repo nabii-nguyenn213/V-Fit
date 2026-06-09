@@ -6,9 +6,11 @@ import com.vfit.infrastructure.external.ai.dto.AiFormCheckFeedback;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.Map;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(prefix = "app.ai", name = "client-mode", havingValue = "mock", matchIfMissing = true)
 public class MockAiClient implements AiClient {
     @Override
     @CircuitBreaker(name = "aiCore", fallbackMethod = "analyzeFormFallback")
@@ -40,7 +42,10 @@ public class MockAiClient implements AiClient {
 
     @Override
     @CircuitBreaker(name = "aiCore", fallbackMethod = "estimateFoodCaloriesFallback")
-    public AiFoodCalorieEstimate estimateFoodCalories(String imageReference, Map<String, Object> metadata) {
+    public AiFoodCalorieEstimate estimateFoodCalories(
+            String imageReference,
+            byte[] imageBytes,
+            Map<String, Object> metadata) {
         return new AiFoodCalorieEstimate(
                 "Grilled chicken breast with rice",
                 "1 plate",
@@ -71,6 +76,7 @@ public class MockAiClient implements AiClient {
 
     public AiFoodCalorieEstimate estimateFoodCaloriesFallback(
             String imageReference,
+            byte[] imageBytes,
             Map<String, Object> metadata,
             Throwable throwable) {
         return AiFoodCalorieEstimate.safeFallback();

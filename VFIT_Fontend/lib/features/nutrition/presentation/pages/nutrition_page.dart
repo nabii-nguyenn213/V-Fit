@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_feedback.dart';
@@ -136,8 +137,16 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
     }
     setState(() => _scanLoading = true);
     try {
-      final estimate =
-          await ref.read(nutritionRepositoryProvider).estimateFoodCalories();
+      final image = await ImagePicker().pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+      if (!mounted || image == null) {
+        return;
+      }
+      final estimate = await ref
+          .read(nutritionRepositoryProvider)
+          .estimateFoodCalories(image);
       if (!mounted) {
         return;
       }

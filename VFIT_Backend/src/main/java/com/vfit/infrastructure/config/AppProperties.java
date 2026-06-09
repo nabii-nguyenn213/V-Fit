@@ -26,6 +26,8 @@ public class AppProperties {
     private Bootstrap bootstrap = new Bootstrap();
     @Valid
     private Cors cors = new Cors();
+    @Valid
+    private Ai ai = new Ai();
 
     @Getter
     @Setter
@@ -82,5 +84,13 @@ public class AppProperties {
             private String latestVersion;
             private String minSupportedVersion;
         }
+    }
+
+    @Getter
+    @Setter
+    public static class Ai {
+        private String clientMode = "mock";
+        private String baseUrl = "http://localhost:8000";
+        private String foodScannerPath = "/api/v1/food-scanner/";
     }
 }
