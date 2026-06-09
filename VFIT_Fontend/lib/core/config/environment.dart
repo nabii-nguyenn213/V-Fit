@@ -50,7 +50,7 @@ class Environment {
       return 'http://localhost:8080';
     }
     return switch (defaultTargetPlatform) {
-      TargetPlatform.android => 'http://10.0.2.2:8080',
+      TargetPlatform.android => 'http://192.168.1.93:8080',
       _ => 'http://localhost:8080',
     };
   }
