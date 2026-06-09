@@ -5,6 +5,7 @@ class CameraErrorMessages {
 
   static const noCameraFound = 'Thiết bị này chưa có camera khả dụng.';
   static const cameraUnavailable = 'Không thể sử dụng camera.';
+  static const captureFailed = 'Không thể chụp ảnh. Vui lòng thử lại.';
 
   static String fromCameraException(CameraException error) {
     return switch (error.code) {
@@ -12,7 +13,7 @@ class CameraErrorMessages {
       'CameraAccessDeniedWithoutPrompt' =>
         'Hãy bật quyền camera trong phần cài đặt.',
       'CameraAccessRestricted' => 'Quyền camera đang bị giới hạn.',
-      _ => 'Lỗi camera: ${error.description ?? error.code}',
+      _ => cameraUnavailable,
     };
   }
 }

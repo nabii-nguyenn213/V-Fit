@@ -93,7 +93,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             SizedBox(height: compact ? 16 : 20),
                             _LoginTextField(
                               controller: _emailController,
-                              label: 'Email',
+                              label: 'Nhập sdt hoặc mã sinh viên',
                               icon: Icons.alternate_email_rounded,
                               validator: Validators.email,
                               keyboardType: TextInputType.emailAddress,

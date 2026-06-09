@@ -49,6 +49,25 @@ services:
       mongodb:
         condition: service_healthy
 
+  vfit-ai-api:
+    build:
+      context: ../AI-VFIT/V-Fit
+      dockerfile: Dockerfile
+    container_name: vfit-ai-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5000:5000"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      FLASK_ENV: production
+    volumes:
+      - ../AI-VFIT/V-Fit:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   vfit-backend:
     build: .
     container_name: vfit-backend
@@ -71,6 +90,8 @@ services:
       mongodb:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      vfit-ai-api:
         condition: service_healthy
 
 volumes:

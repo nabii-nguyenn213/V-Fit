@@ -35,29 +35,72 @@ public class HttpAiClient implements AiClient {
     @Override
     @CircuitBreaker(name = "aiCore", fallbackMethod = "analyzeFormFallback")
     public AiFormCheckFeedback analyzeForm(String userId, String videoUrl, Map<String, Object> metadata) {
-        return new AiFormCheckFeedback(
-                82,
-                "Form is stable with minor knee alignment improvements suggested.",
-                List.of(new AiFormCheckFeedback.FormError(
-                        "KNEE_ALIGNMENT",
-                        "WARN",
-                        "Keep knees aligned with toes.",
-                        List.of("left_knee", "right_knee"))),
-                List.of("left_knee", "right_knee"),
-                "Keep knees tracking over toes.",
-                "WARN",
-                false);
+        try {
+            // Extract frame data from request
+            // In real-time WebSocket, frame comes as part of the message
+            byte[] frameBytes = (byte[]) metadata.getOrDefault("frameBytes", new byte[0]);
+            String exercise = (String) metadata.getOrDefault("exercise", "squat");
+            String cameraView = (String) metadata.getOrDefault("cameraView", "side");
+            
+            if (frameBytes == null || frameBytes.length == 0) {
+                return AiFormCheckFeedback.safeFallback();
+            }
+            
+            // Convert bytes to base64 for sending to Python API
+            String frameBase64 = java.util.Base64.getEncoder().encodeToString(frameBytes);
+            
+            // Call Python AI API
+            FormCheckRequest apiRequest = new FormCheckRequest(frameBase64, exercise, cameraView);
+            FormCheckResponse response = restClient.post()
+                    .uri(aiProperties.getBaseUrl() + "/api/ai/form-check")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(apiRequest)
+                    .retrieve()
+                    .body(FormCheckResponse.class);
+            
+            if (response == null || !response.success) {
+                return AiFormCheckFeedback.safeFallback();
+            }
+            
+            return response.toAiFeedback();
+        } catch (RestClientException e) {
+            log.warn("AI form check request failed: {}", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @CircuitBreaker(name = "aiCore", fallbackMethod = "analyzeBodyFallback")
     public AiBodyAnalysisResult analyzeBody(String userId, String imageUrl, Map<String, Object> metadata) {
-        return new AiBodyAnalysisResult(
-                new AiBodyAnalysisResult.Posture("Neutral posture baseline", 18),
-                new AiBodyAnalysisResult.Imbalance("Minor left-right shoulder imbalance", "LOW"),
-                new AiBodyAnalysisResult.BodyEstimate(22.0, 58.5, 0.78),
-                new AiBodyAnalysisResult.Recommendation("mobility and recomposition", 4),
-                false);
+        try {
+            // Extract frame data
+            byte[] frameBytes = (byte[]) metadata.getOrDefault("frameBytes", new byte[0]);
+            
+            if (frameBytes == null || frameBytes.length == 0) {
+                return AiBodyAnalysisResult.safeFallback();
+            }
+            
+            // Convert bytes to base64
+            String frameBase64 = java.util.Base64.getEncoder().encodeToString(frameBytes);
+            
+            // Call Python AI API
+            BodyAnalysisRequest apiRequest = new BodyAnalysisRequest(frameBase64);
+            BodyAnalysisResponse response = restClient.post()
+                    .uri(aiProperties.getBaseUrl() + "/api/ai/body-analysis")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(apiRequest)
+                    .retrieve()
+                    .body(BodyAnalysisResponse.class);
+            
+            if (response == null || !response.success) {
+                return AiBodyAnalysisResult.safeFallback();
+            }
+            
+            return response.toAiResult();
+        } catch (RestClientException e) {
+            log.warn("AI body analysis request failed: {}", e.getMessage());
+            throw e;
+        }
     }
 
     @Override

@@ -3,9 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils/camera_error_messages.dart';
-import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
-import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_spacing.dart';
 import '../../../../presentation/theme/app_typography.dart';
 
@@ -24,6 +22,8 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
   int _selectedCameraIndex = 0;
   bool _initializing = true;
   bool _capturing = false;
+  bool _retriedInitialOpen = false;
+  int _openRequestId = 0;
   String? _error;
 
   @override
@@ -42,11 +42,16 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
       _controller?.dispose();
       _controller = null;
-    } else if (state == AppLifecycleState.resumed && _cameras.isNotEmpty) {
+    } else if (state == AppLifecycleState.inactive && !_initializing) {
+      _controller?.dispose();
+      _controller = null;
+    } else if (state == AppLifecycleState.resumed &&
+        _cameras.isNotEmpty &&
+        (_controller == null || !_controller!.value.isInitialized)) {
       _openCamera(_selectedCameraIndex);
     }
   }
@@ -69,8 +74,8 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
       await _openCamera(_selectedCameraIndex);
     } on CameraException catch (error) {
       _setError(CameraErrorMessages.fromCameraException(error));
-    } catch (error) {
-      _setError(error.toString());
+    } catch (_) {
+      _setError(CameraErrorMessages.cameraUnavailable);
     }
   }
 
@@ -82,7 +87,9 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
       _initializing = true;
       _error = null;
     });
+    final requestId = ++_openRequestId;
     await _controller?.dispose();
+    _controller = null;
     final controller = CameraController(
       _cameras[index],
       ResolutionPreset.high,
@@ -91,7 +98,7 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
     );
     try {
       await controller.initialize();
-      if (!mounted) {
+      if (!mounted || requestId != _openRequestId) {
         await controller.dispose();
         return;
       }
@@ -102,8 +109,35 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
       });
     } on CameraException catch (error) {
       await controller.dispose();
+      if (!mounted || requestId != _openRequestId) {
+        return;
+      }
+      if (_shouldRetryInitialOpen(error)) {
+        _retriedInitialOpen = true;
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        if (mounted && requestId == _openRequestId) {
+          await _openCamera(index);
+        }
+        return;
+      }
       _setError(CameraErrorMessages.fromCameraException(error));
+    } catch (_) {
+      await controller.dispose();
+      if (!mounted || requestId != _openRequestId) {
+        return;
+      }
+      _setError(CameraErrorMessages.cameraUnavailable);
     }
+  }
+
+  bool _shouldRetryInitialOpen(CameraException error) {
+    if (_retriedInitialOpen) {
+      return false;
+    }
+    return error.code == 'CameraAccessDenied' ||
+        error.code == 'CameraAccessDeniedWithoutPrompt' ||
+        error.code == 'CameraAccessRestricted' ||
+        error.description?.isNotEmpty == true;
   }
 
   Future<void> _switchCamera() async {
@@ -128,9 +162,9 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
       if (mounted) {
         Navigator.of(context).pop(file);
       }
-    } catch (error) {
+    } catch (_) {
       if (mounted) {
-        AppFeedback.error('Không thể chụp ảnh: $error');
+        AppFeedback.error(CameraErrorMessages.captureFailed);
       }
     } finally {
       if (mounted) {
@@ -185,7 +219,7 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
                       ),
                     ),
             ),
-          
+
           // Top Controls (Glassmorphism)
           Positioned(
             top: topPadding + 16,
@@ -206,7 +240,7 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
               ],
             ),
           ),
-          
+
           // Bottom Shutter Button
           Positioned(
             bottom: bottomPadding + 32,
@@ -246,7 +280,10 @@ class _ProgressCameraCapturePageState extends State<ProgressCameraCapturePage>
     );
   }
 
-  Widget _buildGlassButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _buildGlassButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(99),
       child: BackdropFilter(
