@@ -48,9 +48,12 @@ public class JwtPremiumHandshakeInterceptor implements HandshakeInterceptor {
             String email = jwtTokenProvider.getEmail(token);
             log.info("Token validated successfully for email: {}", email);
             
+            String path = request.getURI().getPath();
+            boolean isBodyAnalysis = "/ws/ai/body-analysis".equals(path);
+
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
             if (!(userDetails instanceof CustomUserDetails details)
-                    || details.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
+                    || (!isBodyAnalysis && details.getOnboardingStatus() != OnboardingStatus.COMPLETED)) {
                 log.warn("WebSocket handshake rejected: User details invalid or onboarding not completed (status: {}).",
                         (userDetails instanceof CustomUserDetails d) ? d.getOnboardingStatus() : "null");
                 response.setStatusCode(HttpStatus.FORBIDDEN);
@@ -58,12 +61,11 @@ public class JwtPremiumHandshakeInterceptor implements HandshakeInterceptor {
             }
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
-            if (!featureGate.isPremium(authentication)) {
+            if (!isBodyAnalysis && !featureGate.isPremium(authentication)) {
                 log.warn("WebSocket handshake rejected: User {} is not premium.", details.getId());
                 response.setStatusCode(HttpStatus.FORBIDDEN);
                 return false;
             }
-            String path = request.getURI().getPath();
             String exerciseId = queryParam(request.getURI(), "exerciseId");
             if (path.endsWith("/form-check") && !StringUtils.hasText(exerciseId)) {
                 log.warn("WebSocket handshake rejected: exerciseId is required for /form-check path.");
