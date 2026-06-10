@@ -28,6 +28,7 @@ class AiRealtimeCameraView extends StatefulWidget {
     required this.feedbackBuilder,
     this.captureInterval = const Duration(milliseconds: 800),
     this.onFeedbackReceived,
+    this.showStartStopButton = true,
   });
 
   final String title;
@@ -43,6 +44,7 @@ class AiRealtimeCameraView extends StatefulWidget {
     String? statusText,
   ) feedbackBuilder;
   final void Function(Map<String, dynamic> feedback)? onFeedbackReceived;
+  final bool showStartStopButton;
 
   @override
   State<AiRealtimeCameraView> createState() => _AiRealtimeCameraViewState();
@@ -270,16 +272,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
           });
 
           if (widget.onFeedbackReceived != null) {
-            final isFallback = feedbackMap['fallback'] == true;
-            final estimate = feedbackMap['estimate'] is Map
-                ? Map<String, dynamic>.from(feedbackMap['estimate'] as Map)
-                : null;
-            final confidence = (estimate?['confidence'] as num?)?.toDouble() ?? 0.0;
-
-            if (!isFallback && confidence > 0) {
-              await _stopStreaming();
-              widget.onFeedbackReceived!(feedbackMap);
-            }
+            widget.onFeedbackReceived!(feedbackMap);
           }
         }
       }
@@ -429,18 +422,20 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
                     _latestFeedback,
                     _statusText,
                   ),
-                  const SizedBox(height: AppSpacing.x3),
-                  FilledButton.icon(
-                    onPressed: cameraReady
-                        ? (_streaming ? _stopStreaming : _startStreaming)
-                        : null,
-                    icon: Icon(
-                      _streaming
-                          ? Icons.stop_circle_outlined
-                          : Icons.play_circle_outline_rounded,
+                  if (widget.showStartStopButton) ...[
+                    const SizedBox(height: AppSpacing.x3),
+                    FilledButton.icon(
+                      onPressed: cameraReady
+                          ? (_streaming ? _stopStreaming : _startStreaming)
+                          : null,
+                      icon: Icon(
+                        _streaming
+                            ? Icons.stop_circle_outlined
+                            : Icons.play_circle_outline_rounded,
+                      ),
+                      label: Text(_streaming ? 'Dừng kiểm tra' : 'Bắt đầu'),
                     ),
-                    label: Text(_streaming ? 'Dừng kiểm tra' : 'Bắt đầu'),
-                  ),
+                  ],
                 ],
               ),
             ),

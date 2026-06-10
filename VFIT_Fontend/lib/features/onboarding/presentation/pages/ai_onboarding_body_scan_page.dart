@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../data/repositories/onboarding_repository.dart';
@@ -19,16 +22,55 @@ class AiOnboardingBodyScanPage extends ConsumerStatefulWidget {
 }
 
 class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanPage> {
+  int _countdownSeconds = 5;
+  Timer? _timer;
   bool _isSaving = false;
 
-  Future<void> _handleFeedbackReceived(Map<String, dynamic> feedback) async {
-    if (_isSaving) return;
+  @override
+  void initState() {
+    super.initState();
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    setState(() {
+      _countdownSeconds = 5;
+    });
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {
+        if (_countdownSeconds > 0) {
+          _countdownSeconds--;
+        } else {
+          _timer?.cancel();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  bool _isValidResult(Map<String, dynamic>? json) {
+    if (json == null) return false;
+    final feedback = _BodyAnalysisFeedback.fromJson(json);
+    return !feedback.fallback &&
+           feedback.confidence >= 0.8 &&
+           feedback.posture != 'Analysis pending' &&
+           feedback.posture != 'Body analysis pending';
+  }
+
+  Future<void> _confirmAndSave(Map<String, dynamic> feedbackJson) async {
     setState(() {
       _isSaving = true;
     });
 
     try {
-      final user = await ref.read(onboardingRepositoryProvider).completeRealtimeBodyScan(feedback);
+      final user = await ref.read(onboardingRepositoryProvider).completeRealtimeBodyScan(feedbackJson);
       
       // Update auth controller state
       ref.read(authControllerProvider.notifier).setUser(user);
@@ -59,19 +101,84 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
             readyText: 'Camera đã sẵn sàng.',
             streamingText: 'AI đang phân tích hình thể...',
             stoppedText: 'Đã dừng phân tích body.',
-            onFeedbackReceived: _handleFeedbackReceived,
+            showStartStopButton: false,
             feedbackBuilder: (context, feedbackJson, statusText) {
-              return _BodyAnalysisPanel(
-                result: feedbackJson == null
-                    ? null
-                    : _BodyAnalysisFeedback.fromJson(feedbackJson),
-                statusText: statusText,
+              final isValid = _isValidResult(feedbackJson);
+              
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _BodyAnalysisPanel(
+                    result: feedbackJson == null
+                        ? null
+                        : _BodyAnalysisFeedback.fromJson(feedbackJson),
+                    statusText: statusText,
+                  ),
+                  const SizedBox(height: AppSpacing.x3),
+                  AppButton.primary(
+                    label: _countdownSeconds > 0
+                        ? 'Vui lòng giữ tư thế (${_countdownSeconds}s)'
+                        : (isValid ? 'Xác nhận & Lưu' : 'Đang phân tích tư thế...'),
+                    icon: Icons.check_circle_outline_rounded,
+                    loading: _isSaving,
+                    onPressed: (_countdownSeconds == 0 && isValid && !_isSaving)
+                        ? () => _confirmAndSave(feedbackJson!)
+                        : null,
+                  ),
+                ],
               );
             },
           ),
+          
+          // Countdown overlay during scanning
+          if (_countdownSeconds > 0)
+            Positioned(
+              top: 80,
+              left: 20,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.x3,
+                  horizontal: AppSpacing.x4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.75),
+                  borderRadius: BorderRadius.circular(AppRadius.input),
+                  border: Border.all(
+                    color: AppColors.energyMagenta.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.energyMagenta),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: Text(
+                        'Hãy đứng thẳng và giữ nguyên tư thế: $_countdownSeconds giây...',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           if (_isSaving)
             Container(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: Colors.black.withValues(alpha: 0.75),
               child: const Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -81,7 +188,7 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
                     ),
                     SizedBox(height: AppSpacing.x4),
                     Text(
-                      'Đang lưu kết quả phân tích...',
+                      'Đang xử lý & lưu kết quả...',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
