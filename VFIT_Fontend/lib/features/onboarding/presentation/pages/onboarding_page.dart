@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -24,10 +21,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   final _bodyFatController = TextEditingController();
-  File? _scanFile;
   int _step = 0;
   bool _savingProfile = false;
-  bool _uploadingScan = false;
 
   @override
   void dispose() {
@@ -63,41 +58,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     }
   }
 
-  Future<void> _pickScan(ImageSource source) async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: source,
-      imageQuality: 90,
-      maxWidth: 1280,
-    );
-    if (pickedFile == null || !mounted) {
-      return;
-    }
-    setState(() => _scanFile = File(pickedFile.path));
-  }
 
-  Future<void> _completeScan() async {
-    final file = _scanFile;
-    if (file == null) {
-      _showError('Please capture or choose a body scan image first');
-      return;
-    }
-
-    setState(() => _uploadingScan = true);
-    try {
-      final user =
-          await ref.read(onboardingRepositoryProvider).completeBodyScan(file);
-      ref.read(authControllerProvider.notifier).setUser(user);
-      if (mounted) {
-        context.go('/home');
-      }
-    } catch (error) {
-      _showError(error);
-    } finally {
-      if (mounted) {
-        setState(() => _uploadingScan = false);
-      }
-    }
-  }
 
   void _showError(Object error) {
     if (!mounted) {
@@ -108,7 +69,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -117,7 +77,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           title: const Text('Onboarding'),
           actions: [
             IconButton(
-              onPressed: _savingProfile || _uploadingScan
+              onPressed: _savingProfile
                   ? null
                   : () => context.go('/home'),
               icon: const Icon(Icons.close),
@@ -190,84 +150,18 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 ),
               ),
               Step(
-                title: const Text('Body scan'),
-                subtitle: const Text('Capture one clear full-body image'),
+                title: const Text('Quét cơ thể'),
+                subtitle: const Text('Bắt đầu phân tích hình thể realtime bằng AI'),
                 isActive: _step == 1,
-                state:
-                    _scanFile == null ? StepState.indexed : StepState.complete,
+                state: _step > 0 ? StepState.complete : StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AspectRatio(
-                      aspectRatio: 4 / 3,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: scheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: scheme.outlineVariant),
-                        ),
-                        child: _scanFile == null
-                            ? Icon(
-                                Icons.accessibility_new,
-                                size: 56,
-                                color: scheme.onSurfaceVariant,
-                              )
-                            : ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child:
-                                    Image.file(_scanFile!, fit: BoxFit.cover),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 8),
                     AppButton.primary(
                       label: 'Bắt đầu quét cơ thể realtime',
                       icon: Icons.accessibility_new_rounded,
-                      onPressed: _uploadingScan
-                          ? null
-                          : () => context.push('/onboarding/body-scan-realtime'),
-                    ),
-                    const SizedBox(height: 14),
-                    const Row(
-                      children: [
-                        Expanded(child: Divider()),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text('HOẶC TẢI ẢNH LÊN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        ),
-                        Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppButton.secondary(
-                            label: 'Camera',
-                            icon: Icons.photo_camera_outlined,
-                            onPressed: _uploadingScan
-                                ? null
-                                : () => _pickScan(ImageSource.camera),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: AppButton.secondary(
-                            label: 'Gallery',
-                            icon: Icons.photo_library_outlined,
-                            onPressed: _uploadingScan
-                                ? null
-                                : () => _pickScan(ImageSource.gallery),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    AppButton.primary(
-                      label: 'Complete onboarding',
-                      icon: Icons.check_circle_outline,
-                      loading: _uploadingScan,
-                      onPressed: _uploadingScan ? null : _completeScan,
+                      onPressed: () => context.push('/onboarding/body-scan-realtime'),
                     ),
                   ],
                 ),

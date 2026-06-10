@@ -40,10 +40,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return ref.read(authControllerProvider.notifier).loginWithGoogle();
   }
 
-  Future<void> _loginWithFacebook() {
-    return ref.read(authControllerProvider.notifier).loginWithFacebook();
-  }
-
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
@@ -153,16 +149,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               loading: auth.isLoading,
                               palette: palette,
                               onPressed: _loginWithGoogle,
-                            ),
-                            SizedBox(height: compact ? 8 : 10),
-                            _SocialLoginButton(
-                              label: 'Tiếp tục với Facebook',
-                              supportingLabel: 'Đăng nhập bằng Facebook',
-                              brandLabel: 'f',
-                              brandColor: const Color(0xFF1877F2),
-                              loading: auth.isLoading,
-                              palette: palette,
-                              onPressed: _loginWithFacebook,
                             ),
                             SizedBox(height: compact ? 12 : 16),
                             _RegisterPrompt(palette: palette),
@@ -318,7 +304,7 @@ class _LoginShell extends StatelessWidget {
   }
 }
 
-class _LoginTextField extends StatelessWidget {
+class _LoginTextField extends StatefulWidget {
   const _LoginTextField({
     required this.controller,
     required this.label,
@@ -340,38 +326,67 @@ class _LoginTextField extends StatelessWidget {
   final bool obscureText;
 
   @override
+  State<_LoginTextField> createState() => _LoginTextFieldState();
+}
+
+class _LoginTextFieldState extends State<_LoginTextField> {
+  late bool _obscured;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscured = widget.obscureText;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
-      validator: validator,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      obscureText: obscureText,
+      controller: widget.controller,
+      validator: widget.validator,
+      keyboardType: widget.keyboardType,
+      textInputAction: widget.textInputAction,
+      obscureText: _obscured,
       style: TextStyle(
-        color: palette.primaryText,
+        color: widget.palette.primaryText,
         fontSize: 14,
         fontWeight: FontWeight.w700,
         letterSpacing: 0,
       ),
       decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 19),
+        labelText: widget.label,
+        prefixIcon: Icon(widget.icon, size: 19),
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                icon: Icon(
+                  _obscured
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
+                  size: 19,
+                  color: widget.palette.secondaryText,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscured = !_obscured;
+                  });
+                },
+              )
+            : null,
         isDense: true,
         filled: true,
-        fillColor: palette.controlSurface,
+        fillColor: widget.palette.controlSurface,
         labelStyle: TextStyle(
-          color: palette.secondaryText,
+          color: widget.palette.secondaryText,
           fontSize: 13,
           fontWeight: FontWeight.w700,
         ),
-        prefixIconColor: palette.accent,
+        prefixIconColor: widget.palette.accent,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 13,
         ),
-        border: _fieldBorder(palette.border),
-        enabledBorder: _fieldBorder(palette.border),
-        focusedBorder: _fieldBorder(palette.accent, width: 1.5),
+        border: _fieldBorder(widget.palette.border),
+        enabledBorder: _fieldBorder(widget.palette.border),
+        focusedBorder: _fieldBorder(widget.palette.accent, width: 1.5),
         errorBorder: _fieldBorder(_LoginPalette.error),
         focusedErrorBorder: _fieldBorder(_LoginPalette.error, width: 1.5),
       ),
@@ -474,7 +489,8 @@ class _SocialLoginButton extends StatelessWidget {
                 boxShadow: [
                   BoxShadow(
                     color: brandColor.withValues(
-                        alpha: palette.isDark ? 0.32 : 0.14),
+                      alpha: palette.isDark ? 0.32 : 0.14,
+                    ),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),

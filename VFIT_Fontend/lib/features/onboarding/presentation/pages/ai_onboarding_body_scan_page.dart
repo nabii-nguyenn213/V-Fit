@@ -62,10 +62,10 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
   bool _isValidResult(Map<String, dynamic>? json) {
     if (json == null) return false;
     final feedback = _BodyAnalysisFeedback.fromJson(json);
+    final postureLower = feedback.posture.toLowerCase();
     return !feedback.fallback &&
            feedback.confidence >= 0.8 &&
-           feedback.posture != 'Analysis pending' &&
-           feedback.posture != 'Body analysis pending';
+           !postureLower.contains('pending');
   }
 
   Future<void> _handleFeedbackReceived(Map<String, dynamic> feedback) async {
