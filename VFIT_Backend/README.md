@@ -24,6 +24,7 @@ docker compose up --build
 Services:
 
 - Backend: `http://localhost:8080`
+- AI API: `http://localhost:5000` on the host, `http://vfit-ai-api:5000` inside Docker
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - Mongo Express: `http://localhost:8081`
 
@@ -110,6 +111,20 @@ If the backend also runs inside Docker Compose, use the service name `mongodb`:
 ```env
 MONGODB_URI=mongodb://vfit_app:change_this_app_password@mongodb:27017/vfit?authSource=vfit
 ```
+
+For AI form check, use the same environment boundary:
+
+```env
+# Backend through IDE or Maven, AI container published to localhost
+AI_BASE_URL=http://localhost:5000
+
+# Backend inside Docker Compose
+AI_BASE_URL=http://vfit-ai-api:5000
+```
+
+Production keeps the AI service internal. Mobile clients call only the backend
+API/WSS domain; the backend forwards realtime camera frames to AI and returns
+JSON feedback.
 
 On a server, set the same environment variables in your deployment secret store and replace the passwords with strong values. Do not commit the real `.env` file.
 

@@ -1,11 +1,44 @@
 services:
+  vfit-ai-api:
+    build:
+      context: ../AI-VFIT/V-Fit
+      dockerfile: Dockerfile
+    container_name: vfit-ai-api
+    restart: unless-stopped
+    init: true
+    expose:
+      - "5000"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      FLASK_ENV: production
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+      - /root/.config
+    pids_limit: 512
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
   vfit-backend:
     build: .
     container_name: vfit-backend
     restart: unless-stopped
     init: true
     env_file:
-      - .env.production
+      - path: .env.production
+        required: false
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
@@ -29,6 +62,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 40s
+    depends_on:
+      vfit-ai-api:
+        condition: service_healthy
 
 volumes:
   uploads_data:

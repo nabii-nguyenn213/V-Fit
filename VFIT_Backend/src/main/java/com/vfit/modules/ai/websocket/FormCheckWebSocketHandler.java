@@ -1,6 +1,7 @@
 package com.vfit.modules.ai.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vfit.infrastructure.config.AppProperties;
 import com.vfit.infrastructure.external.ai.AiClient;
 import com.vfit.infrastructure.external.ai.dto.AiFormCheckFeedback;
 import java.nio.ByteBuffer;
@@ -22,9 +23,11 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
     private final AiWebSocketFrameRateLimiter frameRateLimiter;
+    private final AppProperties appProperties;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        configureSessionLimits(session);
         log.info("[AI WS] Connection established. Session ID: {}, attributes: {}", session.getId(), session.getAttributes());
         super.afterConnectionEstablished(session);
     }
@@ -43,6 +46,15 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
         byte[] bytes = payloadBytes(message);
         log.info("[AI WS] Received binary frame. Session ID: {}, Size: {} bytes, user: {}, exercise: {}, view: {}",
                 session.getId(), bytes.length, userId, exerciseId, cameraView);
+
+        int maxFrameBytes = toIntBytes(appProperties.getWebsocket().getAiMaxFrameSize());
+        if (bytes.length > maxFrameBytes) {
+            log.warn("[AI WS] Frame too large for user: {}. Size: {} bytes, limit: {} bytes.",
+                    userId, bytes.length, maxFrameBytes);
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(frameTooLargeFeedback(maxFrameBytes))));
+            session.close(new CloseStatus(1009, "AI frame too large"));
+            return;
+        }
         
         if (!frameRateLimiter.allow(userId)) {
             log.warn("[AI WS] Rate limit exceeded for user: {}. Closing session.", userId);
@@ -76,6 +88,15 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
         return bytes;
     }
 
+    private void configureSessionLimits(WebSocketSession session) {
+        session.setTextMessageSizeLimit(toIntBytes(appProperties.getWebsocket().getMaxTextMessageBufferSize()));
+        session.setBinaryMessageSizeLimit(toIntBytes(appProperties.getWebsocket().getMaxBinaryMessageBufferSize()));
+    }
+
+    private int toIntBytes(org.springframework.util.unit.DataSize dataSize) {
+        return Math.toIntExact(dataSize.toBytes());
+    }
+
     private String normalizeExercise(String exerciseId) {
         if (exerciseId == null || exerciseId.isBlank() || "general".equalsIgnoreCase(exerciseId)) {
             return "squat";
@@ -98,6 +119,20 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
                 List.of(),
                 "Giữ máy ổn định và gửi lại sau ít giây.",
                 "RATE_LIMITED",
+                true,
+                0);
+    }
+
+    private AiFormCheckFeedback frameTooLargeFeedback(int maxFrameBytes) {
+        int maxFrameKb = maxFrameBytes / 1024;
+        return new AiFormCheckFeedback(
+                0,
+                "Camera frame is too large for realtime AI analysis.",
+                List.of(),
+                List.of(),
+                "Lower camera capture quality or retry with a clearer, steadier view. Max frame size: "
+                        + maxFrameKb + "KB.",
+                "FRAME_TOO_LARGE",
                 true,
                 0);
     }

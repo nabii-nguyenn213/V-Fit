@@ -11,11 +11,12 @@ Use this layout when the app is heading toward real mobile release:
 ```text
 Frontend: Vercel, Netlify, or VPS Nginx
 Backend: Docker container on VPS
+AI: Internal Docker service on the same private compose network
 Database: MongoDB Atlas
 Domain: api.your-domain.com -> backend
 ```
 
-Keep MongoDB private. The mobile app and frontend should call only the HTTPS API domain.
+Keep MongoDB, Redis, and AI private. The mobile app and frontend should call only the HTTPS API domain.
 
 ## Backend On VPS
 
@@ -33,6 +34,8 @@ cp .env.production.example .env.production
 APP_BASE_URL=https://api.your-domain.com
 CORS_ALLOWED_ORIGINS=https://your-domain.com,https://app.your-domain.com
 MONGODB_URI=mongodb+srv://vfit_app:<strong_password>@<cluster-host>/vfit?retryWrites=true&w=majority
+AI_CLIENT_MODE=http
+AI_BASE_URL=http://vfit-ai-api:5000
 JWT_SECRET=<long_random_secret>
 OTP_PEPPER=<different_long_random_secret>
 BOOTSTRAP_ADMIN_EMAIL=admin@your-domain.com
@@ -90,6 +93,7 @@ api.your-domain.com
 with the real API domain.
 
 The backend port is bound to `127.0.0.1:8080`, so it is reachable from Nginx on the server but not exposed directly to the public internet.
+The AI service is exposed only inside the Docker network as `vfit-ai-api:5000`; it has no public host port in production.
 
 Install the API site:
 
@@ -117,3 +121,25 @@ https://api.your-domain.com/api
 as the API base URL.
 
 Never ship MongoDB credentials in the mobile app. Only the backend owns `MONGODB_URI`.
+
+## AI Service Topology
+
+Production traffic must use this path:
+
+```text
+Mobile app -> HTTPS/WSS API domain -> vfit-backend -> http://vfit-ai-api:5000
+```
+
+Do not point the mobile app directly at the AI container. Backend owns JWT
+validation, onboarding and premium gates, rate limits, circuit breakers, and
+fallback responses.
+
+Use environment-specific AI URLs:
+
+```env
+# Backend running on the host with AI in Docker
+AI_BASE_URL=http://localhost:5000
+
+# Backend running inside Docker Compose, staging, or production
+AI_BASE_URL=http://vfit-ai-api:5000
+```

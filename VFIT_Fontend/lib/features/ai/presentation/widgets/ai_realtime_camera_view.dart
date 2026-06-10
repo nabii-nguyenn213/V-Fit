@@ -26,7 +26,7 @@ class AiRealtimeCameraView extends StatefulWidget {
     required this.streamingText,
     required this.stoppedText,
     required this.feedbackBuilder,
-    this.captureInterval = const Duration(milliseconds: 500),
+    this.captureInterval = const Duration(milliseconds: 800),
   });
 
   final String title;
@@ -130,7 +130,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
 
     final controller = CameraController(
       _cameras[index],
-      ResolutionPreset.medium,
+      ResolutionPreset.low,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );

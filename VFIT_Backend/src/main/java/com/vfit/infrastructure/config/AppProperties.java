@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.util.unit.DataSize;
 import org.springframework.validation.annotation.Validated;
 
 @Getter
@@ -28,6 +29,8 @@ public class AppProperties {
     private Cors cors = new Cors();
     @Valid
     private Ai ai = new Ai();
+    @Valid
+    private WebSocket websocket = new WebSocket();
 
     @Getter
     @Setter
@@ -92,5 +95,15 @@ public class AppProperties {
         private String clientMode = "mock";
         private String baseUrl = "http://localhost:8000";
         private String foodScannerPath = "/api/v1/food-scanner/";
+    }
+
+    @Getter
+    @Setter
+    public static class WebSocket {
+        private DataSize maxTextMessageBufferSize = DataSize.ofMegabytes(10);
+        private DataSize maxBinaryMessageBufferSize = DataSize.ofMegabytes(10);
+        private DataSize aiMaxFrameSize = DataSize.ofMegabytes(2);
+        private long asyncSendTimeoutMs = 10000;
+        private long maxSessionIdleTimeoutMs = 120000;
     }
 }

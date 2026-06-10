@@ -84,6 +84,8 @@ services:
       REDIS_REQUIRED: "true"
       REDIS_HEALTH_ENABLED: "true"
       AI_RATE_LIMIT_FAIL_OPEN: "false"
+      AI_CLIENT_MODE: "http"
+      AI_BASE_URL: "http://vfit-ai-api:5000"
     volumes:
       - ./uploads:/app/uploads
     depends_on:
