@@ -7,10 +7,8 @@ import com.vfit.common.exception.AppException;
 import com.vfit.common.exception.ErrorCode;
 import com.vfit.common.exception.ResourceNotFoundException;
 import com.vfit.common.util.SecurityUtil;
-import com.vfit.infrastructure.config.AppProperties;
 import com.vfit.infrastructure.external.ai.AiClient;
 import com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult;
-import com.vfit.bootstrap.storage.FileStorageService;
 import com.vfit.modules.ai.document.BodyAnalysisResult;
 import com.vfit.modules.ai.mapper.AiResultMapper;
 import com.vfit.modules.ai.repository.BodyAnalysisRepository;
@@ -22,6 +20,7 @@ import com.vfit.modules.user.dto.response.UserResponse;
 import com.vfit.modules.user.mapper.UserMapper;
 import com.vfit.modules.user.repository.UserRepository;
 import com.vfit.modules.user.service.OnboardingService;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -34,10 +33,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class OnboardingServiceImpl implements OnboardingService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final FileStorageService fileStorageService;
     private final AiClient aiClient;
     private final BodyAnalysisRepository bodyAnalysisRepository;
-    private final AppProperties appProperties;
     private final AiResultMapper aiResultMapper;
     private final ObjectMapper objectMapper;
 
@@ -94,20 +91,22 @@ public class OnboardingServiceImpl implements OnboardingService {
             throw new AppException(ErrorCode.BAD_REQUEST, "Physical profile must be completed before body scan");
         }
 
-        String scanPath = fileStorageService.store(file, "body-scans");
-        String scanUrl = appProperties.getBaseUrl() + "/uploads/" + scanPath;
         AiBodyAnalysisResult aiResult = aiClient.analyzeBody(
                 user.getId(),
-                scanUrl,
-                Map.of("heightCm", metrics.getHeightCm(), "weightKg", metrics.getWeightKg()));
+                "transient-body-scan",
+                Map.of(
+                        "heightCm", metrics.getHeightCm(),
+                        "weightKg", metrics.getWeightKg(),
+                        "contentType", file.getContentType() == null ? "unknown" : file.getContentType(),
+                        "sizeBytes", file.getSize(),
+                        "frameBytes", readBodyScanBytes(file)));
         GoalType inferredGoal = inferGoalType(metrics, aiResult);
 
         bodyAnalysisRepository.save(BodyAnalysisResult.builder()
                 .userId(user.getId())
-                .imageUrl(scanPath)
                 .metadata(Map.of(
                         "source", "onboarding",
-                        "scanUrl", scanUrl,
+                        "storage", "transient",
                         "inferredGoalType", inferredGoal.name()))
                 .posture(aiResultMapper.toMap(objectMapper, aiResult.posture()))
                 .imbalance(aiResultMapper.toMap(objectMapper, aiResult.imbalance()))
@@ -168,6 +167,14 @@ public class OnboardingServiceImpl implements OnboardingService {
     private User currentUser() {
         return userRepository.findById(SecurityUtil.requireCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    private byte[] readBodyScanBytes(MultipartFile file) {
+        try {
+            return file.getBytes();
+        } catch (IOException e) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Could not read body scan image");
+        }
     }
 
     private Double calculateBmi(Double heightCm, Double weightKg) {

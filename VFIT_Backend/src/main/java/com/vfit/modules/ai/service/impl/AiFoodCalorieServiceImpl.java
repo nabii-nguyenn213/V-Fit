@@ -1,5 +1,7 @@
 package com.vfit.modules.ai.service.impl;
 
+import com.vfit.common.exception.AppException;
+import com.vfit.common.exception.ErrorCode;
 import com.vfit.infrastructure.external.ai.AiClient;
 import com.vfit.infrastructure.external.ai.dto.AiFoodCalorieEstimate;
 import com.vfit.modules.ai.dto.response.FoodCalorieEstimateResponse;
@@ -14,11 +16,14 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class AiFoodCalorieServiceImpl implements AiFoodCalorieService {
+    private static final long MAX_TRANSIENT_IMAGE_BYTES = 8L * 1024L * 1024L;
+
     private final AiClient aiClient;
     private final AiResultMapper aiResultMapper;
 
     @Override
     public FoodCalorieEstimateResponse estimate(MultipartFile image) {
+        validateImage(image);
         String fileName = image == null || image.getOriginalFilename() == null
                 ? "camera-preview"
                 : image.getOriginalFilename();
@@ -34,6 +39,19 @@ public class AiFoodCalorieServiceImpl implements AiFoodCalorieService {
         AiFoodCalorieEstimate result =
                 aiClient.estimateFoodCalories(fileName, readImageBytes(image), metadata);
         return aiResultMapper.toFoodCalorieEstimateResponse(result);
+    }
+
+    private void validateImage(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Food image is required");
+        }
+        if (image.getSize() > MAX_TRANSIENT_IMAGE_BYTES) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Food image is too large for transient AI analysis");
+        }
+        String contentType = image.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Food scan only accepts image uploads");
+        }
     }
 
     private byte[] readImageBytes(MultipartFile image) {

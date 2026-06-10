@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -145,7 +146,11 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         builder: (context) => _FoodScanSheet(
           onAnalyze: (image) =>
-              ref.read(nutritionRepositoryProvider).estimateFoodCalories(image),
+              ref.read(nutritionRepositoryProvider).estimateFoodCaloriesBytes(
+                    bytes: image.bytes,
+                    filename: image.filename,
+                    mimeType: image.mimeType,
+                  ),
         ),
       );
       if (!mounted || estimate == null) {
@@ -172,14 +177,15 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
 class _FoodScanSheet extends StatefulWidget {
   const _FoodScanSheet({required this.onAnalyze});
 
-  final Future<FoodCalorieEstimateModel> Function(XFile image) onAnalyze;
+  final Future<FoodCalorieEstimateModel> Function(_TransientFoodImage image)
+      onAnalyze;
 
   @override
   State<_FoodScanSheet> createState() => _FoodScanSheetState();
 }
 
 class _FoodScanSheetState extends State<_FoodScanSheet> {
-  XFile? _image;
+  _TransientFoodImage? _image;
   Uint8List? _previewBytes;
   bool _loading = false;
 
@@ -196,13 +202,31 @@ class _FoodScanSheetState extends State<_FoodScanSheet> {
       return;
     }
     final bytes = await picked.readAsBytes();
+    if (source == ImageSource.camera) {
+      unawaited(_deleteTemporaryPickedImage(picked.path));
+    }
     if (!mounted) {
       return;
     }
     setState(() {
-      _image = picked;
+      _image = _TransientFoodImage(
+        bytes: bytes,
+        filename: picked.name,
+        mimeType: picked.mimeType,
+      );
       _previewBytes = bytes;
     });
+  }
+
+  Future<void> _deleteTemporaryPickedImage(String path) async {
+    try {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {
+      // Best-effort cleanup for camera temp files.
+    }
   }
 
   Future<void> _analyze() async {
@@ -352,12 +376,32 @@ class _FoodScanSheetState extends State<_FoodScanSheet> {
                     : const Icon(Icons.auto_awesome_rounded),
                 label: Text(_loading ? 'Dang phan tich...' : 'Phan tich calo'),
               ),
+              if (_loading) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  label: const Text('Thoat phan tich'),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
   }
+}
+
+class _TransientFoodImage {
+  const _TransientFoodImage({
+    required this.bytes,
+    required this.filename,
+    required this.mimeType,
+  });
+
+  final Uint8List bytes;
+  final String filename;
+  final String? mimeType;
 }
 
 class _FoodScanCard extends StatelessWidget {

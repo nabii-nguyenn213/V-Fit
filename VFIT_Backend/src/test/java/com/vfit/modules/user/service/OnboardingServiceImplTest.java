@@ -10,8 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vfit.common.enums.GoalType;
 import com.vfit.common.enums.OnboardingStatus;
 import com.vfit.common.enums.RoleName;
-import com.vfit.bootstrap.storage.FileStorageService;
-import com.vfit.infrastructure.config.AppProperties;
 import com.vfit.infrastructure.external.ai.AiClient;
 import com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult;
 import com.vfit.modules.ai.mapper.AiResultMapper;
@@ -30,6 +28,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,8 +42,6 @@ class OnboardingServiceImplTest {
     @Mock
     private UserMapper userMapper;
     @Mock
-    private FileStorageService fileStorageService;
-    @Mock
     private AiClient aiClient;
     @Mock
     private BodyAnalysisRepository bodyAnalysisRepository;
@@ -53,7 +50,6 @@ class OnboardingServiceImplTest {
     @Mock
     private MultipartFile file;
 
-    private final AppProperties appProperties = new AppProperties();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @AfterEach
@@ -94,21 +90,11 @@ class OnboardingServiceImplTest {
     }
 
     private OnboardingServiceImpl service() {
-        appProperties.setName("V-FIT");
-        appProperties.setBaseUrl("http://localhost:8080");
-        appProperties.getStorage().setUploadDir("uploads");
-        appProperties.getSwagger().setTitle("API");
-        appProperties.getSwagger().setVersion("test");
-        appProperties.getSwagger().setDescription("test");
-        appProperties.getBootstrap().getPublicConfig().setAppName("V-FIT");
-
         return new OnboardingServiceImpl(
                 userRepository,
                 userMapper,
-                fileStorageService,
                 aiClient,
                 bodyAnalysisRepository,
-                appProperties,
                 aiResultMapper,
                 objectMapper);
     }
@@ -116,9 +102,16 @@ class OnboardingServiceImplTest {
     private void arrangeBodyScan(User user, AiBodyAnalysisResult aiResult) {
         authenticate(user);
         when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("image/jpeg");
+        try {
+            when(file.getBytes()).thenReturn(new byte[] {1, 2, 3});
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
+        when(file.getSize()).thenReturn(3L);
         when(userRepository.findById("user-1")).thenReturn(Optional.of(user));
-        when(fileStorageService.store(file, "body-scans")).thenReturn("body-scans/user-1.jpg");
-        when(aiClient.analyzeBody(eq("user-1"), eq("http://localhost:8080/uploads/body-scans/user-1.jpg"), any()))
+        when(aiClient.analyzeBody(eq("user-1"), eq("transient-body-scan"), ArgumentMatchers.argThat(metadata ->
+                metadata instanceof Map<?, ?> map && map.containsKey("frameBytes"))))
                 .thenReturn(aiResult);
         when(aiResultMapper.toMap(any(ObjectMapper.class), any())).thenReturn(Map.of());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));

@@ -239,8 +239,10 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     try {
       final image = await controller.takePicture();
       final bytes = await image.readAsBytes();
-      print('[AI CAMERA] Successfully captured frame, size: ${bytes.length} bytes');
+      print(
+          '[AI CAMERA] Successfully captured frame, size: ${bytes.length} bytes');
       socket.add(bytes);
+      unawaited(_deleteTemporaryCapture(image.path));
     } catch (error) {
       _waitingForFeedback = false;
       print('[AI CAMERA] Error capturing frame: $error');
@@ -249,6 +251,17 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
       }
     } finally {
       _capturing = false;
+    }
+  }
+
+  Future<void> _deleteTemporaryCapture(String path) async {
+    try {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {
+      // Best-effort cleanup; analysis should not fail because temp cleanup did.
     }
   }
 
@@ -367,7 +380,8 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
                                   color: _feedbackBorderColor,
                                   width: 6,
                                 ),
-                                borderRadius: BorderRadius.circular(AppRadius.large),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.large),
                               ),
                             ),
                           ),
@@ -389,7 +403,23 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
                             right: AppSpacing.x3,
                             child: _LiveBadge(
                               color: AppColors.energyMagenta,
-                              label: 'LIVE',
+                              label: _waitingForFeedback
+                                  ? 'ĐANG PHÂN TÍCH'
+                                  : 'LIVE',
+                            ),
+                          ),
+                        if (_streaming)
+                          Positioned(
+                            top: AppSpacing.x3,
+                            left: AppSpacing.x3,
+                            child: _buildGlassButton(
+                              icon: Icons.close_rounded,
+                              onTap: () async {
+                                await _stopStreaming();
+                                if (mounted) {
+                                  Navigator.of(context).maybePop();
+                                }
+                              },
                             ),
                           ),
                         if (cameraReady && _cameras.length > 1)

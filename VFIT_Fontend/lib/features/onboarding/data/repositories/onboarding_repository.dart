@@ -43,8 +43,14 @@ class OnboardingRepository {
 
   Future<UserModel> completeBodyScan(File file) async {
     try {
+      final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(file.path),
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: file.uri.pathSegments.isEmpty
+              ? 'body-scan.jpg'
+              : file.uri.pathSegments.last,
+        ),
       });
       final response = await _dio.post<dynamic>(
         ApiEndpoints.onboardingBodyScan,
@@ -62,7 +68,8 @@ class OnboardingRepository {
     }
   }
 
-  Future<UserModel> completeRealtimeBodyScan(Map<String, dynamic> bodyAnalysisResult) async {
+  Future<UserModel> completeRealtimeBodyScan(
+      Map<String, dynamic> bodyAnalysisResult) async {
     try {
       final response = await _dio.post<dynamic>(
         ApiEndpoints.onboardingRealtime,

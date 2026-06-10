@@ -19,15 +19,27 @@ class NutritionRepository {
   final Dio _dio;
 
   Future<FoodCalorieEstimateModel> estimateFoodCalories(XFile image) async {
+    return estimateFoodCaloriesBytes(
+      bytes: await image.readAsBytes(),
+      filename: image.name,
+      mimeType: image.mimeType,
+    );
+  }
+
+  Future<FoodCalorieEstimateModel> estimateFoodCaloriesBytes({
+    required List<int> bytes,
+    required String filename,
+    String? mimeType,
+  }) async {
     try {
-      final bytes = await image.readAsBytes();
       final response = await _dio.post<dynamic>(
         ApiEndpoints.foodCalorieEstimate,
         data: FormData.fromMap({
           'image': MultipartFile.fromBytes(
             bytes,
-            filename: image.name,
-            contentType: _contentTypeFor(image),
+            filename: filename,
+            contentType:
+                _contentTypeFor(filename: filename, mimeType: mimeType),
           ),
         }),
         options: Options(contentType: Headers.multipartFormDataContentType),
@@ -43,13 +55,12 @@ class NutritionRepository {
     }
   }
 
-  MediaType _contentTypeFor(XFile image) {
-    final mimeType = image.mimeType;
+  MediaType _contentTypeFor({required String filename, String? mimeType}) {
     if (mimeType != null && mimeType.startsWith('image/')) {
       final parts = mimeType.split('/');
       return MediaType(parts.first, parts.length > 1 ? parts.last : 'jpeg');
     }
-    final lowerName = image.name.toLowerCase();
+    final lowerName = filename.toLowerCase();
     if (lowerName.endsWith('.png')) {
       return MediaType('image', 'png');
     }
