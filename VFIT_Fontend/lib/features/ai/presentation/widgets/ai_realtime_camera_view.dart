@@ -28,6 +28,9 @@ class AiRealtimeCameraView extends StatefulWidget {
     required this.feedbackBuilder,
     this.captureInterval = const Duration(milliseconds: 800),
     this.onFeedbackReceived,
+    this.onStreamingStarted,
+    this.onStreamingStopped,
+    this.autoStartStreaming = true,
     this.showStartStopButton = true,
   });
 
@@ -44,6 +47,9 @@ class AiRealtimeCameraView extends StatefulWidget {
     String? statusText,
   ) feedbackBuilder;
   final void Function(Map<String, dynamic> feedback)? onFeedbackReceived;
+  final VoidCallback? onStreamingStarted;
+  final VoidCallback? onStreamingStopped;
+  final bool autoStartStreaming;
   final bool showStartStopButton;
 
   @override
@@ -104,7 +110,10 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
         (camera) => camera.lensDirection == CameraLensDirection.back,
       );
       _selectedCameraIndex = backIndex >= 0 ? backIndex : 0;
-      await _openCamera(_selectedCameraIndex, autoStartStreaming: true);
+      await _openCamera(
+        _selectedCameraIndex,
+        autoStartStreaming: widget.autoStartStreaming,
+      );
     } on CameraException catch (error) {
       _showSetupError(CameraErrorMessages.fromCameraException(error));
     } catch (error) {
@@ -187,6 +196,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
       _streaming = true;
       _waitingForFeedback = false;
       setState(() => _statusText = widget.streamingText);
+      widget.onStreamingStarted?.call();
 
       unawaited(_listenForFeedback(socket));
       _captureTimer = Timer.periodic(
@@ -215,6 +225,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     }
     if (mounted && !fromDispose) {
       setState(() => _statusText = widget.stoppedText);
+      widget.onStreamingStopped?.call();
     }
   }
 

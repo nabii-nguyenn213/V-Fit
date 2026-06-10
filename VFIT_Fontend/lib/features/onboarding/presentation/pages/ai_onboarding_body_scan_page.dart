@@ -6,13 +6,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
-import '../../../auth/application/auth_controller.dart';
-import '../../data/repositories/onboarding_repository.dart';
-import '../../../ai/presentation/widgets/ai_realtime_camera_view.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
 import '../../../../presentation/theme/app_spacing.dart';
 import '../../../../presentation/theme/app_typography.dart';
+import '../../../ai/presentation/widgets/ai_realtime_camera_view.dart';
+import '../../../auth/application/auth_controller.dart';
+import '../../data/repositories/onboarding_repository.dart';
 
 enum ScanState { scanning, reviewing, saving }
 
@@ -20,38 +20,20 @@ class AiOnboardingBodyScanPage extends ConsumerStatefulWidget {
   const AiOnboardingBodyScanPage({super.key});
 
   @override
-  ConsumerState<AiOnboardingBodyScanPage> createState() => _AiOnboardingBodyScanPageState();
+  ConsumerState<AiOnboardingBodyScanPage> createState() =>
+      _AiOnboardingBodyScanPageState();
 }
 
-class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanPage> {
+class _AiOnboardingBodyScanPageState
+    extends ConsumerState<AiOnboardingBodyScanPage> {
+  static const _scanDuration = Duration(seconds: 9);
+
   ScanState _scanState = ScanState.scanning;
-  int _countdownSeconds = 9; // Tăng thêm 4 giây thành 9 giây tổng cộng
-  Timer? _timer;
+  int _countdownSeconds = _scanDuration.inSeconds;
   int _retryCount = 0;
+  bool _scanStarted = false;
+  Timer? _timer;
   Map<String, dynamic>? _scannedFeedback;
-
-  @override
-  void initState() {
-    super.initState();
-    _startCountdown();
-  }
-
-  void _startCountdown() {
-    setState(() {
-      _countdownSeconds = 9;
-    });
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      setState(() {
-        if (_countdownSeconds > 0) {
-          _countdownSeconds--;
-        } else {
-          _timer?.cancel();
-        }
-      });
-    });
-  }
 
   @override
   void dispose() {
@@ -59,64 +41,192 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
     super.dispose();
   }
 
-  bool _isValidResult(Map<String, dynamic>? json) {
-    if (json == null) return false;
-    final feedback = _BodyAnalysisFeedback.fromJson(json);
-    final postureLower = feedback.posture.toLowerCase();
-    return !feedback.fallback &&
-           feedback.confidence >= 0.8 &&
-           !postureLower.contains('pending');
+  void _startCountdown() {
+    if (_scanStarted || _scanState != ScanState.scanning) return;
+    _timer?.cancel();
+    setState(() {
+      _scanStarted = true;
+      _countdownSeconds = _scanDuration.inSeconds;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_countdownSeconds <= 1) {
+        timer.cancel();
+        _finishScan();
+        return;
+      }
+      setState(() => _countdownSeconds--);
+    });
+  }
+
+  void _finishScan() {
+    if (!mounted || _scanState != ScanState.scanning) return;
+    setState(() => _scanState = ScanState.reviewing);
+  }
+
+  void _restartScan() {
+    setState(() {
+      _scanState = ScanState.scanning;
+      _scanStarted = false;
+      _countdownSeconds = _scanDuration.inSeconds;
+      _scannedFeedback = null;
+      _retryCount++;
+    });
+  }
+
+  void _handleStreamingStopped() {
+    if (!mounted || _scanState != ScanState.scanning) return;
+    _timer?.cancel();
+    setState(() {
+      _scanStarted = false;
+      _countdownSeconds = _scanDuration.inSeconds;
+    });
   }
 
   Future<void> _handleFeedbackReceived(Map<String, dynamic> feedback) async {
-    if (_countdownSeconds > 0) {
-      // Bỏ qua kết quả cho đến khi đếm ngược kết thúc để đảm bảo người dùng đứng yên
-      return;
-    }
     if (_scanState != ScanState.scanning) return;
-    if (!_isValidResult(feedback)) return;
-
-    // Khi có kết quả hợp lệ đầu tiên sau thời gian đếm ngược:
-    // Dừng camera và dừng gọi sang AI (bằng cách chuyển sang trạng thái Reviewing để unmount CameraView)
-    setState(() {
-      _scannedFeedback = feedback;
-      _scanState = ScanState.reviewing;
-    });
+    _scannedFeedback = feedback;
   }
 
   Future<void> _confirmAndSave() async {
-    if (_scannedFeedback == null) return;
-    setState(() {
-      _scanState = ScanState.saving;
-    });
+    final scannedFeedback = _scannedFeedback;
+    if (scannedFeedback == null) return;
+
+    setState(() => _scanState = ScanState.saving);
 
     try {
-      final user = await ref.read(onboardingRepositoryProvider).completeRealtimeBodyScan(_scannedFeedback!);
-      
-      // Cập nhật trạng thái người dùng trong auth controller
+      final user = await ref
+          .read(onboardingRepositoryProvider)
+          .completeRealtimeBodyScan(scannedFeedback);
       ref.read(authControllerProvider.notifier).setUser(user);
-      
-      if (mounted) {
-        AppFeedback.success('Quét cơ thể thành công! Đang chuyển hướng...');
-        context.go('/home');
-      }
+
+      if (!mounted) return;
+      AppFeedback.success('Da quet co the thanh cong.');
+      context.go('/home');
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _scanState = ScanState.reviewing;
-        });
-        AppFeedback.error('Lưu kết quả thất bại: $e. Vui lòng thử lại.');
-      }
+      if (!mounted) return;
+      setState(() => _scanState = ScanState.reviewing);
+      AppFeedback.error('Luu ket qua that bai: $e. Vui long thu lai.');
     }
   }
 
-  Widget _buildReviewPanel() {
-    final feedback = _BodyAnalysisFeedback.fromJson(_scannedFeedback!);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          if (_scanState == ScanState.scanning)
+            AiRealtimeCameraView(
+              key: ValueKey(_retryCount),
+              title: 'AI Body Check',
+              webSocketPath: '/ws/ai/body-analysis',
+              queryParameters: const {},
+              readyText: 'Camera da san sang.',
+              streamingText: 'AI dang phan tich hinh the...',
+              stoppedText: 'Da dung phan tich body.',
+              autoStartStreaming: false,
+              showStartStopButton: true,
+              onStreamingStarted: _startCountdown,
+              onStreamingStopped: _handleStreamingStopped,
+              onFeedbackReceived: _handleFeedbackReceived,
+              feedbackBuilder: (context, feedbackJson, statusText) {
+                return _BodyAnalysisPanel(
+                  result: feedbackJson == null
+                      ? null
+                      : _BodyAnalysisFeedback.fromJson(feedbackJson),
+                  statusText: statusText,
+                );
+              },
+            ),
+          if (_scanState == ScanState.scanning && _scanStarted)
+            Positioned(
+              top: 80,
+              left: 20,
+              right: 20,
+              child: _ScanningBanner(secondsLeft: _countdownSeconds),
+            ),
+          if (_scanState == ScanState.reviewing)
+            Positioned.fill(
+              child: _ReviewPanel(
+                feedback: _scannedFeedback,
+                onRescan: _restartScan,
+                onAccept: _confirmAndSave,
+              ),
+            ),
+          if (_scanState == ScanState.saving) const _SavingOverlay(),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScanningBanner extends StatelessWidget {
+  const _ScanningBanner({required this.secondsLeft});
+
+  final int secondsLeft;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.x3,
+        horizontal: AppSpacing.x4,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        border: Border.all(
+          color: AppColors.energyMagenta.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          const SizedBox.square(
+            dimension: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                AppColors.energyMagenta,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x3),
+          Expanded(
+            child: Text(
+              'Dang phan tich dang nguoi... ${secondsLeft}s',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReviewPanel extends StatelessWidget {
+  const _ReviewPanel({
+    required this.feedback,
+    required this.onRescan,
+    required this.onAccept,
+  });
+
+  final Map<String, dynamic>? feedback;
+  final VoidCallback onRescan;
+  final VoidCallback onAccept;
+
+  @override
+  Widget build(BuildContext context) {
+    final result =
+        feedback == null ? null : _BodyAnalysisFeedback.fromJson(feedback!);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
-        title: const Text('Xác nhận kết quả phân tích'),
+        title: const Text('Ket qua phan tich dang nguoi'),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -130,125 +240,79 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Center(
-                        child: Icon(
-                          Icons.check_circle_outline_rounded,
-                          size: 72,
-                          color: AppColors.success,
-                        ),
+                      Icon(
+                        result == null
+                            ? Icons.info_outline_rounded
+                            : Icons.check_circle_outline_rounded,
+                        size: 72,
+                        color: result == null
+                            ? AppColors.warning
+                            : AppColors.success,
                       ),
                       const SizedBox(height: AppSpacing.x4),
-                      Center(
-                        child: Text(
-                          'Đã quét thành công!',
-                          style: AppTypography.headerLargeFor(context).copyWith(
-                            color: AppColors.success,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      Text(
+                        result == null
+                            ? 'Chua nhan duoc du lieu'
+                            : 'Da quet thanh cong',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.headerLargeFor(context).copyWith(
+                          color: result == null
+                              ? AppColors.warning
+                              : AppColors.success,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.x2),
-                      const Center(
-                        child: Text(
-                          'AI đã ghi nhận và phân tích hình thể của bạn. Vui lòng kiểm tra lại kết quả trước khi tiếp tục.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey, height: 1.4),
+                      Text(
+                        result == null
+                            ? 'Hay scan lai voi toan than nam trong khung hinh.'
+                            : 'AI da ghi nhan thong tin hinh the. Hay kiem tra truoc khi tiep tuc.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textSecondaryOf(context),
+                          height: 1.4,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.x6),
-                      
-                      // Result Card
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.x4),
                         decoration: BoxDecoration(
                           color: AppColors.surface1Of(context),
                           borderRadius: BorderRadius.circular(AppRadius.card),
-                          border: Border.all(color: AppColors.borderSubtleOf(context)),
+                          border: Border.all(
+                            color: AppColors.borderSubtleOf(context),
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'KẾT QUẢ TƯ THẾ (POSTURE)',
-                              style: AppTypography.label(color: Colors.grey),
-                            ),
-                            const SizedBox(height: AppSpacing.x1),
-                            Text(
-                              feedback.posture,
-                              style: AppTypography.headerMediumFor(context).copyWith(
-                                color: AppColors.energyMagenta,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.x4),
-                            const Divider(),
-                            const SizedBox(height: AppSpacing.x4),
-                            _buildInfoRow('Tình trạng lệch cơ thể (Imbalance)', feedback.imbalance),
-                            const SizedBox(height: AppSpacing.x4),
-                            _buildInfoRow('Lời khuyên & Khuyến nghị (Recommendation)', feedback.recommendation),
-                            const SizedBox(height: AppSpacing.x4),
-                            const Divider(),
-                            const SizedBox(height: AppSpacing.x4),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildMetricBlock(
-                                    'Tỷ lệ Eo/Vai',
-                                    feedback.waistShoulderRatio == null
-                                        ? '-'
-                                        : feedback.waistShoulderRatio!.toStringAsFixed(2),
-                                  ),
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 40,
-                                  color: AppColors.borderSubtleOf(context),
-                                ),
-                                const SizedBox(width: AppSpacing.x4),
-                                Expanded(
-                                  child: _buildMetricBlock(
-                                    'Độ tin cậy',
-                                    '${(feedback.confidence * 100).round()}%',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                        child: result == null
+                            ? Text(
+                                'Khong co body data de hien thi.',
+                                style: AppTypography.bodyFor(context),
+                              )
+                            : _BodyAnalysisDetails(result: result),
                       ),
                     ],
                   ),
                 ),
               ),
-              
-              // Bottom Action Buttons
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: AppButton.secondary(
-                        label: 'Quét lại',
-                        icon: Icons.refresh_rounded,
-                        onPressed: () {
-                          setState(() {
-                            _scannedFeedback = null;
-                            _scanState = ScanState.scanning;
-                            _retryCount++;
-                            _startCountdown();
-                          });
-                        },
-                      ),
+              const SizedBox(height: AppSpacing.x3),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton.secondary(
+                      label: 'Scan lai',
+                      icon: Icons.refresh_rounded,
+                      onPressed: onRescan,
                     ),
-                    const SizedBox(width: AppSpacing.x3),
-                    Expanded(
-                      child: AppButton.primary(
-                        label: 'Xác nhận & Lưu',
-                        icon: Icons.check_rounded,
-                        onPressed: _confirmAndSave,
-                      ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: AppButton.primary(
+                      label: 'Chap nhan',
+                      icon: Icons.check_rounded,
+                      onPressed: result == null ? null : onAccept,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -256,141 +320,139 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
       ),
     );
   }
+}
 
-  Widget _buildInfoRow(String title, String value) {
+class _BodyAnalysisDetails extends StatelessWidget {
+  const _BodyAnalysisDetails({required this.result});
+
+  final _BodyAnalysisFeedback result;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _InfoRow(title: 'Tu the', value: result.posture),
+        const SizedBox(height: AppSpacing.x4),
+        _InfoRow(title: 'Lech co the', value: result.imbalance),
+        const SizedBox(height: AppSpacing.x4),
+        _InfoRow(title: 'Goi y', value: result.recommendation),
+        const SizedBox(height: AppSpacing.x4),
+        const Divider(),
+        const SizedBox(height: AppSpacing.x4),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricBlock(
+                label: 'Eo/Vai',
+                value: result.waistShoulderRatio == null
+                    ? '-'
+                    : result.waistShoulderRatio!.toStringAsFixed(2),
+              ),
+            ),
+            Container(
+              width: 1,
+              height: 40,
+              color: AppColors.borderSubtleOf(context),
+            ),
+            const SizedBox(width: AppSpacing.x4),
+            Expanded(
+              child: _MetricBlock(
+                label: 'Do tin cay',
+                value: '${(result.confidence * 100).round()}%',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.title, required this.value});
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: AppTypography.label(color: Colors.grey),
+          style: AppTypography.label(color: AppColors.textSecondaryOf(context)),
         ),
         const SizedBox(height: AppSpacing.x1),
         Text(
           value,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.4),
+          style: AppTypography.bodyFor(context).copyWith(
+            fontWeight: FontWeight.w500,
+            height: 1.4,
+          ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildMetricBlock(String label, String value) {
+class _MetricBlock extends StatelessWidget {
+  const _MetricBlock({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: AppTypography.label(color: AppColors.textSecondaryOf(context)),
         ),
         const SizedBox(height: AppSpacing.x1),
         Text(
           value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.energyMagenta),
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.energyMagenta,
+          ),
         ),
       ],
     );
   }
+}
+
+class _SavingOverlay extends StatelessWidget {
+  const _SavingOverlay();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          if (_scanState == ScanState.scanning)
-            AiRealtimeCameraView(
-              key: ValueKey(_retryCount),
-              title: 'Quét cơ thể Realtime',
-              webSocketPath: '/ws/ai/body-analysis',
-              queryParameters: const {},
-              readyText: 'Camera đã sẵn sàng.',
-              streamingText: 'AI đang phân tích hình thể...',
-              stoppedText: 'Đã dừng phân tích body.',
-              showStartStopButton: false,
-              onFeedbackReceived: _handleFeedbackReceived,
-              feedbackBuilder: (context, feedbackJson, statusText) {
-                return _BodyAnalysisPanel(
-                  result: feedbackJson == null
-                      ? null
-                      : _BodyAnalysisFeedback.fromJson(feedbackJson),
-                  statusText: statusText,
-                );
-              },
-            ),
-          
-          // Countdown overlay during scanning
-          if (_scanState == ScanState.scanning)
-            Positioned(
-              top: 80,
-              left: 20,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppSpacing.x3,
-                  horizontal: AppSpacing.x4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(AppRadius.input),
-                  border: Border.all(
-                    color: AppColors.energyMagenta.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.energyMagenta),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.x3),
-                    Expanded(
-                      child: Text(
-                        _countdownSeconds > 0
-                            ? 'Hãy đứng thẳng và giữ nguyên tư thế: $_countdownSeconds giây...'
-                            : 'Đang ghi nhận kết quả tối ưu...',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+    return Container(
+      color: Colors.black.withValues(alpha: 0.75),
+      child: const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                AppColors.energyMagenta,
               ),
             ),
-
-          if (_scanState == ScanState.reviewing && _scannedFeedback != null)
-            Positioned.fill(child: _buildReviewPanel()),
-
-          if (_scanState == ScanState.saving)
-            Container(
-              color: Colors.black.withValues(alpha: 0.75),
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.energyMagenta),
-                    ),
-                    SizedBox(height: AppSpacing.x4),
-                    Text(
-                      'Đang xử lý & lưu kết quả...',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
+            SizedBox(height: AppSpacing.x4),
+            Text(
+              'Dang luu ket qua...',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -426,7 +488,7 @@ class _BodyAnalysisPanel extends StatelessWidget {
               const SizedBox(width: AppSpacing.x2),
               Expanded(
                 child: Text(
-                  result == null ? 'Đang chờ phản hồi AI' : result!.posture,
+                  result == null ? 'Dang cho phan hoi AI' : result!.posture,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.headerMediumFor(context),
@@ -438,7 +500,7 @@ class _BodyAnalysisPanel extends StatelessWidget {
           Text(
             result?.imbalance ??
                 statusText ??
-                'Đứng thẳng người trong khung hình để AI cập nhật chỉ số liên tục.',
+                'Dung thang nguoi trong khung hinh de AI cap nhat chi so.',
             style: AppTypography.bodyFor(context),
           ),
           if (result != null) ...[
