@@ -14,6 +14,8 @@ import '../../../../presentation/theme/app_radius.dart';
 import '../../../../presentation/theme/app_spacing.dart';
 import '../../../../presentation/theme/app_typography.dart';
 
+enum ScanState { scanning, reviewing, saving }
+
 class AiOnboardingBodyScanPage extends ConsumerStatefulWidget {
   const AiOnboardingBodyScanPage({super.key});
 
@@ -22,9 +24,11 @@ class AiOnboardingBodyScanPage extends ConsumerStatefulWidget {
 }
 
 class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanPage> {
-  int _countdownSeconds = 5;
+  ScanState _scanState = ScanState.scanning;
+  int _countdownSeconds = 9; // Tăng thêm 4 giây thành 9 giây tổng cộng
   Timer? _timer;
-  bool _isSaving = false;
+  int _retryCount = 0;
+  Map<String, dynamic>? _scannedFeedback;
 
   @override
   void initState() {
@@ -34,7 +38,7 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
 
   void _startCountdown() {
     setState(() {
-      _countdownSeconds = 5;
+      _countdownSeconds = 9;
     });
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -64,15 +68,32 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
            feedback.posture != 'Body analysis pending';
   }
 
-  Future<void> _confirmAndSave(Map<String, dynamic> feedbackJson) async {
+  Future<void> _handleFeedbackReceived(Map<String, dynamic> feedback) async {
+    if (_countdownSeconds > 0) {
+      // Bỏ qua kết quả cho đến khi đếm ngược kết thúc để đảm bảo người dùng đứng yên
+      return;
+    }
+    if (_scanState != ScanState.scanning) return;
+    if (!_isValidResult(feedback)) return;
+
+    // Khi có kết quả hợp lệ đầu tiên sau thời gian đếm ngược:
+    // Dừng camera và dừng gọi sang AI (bằng cách chuyển sang trạng thái Reviewing để unmount CameraView)
     setState(() {
-      _isSaving = true;
+      _scannedFeedback = feedback;
+      _scanState = ScanState.reviewing;
+    });
+  }
+
+  Future<void> _confirmAndSave() async {
+    if (_scannedFeedback == null) return;
+    setState(() {
+      _scanState = ScanState.saving;
     });
 
     try {
-      final user = await ref.read(onboardingRepositoryProvider).completeRealtimeBodyScan(feedbackJson);
+      final user = await ref.read(onboardingRepositoryProvider).completeRealtimeBodyScan(_scannedFeedback!);
       
-      // Update auth controller state
+      // Cập nhật trạng thái người dùng trong auth controller
       ref.read(authControllerProvider.notifier).setUser(user);
       
       if (mounted) {
@@ -82,11 +103,192 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isSaving = false;
+          _scanState = ScanState.reviewing;
         });
         AppFeedback.error('Lưu kết quả thất bại: $e. Vui lòng thử lại.');
       }
     }
+  }
+
+  Widget _buildReviewPanel() {
+    final feedback = _BodyAnalysisFeedback.fromJson(_scannedFeedback!);
+
+    return Scaffold(
+      backgroundColor: AppColors.backgroundOf(context),
+      appBar: AppBar(
+        title: const Text('Xác nhận kết quả phân tích'),
+        automaticallyImplyLeading: false,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.x4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Center(
+                        child: Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: 72,
+                          color: AppColors.success,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.x4),
+                      Center(
+                        child: Text(
+                          'Đã quét thành công!',
+                          style: AppTypography.headerLargeFor(context).copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.x2),
+                      const Center(
+                        child: Text(
+                          'AI đã ghi nhận và phân tích hình thể của bạn. Vui lòng kiểm tra lại kết quả trước khi tiếp tục.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey, height: 1.4),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.x6),
+                      
+                      // Result Card
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.x4),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface1Of(context),
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.borderSubtleOf(context)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'KẾT QUẢ TƯ THẾ (POSTURE)',
+                              style: AppTypography.label(color: Colors.grey),
+                            ),
+                            const SizedBox(height: AppSpacing.x1),
+                            Text(
+                              feedback.posture,
+                              style: AppTypography.headerMediumFor(context).copyWith(
+                                color: AppColors.energyMagenta,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.x4),
+                            const Divider(),
+                            const SizedBox(height: AppSpacing.x4),
+                            _buildInfoRow('Tình trạng lệch cơ thể (Imbalance)', feedback.imbalance),
+                            const SizedBox(height: AppSpacing.x4),
+                            _buildInfoRow('Lời khuyên & Khuyến nghị (Recommendation)', feedback.recommendation),
+                            const SizedBox(height: AppSpacing.x4),
+                            const Divider(),
+                            const SizedBox(height: AppSpacing.x4),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildMetricBlock(
+                                    'Tỷ lệ Eo/Vai',
+                                    feedback.waistShoulderRatio == null
+                                        ? '-'
+                                        : feedback.waistShoulderRatio!.toStringAsFixed(2),
+                                  ),
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: AppColors.borderSubtleOf(context),
+                                ),
+                                const SizedBox(width: AppSpacing.x4),
+                                Expanded(
+                                  child: _buildMetricBlock(
+                                    'Độ tin cậy',
+                                    '${(feedback.confidence * 100).round()}%',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Bottom Action Buttons
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AppButton.secondary(
+                        label: 'Quét lại',
+                        icon: Icons.refresh_rounded,
+                        onPressed: () {
+                          setState(() {
+                            _scannedFeedback = null;
+                            _scanState = ScanState.scanning;
+                            _retryCount++;
+                            _startCountdown();
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: AppButton.primary(
+                        label: 'Xác nhận & Lưu',
+                        icon: Icons.check_rounded,
+                        onPressed: _confirmAndSave,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String title, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: AppTypography.label(color: Colors.grey),
+        ),
+        const SizedBox(height: AppSpacing.x1),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.4),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricBlock(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        const SizedBox(height: AppSpacing.x1),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.energyMagenta),
+        ),
+      ],
+    );
   }
 
   @override
@@ -94,45 +296,29 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
     return Scaffold(
       body: Stack(
         children: [
-          AiRealtimeCameraView(
-            title: 'Quét cơ thể Realtime',
-            webSocketPath: '/ws/ai/body-analysis',
-            queryParameters: const {},
-            readyText: 'Camera đã sẵn sàng.',
-            streamingText: 'AI đang phân tích hình thể...',
-            stoppedText: 'Đã dừng phân tích body.',
-            showStartStopButton: false,
-            feedbackBuilder: (context, feedbackJson, statusText) {
-              final isValid = _isValidResult(feedbackJson);
-              
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _BodyAnalysisPanel(
-                    result: feedbackJson == null
-                        ? null
-                        : _BodyAnalysisFeedback.fromJson(feedbackJson),
-                    statusText: statusText,
-                  ),
-                  const SizedBox(height: AppSpacing.x3),
-                  AppButton.primary(
-                    label: _countdownSeconds > 0
-                        ? 'Vui lòng giữ tư thế (${_countdownSeconds}s)'
-                        : (isValid ? 'Xác nhận & Lưu' : 'Đang phân tích tư thế...'),
-                    icon: Icons.check_circle_outline_rounded,
-                    loading: _isSaving,
-                    onPressed: (_countdownSeconds == 0 && isValid && !_isSaving)
-                        ? () => _confirmAndSave(feedbackJson!)
-                        : null,
-                  ),
-                ],
-              );
-            },
-          ),
+          if (_scanState == ScanState.scanning)
+            AiRealtimeCameraView(
+              key: ValueKey(_retryCount),
+              title: 'Quét cơ thể Realtime',
+              webSocketPath: '/ws/ai/body-analysis',
+              queryParameters: const {},
+              readyText: 'Camera đã sẵn sàng.',
+              streamingText: 'AI đang phân tích hình thể...',
+              stoppedText: 'Đã dừng phân tích body.',
+              showStartStopButton: false,
+              onFeedbackReceived: _handleFeedbackReceived,
+              feedbackBuilder: (context, feedbackJson, statusText) {
+                return _BodyAnalysisPanel(
+                  result: feedbackJson == null
+                      ? null
+                      : _BodyAnalysisFeedback.fromJson(feedbackJson),
+                  statusText: statusText,
+                );
+              },
+            ),
           
           // Countdown overlay during scanning
-          if (_countdownSeconds > 0)
+          if (_scanState == ScanState.scanning)
             Positioned(
               top: 80,
               left: 20,
@@ -163,7 +349,9 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
                     const SizedBox(width: AppSpacing.x3),
                     Expanded(
                       child: Text(
-                        'Hãy đứng thẳng và giữ nguyên tư thế: $_countdownSeconds giây...',
+                        _countdownSeconds > 0
+                            ? 'Hãy đứng thẳng và giữ nguyên tư thế: $_countdownSeconds giây...'
+                            : 'Đang ghi nhận kết quả tối ưu...',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -176,7 +364,10 @@ class _AiOnboardingBodyScanPageState extends ConsumerState<AiOnboardingBodyScanP
               ),
             ),
 
-          if (_isSaving)
+          if (_scanState == ScanState.reviewing && _scannedFeedback != null)
+            Positioned.fill(child: _buildReviewPanel()),
+
+          if (_scanState == ScanState.saving)
             Container(
               color: Colors.black.withValues(alpha: 0.75),
               child: const Center(
