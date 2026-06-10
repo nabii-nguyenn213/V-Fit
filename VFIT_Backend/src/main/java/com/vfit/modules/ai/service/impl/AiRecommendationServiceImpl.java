@@ -44,25 +44,54 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         if (!ACTIVITY_LEVELS.contains(activityLevel)) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Activity level must be one of: low, moderate, high");
         }
-
-        User user = currentUser();
-        User.BodyMetrics metrics = user.getBodyMetrics();
-        if (user.getDateOfBirth() == null
-                || user.getGender() == null
-                || user.getGoalType() == null
-                || metrics == null
-                || metrics.getWeightKg() == null
-                || metrics.getHeightCm() == null) {
-            throw new AppException(ErrorCode.BAD_REQUEST, "Please complete your profile and body metrics before using AI meal planner");
-        }
-
-        enrichedRequest.put("age", age(user.getDateOfBirth()));
-        enrichedRequest.put("gender", user.getGender().name().toLowerCase());
-        enrichedRequest.put("weight", metrics.getWeightKg());
-        enrichedRequest.put("height", metrics.getHeightCm());
-        enrichedRequest.put("goal", user.getGoalType().name().toLowerCase());
         enrichedRequest.put("activity_level", activityLevel);
         enrichedRequest.remove("meals_per_day");
+
+        // Required profile fields for AI model (gender, weight, height, goal). Age is optional.
+        boolean hasRequiredProfile = enrichedRequest.containsKey("gender")
+                && enrichedRequest.containsKey("weight")
+                && enrichedRequest.containsKey("height")
+                && enrichedRequest.containsKey("goal");
+        if (!hasRequiredProfile) {
+            // Enrich missing fields from the authenticated user profile (if any)
+            User user = currentUser();
+            User.BodyMetrics metrics = user.getBodyMetrics();
+
+            // Gender
+            if (!enrichedRequest.containsKey("gender") && user.getGender() != null) {
+                enrichedRequest.put("gender", user.getGender().name().toLowerCase());
+            }
+            // Weight
+            if (!enrichedRequest.containsKey("weight") && metrics != null && metrics.getWeightKg() != null) {
+                enrichedRequest.put("weight", metrics.getWeightKg());
+            }
+            // Height
+            if (!enrichedRequest.containsKey("height") && metrics != null && metrics.getHeightCm() != null) {
+                enrichedRequest.put("height", metrics.getHeightCm());
+            }
+            // Goal
+            if (!enrichedRequest.containsKey("goal") && user.getGoalType() != null) {
+                enrichedRequest.put("goal", user.getGoalType().name().toLowerCase());
+            }
+            // Age (optional) – add if DOB exists
+            if (!enrichedRequest.containsKey("age") && user.getDateOfBirth() != null) {
+                enrichedRequest.put("age", age(user.getDateOfBirth()));
+            }
+            // Body fat percent (optional)
+            if (!enrichedRequest.containsKey("body_fat_percent") && metrics != null && metrics.getBodyFatPercent() != null) {
+                enrichedRequest.put("body_fat_percent", metrics.getBodyFatPercent());
+            }
+
+            // After enrichment, verify required fields are now present
+            if (!enrichedRequest.containsKey("gender")
+                    || !enrichedRequest.containsKey("weight")
+                    || !enrichedRequest.containsKey("height")
+                    || !enrichedRequest.containsKey("goal")) {
+                throw new AppException(ErrorCode.BAD_REQUEST,
+                        "Please complete your profile (gender, weight, height, goal) before using AI meal planner");
+            }
+        }
+
         return aiClient.createMealPlan(enrichedRequest);
     }
 

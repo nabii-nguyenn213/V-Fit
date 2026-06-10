@@ -16,17 +16,18 @@ class AiRecommendationRepository {
 
   final Dio _dio;
 
-  Future<Map<String, dynamic>> askCoach(Map<String, dynamic> payload) {
-    return _post(ApiEndpoints.aiCoach, payload);
-  }
+  // Future<Map<String, dynamic>> askCoach(Map<String, dynamic> payload) {
+  //   return _post(ApiEndpoints.aiCoach, payload);
+  // }
 
-  Future<Map<String, dynamic>> createWorkoutPlan(Map<String, dynamic> payload) {
-    return _post(ApiEndpoints.aiWorkoutPlanner, payload);
-  }
+  // Future<Map<String, dynamic>> createWorkoutPlan(Map<String, dynamic> payload) {
+  //   return _post(ApiEndpoints.aiWorkoutPlanner, payload);
+  // }
 
-  Future<Map<String, dynamic>> createMealPlan(Map<String, dynamic> payload) {
-    return _post(ApiEndpoints.aiMealPlanner, payload);
-  }
+  // Future<Map<String, dynamic>> createMealPlan(Map<String, dynamic> payload) {
+  //   return _post(ApiEndpoints.aiMealPlanner, payload);
+  // }
+
 
   Future<Map<String, dynamic>> _post(
     String path,

@@ -6,6 +6,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AiRecommendationController {
     private final AiRecommendationService aiRecommendationService;
 
+    @Hidden
+    @Deprecated
     @PostMapping("/coach")
     @PreAuthorize("@featureGate.isPremium(authentication)")
     public ApiResponse<Map<String, Object>> askCoach(@RequestBody Map<String, Object> request) {
@@ -25,6 +28,8 @@ public class AiRecommendationController {
         return ApiResponse.ok(aiRecommendationService.askCoach(request));
     }
 
+    @Hidden
+    @Deprecated
     @PostMapping("/workout-planner")
     @PreAuthorize("@featureGate.isPremium(authentication)")
     public ApiResponse<Map<String, Object>> createWorkoutPlan(@RequestBody Map<String, Object> request) {
@@ -32,7 +37,10 @@ public class AiRecommendationController {
         return ApiResponse.ok(aiRecommendationService.createWorkoutPlan(request));
     }
 
+    @Hidden
+    @Deprecated
     @PostMapping("/meal-planner")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<Map<String, Object>> createMealPlan(@RequestBody Map<String, Object> request) {
         log.info("[AI RECOMMENDATION] Meal planner request received");
         return ApiResponse.ok(aiRecommendationService.createMealPlan(request));
