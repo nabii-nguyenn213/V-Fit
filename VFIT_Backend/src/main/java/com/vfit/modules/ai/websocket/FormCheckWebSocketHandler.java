@@ -71,9 +71,14 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
                             "exerciseId", exerciseId,
                             "exercise", normalizeExercise(exerciseId),
                             "cameraView", cameraView,
+                            "sessionId", session.getId(),
                             "frameBytes", bytes));
-            log.info("[AI WS] AI analysis response received: success={}, feedback='{}'", 
-                    feedback != null, feedback != null ? feedback.summary() : "null");
+            log.info("[AI WS] AI analysis response received: success={}, repCount={}, phase={}, confidence={}, feedback='{}'",
+                    feedback != null,
+                    feedback != null ? feedback.repCount() : "null",
+                    feedback != null ? feedback.phase() : "null",
+                    feedback != null ? feedback.repConfidence() : "null",
+                    feedback != null ? feedback.summary() : "null");
             session.sendMessage(new TextMessage(objectMapper.writeValueAsString(feedback)));
         } catch (Exception e) {
             log.error("[AI WS] Error calling AI analysis: {}", e.getMessage(), e);
@@ -120,7 +125,11 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
                 "Giữ máy ổn định và gửi lại sau ít giây.",
                 "RATE_LIMITED",
                 true,
-                0);
+                0,
+                "rate_limited",
+                "rate_limited",
+                0.0,
+                false);
     }
 
     private AiFormCheckFeedback frameTooLargeFeedback(int maxFrameBytes) {
@@ -134,6 +143,10 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
                         + maxFrameKb + "KB.",
                 "FRAME_TOO_LARGE",
                 true,
-                0);
+                0,
+                "frame_too_large",
+                "frame_too_large",
+                0.0,
+                false);
     }
 }

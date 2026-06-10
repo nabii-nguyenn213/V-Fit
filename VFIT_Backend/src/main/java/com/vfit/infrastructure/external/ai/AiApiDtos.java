@@ -17,7 +17,8 @@ import java.util.Map;
 record FormCheckRequest(
         @JsonProperty("frame") String frame,
         @JsonProperty("exercise") String exercise,
-        @JsonProperty("camera_view") String cameraView) {}
+        @JsonProperty("camera_view") String cameraView,
+        @JsonProperty("session_id") String sessionId) {}
 
 record FormCheckResponse(
         @JsonProperty("success") boolean success,
@@ -25,7 +26,11 @@ record FormCheckResponse(
         @JsonProperty("errors") List<FormErrorDto> errors,
         @JsonProperty("feedback") Object feedback,
         @JsonProperty("metrics") Map<String, Object> metrics,
-        @JsonProperty("rep_count") int repCount) {
+        @JsonProperty("rep_count") int repCount,
+        @JsonProperty("phase") String phase,
+        @JsonProperty("rep_label") String repLabel,
+        @JsonProperty("rep_confidence") Double repConfidence,
+        @JsonProperty("rep_counter_enabled") Boolean repCounterEnabled) {
     
     public AiFormCheckFeedback toAiFeedback() {
         List<FormErrorDto> safeErrors = errors == null ? List.of() : errors;
@@ -53,7 +58,11 @@ record FormCheckResponse(
                 feedbackPayload.cue(),
                 severity,
                 false,
-                repCount);
+                repCount,
+                valueOrDefault(phase, "unknown"),
+                valueOrDefault(repLabel, "unknown"),
+                repConfidence == null ? 0.0 : repConfidence,
+                Boolean.TRUE.equals(repCounterEnabled));
     }
 
     private static String valueOrDefault(String value, String fallback) {

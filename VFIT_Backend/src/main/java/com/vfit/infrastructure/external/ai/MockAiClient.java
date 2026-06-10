@@ -27,7 +27,11 @@ public class MockAiClient implements AiClient {
                 "Keep knees tracking over toes.",
                 "WARN",
                 false,
-                3);
+                3,
+                "down",
+                "squat_down",
+                0.86,
+                true);
     }
 
     @Override

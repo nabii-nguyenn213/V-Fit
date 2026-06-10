@@ -80,16 +80,22 @@ class _FeedbackPanel extends StatelessWidget {
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Số lần: ${feedback!.repCount}',
-                            style: AppTypography.headerMediumFor(context).copyWith(
-                              color: AppColors.energyMagenta,
-                              fontWeight: FontWeight.bold,
+                          Flexible(
+                            child: Text(
+                              'Số lần: ${feedback!.repCount} · ${feedback!.phaseLabel}',
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.headerMediumFor(context)
+                                  .copyWith(
+                                color: AppColors.energyMagenta,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
+                          const SizedBox(width: AppSpacing.x2),
                           Text(
                             'Điểm: ${feedback!.score}/100',
-                            style: AppTypography.headerMediumFor(context).copyWith(
+                            style:
+                                AppTypography.headerMediumFor(context).copyWith(
                               color: color,
                               fontWeight: FontWeight.bold,
                             ),
@@ -133,6 +139,8 @@ class _FormCheckFeedback {
     required this.severity,
     required this.fallback,
     required this.repCount,
+    required this.phase,
+    required this.repCounterEnabled,
     this.coachingCue,
   });
 
@@ -141,7 +149,22 @@ class _FormCheckFeedback {
   final String severity;
   final bool fallback;
   final int repCount;
+  final String phase;
+  final bool repCounterEnabled;
   final String? coachingCue;
+
+  String get phaseLabel {
+    if (!repCounterEnabled) {
+      return 'AI rep offline';
+    }
+    return switch (phase) {
+      'down' => 'xuống',
+      'up' => 'lên',
+      'other' => 'ngoài form',
+      'unknown' => 'đang bắt form',
+      _ => phase,
+    };
+  }
 
   factory _FormCheckFeedback.fromJson(Map<String, dynamic> json) {
     return _FormCheckFeedback(
@@ -151,7 +174,15 @@ class _FormCheckFeedback {
           'Chưa có phản hồi.',
       severity: json['severity']?.toString() ?? 'INFO',
       fallback: json['fallback'] == true,
-      repCount: (json['rep_count'] as num?)?.toInt() ?? 0,
+      repCount: (json['rep_count'] as num?)?.toInt() ??
+          (json['repCount'] as num?)?.toInt() ??
+          0,
+      phase: json['phase']?.toString() ??
+          json['rep_phase']?.toString() ??
+          json['repPhase']?.toString() ??
+          'unknown',
+      repCounterEnabled: json['rep_counter_enabled'] == true ||
+          json['repCounterEnabled'] == true,
       coachingCue: json['cue']?.toString() ?? json['coachingCue']?.toString(),
     );
   }

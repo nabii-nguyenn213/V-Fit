@@ -41,6 +41,7 @@ public class HttpAiClient implements AiClient {
             byte[] frameBytes = frameBytes(metadata);
             String exercise = (String) metadata.getOrDefault("exercise", "squat");
             String cameraView = (String) metadata.getOrDefault("cameraView", "side");
+            String sessionId = (String) metadata.getOrDefault("sessionId", userId);
             
             if (frameBytes == null || frameBytes.length == 0) {
                 return AiFormCheckFeedback.safeFallback();
@@ -50,7 +51,7 @@ public class HttpAiClient implements AiClient {
             String frameBase64 = java.util.Base64.getEncoder().encodeToString(frameBytes);
             
             // Call Python AI API
-            FormCheckRequest apiRequest = new FormCheckRequest(frameBase64, exercise, cameraView);
+            FormCheckRequest apiRequest = new FormCheckRequest(frameBase64, exercise, cameraView, sessionId);
             FormCheckResponse response = restClient.post()
                     .uri(aiProperties.getBaseUrl() + "/api/ai/form-check")
                     .contentType(MediaType.APPLICATION_JSON)

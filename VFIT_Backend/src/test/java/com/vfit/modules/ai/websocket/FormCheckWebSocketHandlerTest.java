@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vfit.infrastructure.config.AppProperties;
 import com.vfit.infrastructure.external.ai.AiClient;
+import com.vfit.infrastructure.external.ai.dto.AiFormCheckFeedback;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,5 +73,49 @@ class FormCheckWebSocketHandlerTest {
         assertThat(feedback.getValue().getPayload()).contains("FRAME_TOO_LARGE");
         verify(session).close(argThat(status -> status.getCode() == 1009));
         verifyNoInteractions(aiClient);
+    }
+
+    @Test
+    void validFrameForwardsWebSocketSessionIdAndRepMetadata() throws Exception {
+        when(session.getId()).thenReturn("session-1");
+        when(session.getAttributes()).thenReturn(Map.of(
+                "userId", "user-1",
+                "exerciseId", "squat",
+                "cameraView", "side"));
+        when(frameRateLimiter.allow("user-1")).thenReturn(true);
+        when(aiClient.analyzeForm(
+                        org.mockito.ArgumentMatchers.eq("user-1"),
+                        org.mockito.ArgumentMatchers.eq("realtime-frame"),
+                        org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new AiFormCheckFeedback(
+                        90,
+                        "Good depth.",
+                        java.util.List.of(),
+                        java.util.List.of(),
+                        "Stand tall.",
+                        "OK",
+                        false,
+                        1,
+                        "down",
+                        "squat_down",
+                        0.91,
+                        true));
+
+        handler.handleBinaryMessage(session, new BinaryMessage(new byte[32]));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> metadataCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(aiClient).analyzeForm(
+                org.mockito.ArgumentMatchers.eq("user-1"),
+                org.mockito.ArgumentMatchers.eq("realtime-frame"),
+                metadataCaptor.capture());
+        assertThat(metadataCaptor.getValue()).containsEntry("sessionId", "session-1");
+
+        ArgumentCaptor<TextMessage> feedback = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session).sendMessage(feedback.capture());
+        assertThat(feedback.getValue().getPayload())
+                .contains("\"rep_count\":1")
+                .contains("\"phase\":\"down\"")
+                .contains("\"rep_counter_enabled\":true");
     }
 }
