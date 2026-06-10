@@ -39,6 +39,9 @@ class ApiEndpoints {
   static const progressSnaps = '/api/progress/snaps';
   static String progressSnap(String id) => '/api/progress/snaps/$id';
 
+  static const aiCoach = '/api/ai/coach';
+  static const aiWorkoutPlanner = '/api/ai/workout-planner';
+  static const aiMealPlanner = '/api/ai/meal-planner';
   static const foodCalorieEstimate = '/api/ai/food-calorie-estimate';
   static const foodSearch = '/api/v1/foods/search';
 

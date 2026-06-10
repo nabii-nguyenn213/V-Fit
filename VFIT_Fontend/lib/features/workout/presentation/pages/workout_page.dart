@@ -4,13 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/utils/enum_parsers.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
 import '../../../../presentation/theme/app_spacing.dart';
 import '../../../../presentation/theme/app_typography.dart';
+import '../../../ai/data/repositories/ai_recommendation_repository.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../../exercise_library/data/repositories/exercise_library_repository_impl.dart';
 import '../../../exercise_library/presentation/bloc/exercise_library_bloc.dart';
@@ -389,7 +392,7 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
       await showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
-        builder: (context) => const _AiRealtimeActionSheet(),
+        builder: (context) => _AiRealtimeActionSheet(user: user),
       );
     } finally {
       if (mounted) {
@@ -399,11 +402,13 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
   }
 }
 
-class _AiRealtimeActionSheet extends StatelessWidget {
-  const _AiRealtimeActionSheet();
+class _AiRealtimeActionSheet extends ConsumerWidget {
+  const _AiRealtimeActionSheet({required this.user});
+
+  final UserModel user;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -417,15 +422,31 @@ class _AiRealtimeActionSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'AI realtime',
+              'Trợ lý AI luyện tập',
               style: AppTypography.headerMediumFor(context),
             ),
             const SizedBox(height: AppSpacing.x2),
             Text(
-              'Mở camera trực tiếp để AI phản hồi liên tục trong lúc tập.',
+              'Mở camera realtime, hỏi coach hoặc tạo lịch tập từ AI team.',
               style: AppTypography.bodySmallFor(context),
             ),
             const SizedBox(height: AppSpacing.x4),
+            _AiRealtimeActionTile(
+              icon: Icons.psychology_rounded,
+              title: 'AI Coach',
+              subtitle:
+                  'Hỏi nhanh về kỹ thuật tập, phục hồi, lịch tập hoặc thói quen.',
+              onTap: () => _openCoach(context, ref),
+            ),
+            const SizedBox(height: AppSpacing.x2),
+            _AiRealtimeActionTile(
+              icon: Icons.auto_awesome_rounded,
+              title: 'Tạo lịch tập AI',
+              subtitle:
+                  'Gửi hồ sơ tập luyện sang Workout Planner để sinh giáo án mới.',
+              onTap: () => _openWorkoutPlanner(context, ref),
+            ),
+            const SizedBox(height: AppSpacing.x2),
             _AiRealtimeActionTile(
               icon: Icons.directions_run_rounded,
               title: 'Kiểm tra form tập',
@@ -456,6 +477,495 @@ class _AiRealtimeActionSheet extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _openCoach(BuildContext context, WidgetRef ref) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _AiCoachSheet(
+        user: user,
+        onSubmit: ref.read(aiRecommendationRepositoryProvider).askCoach,
+      ),
+    );
+  }
+
+  Future<void> _openWorkoutPlanner(BuildContext context, WidgetRef ref) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _AiWorkoutPlannerSheet(
+        user: user,
+        onSubmit:
+            ref.read(aiRecommendationRepositoryProvider).createWorkoutPlan,
+      ),
+    );
+  }
+}
+
+class _AiCoachSheet extends StatefulWidget {
+  const _AiCoachSheet({
+    required this.user,
+    required this.onSubmit,
+  });
+
+  final UserModel user;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> payload)
+      onSubmit;
+
+  @override
+  State<_AiCoachSheet> createState() => _AiCoachSheetState();
+}
+
+class _AiCoachSheetState extends State<_AiCoachSheet> {
+  late final TextEditingController _questionController;
+  late final TextEditingController _ageController;
+  late final TextEditingController _weightController;
+  late final TextEditingController _heightController;
+  late final TextEditingController _activityController;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _questionController = TextEditingController();
+    _ageController = TextEditingController(
+      text: _ageFromDate(widget.user.dateOfBirth).toString(),
+    );
+    _weightController = TextEditingController(text: '70');
+    _heightController = TextEditingController(text: '170');
+    _activityController = TextEditingController(text: 'moderate');
+  }
+
+  @override
+  void dispose() {
+    _questionController.dispose();
+    _ageController.dispose();
+    _weightController.dispose();
+    _heightController.dispose();
+    _activityController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_loading || _questionController.text.trim().isEmpty) {
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final result = await widget.onSubmit({
+        ..._aiProfilePayload(
+          widget.user,
+          age: int.tryParse(_ageController.text) ?? 25,
+          weight: double.tryParse(_weightController.text) ?? 70,
+          height: double.tryParse(_heightController.text) ?? 170,
+          activityLevel: _activityController.text.trim(),
+        ),
+        'question': _questionController.text.trim(),
+      });
+      if (!mounted) return;
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (context) => _AiJsonResultSheet(
+          title: 'AI Coach',
+          result: result,
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        AppFeedback.error(error.toString(), title: 'AI Coach chưa phản hồi');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _AiFormShell(
+      title: 'AI Coach',
+      loading: _loading,
+      submitLabel: 'Hỏi coach',
+      onSubmit: _submit,
+      children: [
+        TextField(
+          controller: _questionController,
+          minLines: 3,
+          maxLines: 5,
+          decoration: const InputDecoration(
+            labelText: 'Câu hỏi',
+            prefixIcon: Icon(Icons.psychology_rounded),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.x3),
+        _AiProfileInputs(
+          ageController: _ageController,
+          weightController: _weightController,
+          heightController: _heightController,
+          activityController: _activityController,
+        ),
+      ],
+    );
+  }
+}
+
+class _AiWorkoutPlannerSheet extends StatefulWidget {
+  const _AiWorkoutPlannerSheet({
+    required this.user,
+    required this.onSubmit,
+  });
+
+  final UserModel user;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> payload)
+      onSubmit;
+
+  @override
+  State<_AiWorkoutPlannerSheet> createState() => _AiWorkoutPlannerSheetState();
+}
+
+class _AiWorkoutPlannerSheetState extends State<_AiWorkoutPlannerSheet> {
+  late final TextEditingController _ageController;
+  late final TextEditingController _weightController;
+  late final TextEditingController _heightController;
+  late final TextEditingController _activityController;
+  late final TextEditingController _levelController;
+  late final TextEditingController _daysController;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ageController = TextEditingController(
+      text: _ageFromDate(widget.user.dateOfBirth).toString(),
+    );
+    _weightController = TextEditingController(text: '70');
+    _heightController = TextEditingController(text: '170');
+    _activityController = TextEditingController(text: 'moderate');
+    _levelController = TextEditingController(text: 'beginner');
+    _daysController = TextEditingController(text: '4');
+  }
+
+  @override
+  void dispose() {
+    _ageController.dispose();
+    _weightController.dispose();
+    _heightController.dispose();
+    _activityController.dispose();
+    _levelController.dispose();
+    _daysController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_loading) return;
+    setState(() => _loading = true);
+    try {
+      final result = await widget.onSubmit({
+        ..._aiProfilePayload(
+          widget.user,
+          age: int.tryParse(_ageController.text) ?? 25,
+          weight: double.tryParse(_weightController.text) ?? 70,
+          height: double.tryParse(_heightController.text) ?? 170,
+          activityLevel: _activityController.text.trim(),
+        ),
+        'level': _levelController.text.trim().isEmpty
+            ? 'beginner'
+            : _levelController.text.trim(),
+        'days_per_week': int.tryParse(_daysController.text) ?? 4,
+      });
+      if (!mounted) return;
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (context) => _AiJsonResultSheet(
+          title: 'Lịch tập AI',
+          result: result,
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        AppFeedback.error(error.toString(), title: 'Chưa tạo được lịch tập AI');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _AiFormShell(
+      title: 'Tạo lịch tập AI',
+      loading: _loading,
+      submitLabel: 'Tạo lịch tập',
+      onSubmit: _submit,
+      children: [
+        _AiProfileInputs(
+          ageController: _ageController,
+          weightController: _weightController,
+          heightController: _heightController,
+          activityController: _activityController,
+        ),
+        const SizedBox(height: AppSpacing.x3),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _levelController,
+                decoration: const InputDecoration(
+                  labelText: 'Trình độ',
+                  prefixIcon: Icon(Icons.trending_up_rounded),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.x2),
+            Expanded(
+              child: TextField(
+                controller: _daysController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Buổi/tuần',
+                  prefixIcon: Icon(Icons.calendar_month_rounded),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _AiFormShell extends StatelessWidget {
+  const _AiFormShell({
+    required this.title,
+    required this.loading,
+    required this.submitLabel,
+    required this.onSubmit,
+    required this.children,
+  });
+
+  final String title;
+  final bool loading;
+  final String submitLabel;
+  final VoidCallback onSubmit;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: AppResponsive.pagePadding(context).copyWith(
+          top: 0,
+          bottom: AppSpacing.x4 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(title, style: AppTypography.headerMediumFor(context)),
+              const SizedBox(height: AppSpacing.x3),
+              ...children,
+              const SizedBox(height: AppSpacing.x4),
+              FilledButton.icon(
+                onPressed: loading ? null : onSubmit,
+                icon: loading
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome_rounded),
+                label: Text(loading ? 'Đang phân tích...' : submitLabel),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AiProfileInputs extends StatelessWidget {
+  const _AiProfileInputs({
+    required this.ageController,
+    required this.weightController,
+    required this.heightController,
+    required this.activityController,
+  });
+
+  final TextEditingController ageController;
+  final TextEditingController weightController;
+  final TextEditingController heightController;
+  final TextEditingController activityController;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: ageController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Tuổi'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.x2),
+            Expanded(
+              child: TextField(
+                controller: weightController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Cân nặng kg'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.x2),
+            Expanded(
+              child: TextField(
+                controller: heightController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Cao cm'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.x3),
+        TextField(
+          controller: activityController,
+          decoration: const InputDecoration(
+            labelText: 'Mức vận động',
+            prefixIcon: Icon(Icons.directions_run_rounded),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AiJsonResultSheet extends StatelessWidget {
+  const _AiJsonResultSheet({
+    required this.title,
+    required this.result,
+  });
+
+  final String title;
+  final Map<String, dynamic> result;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: AppResponsive.pagePadding(context).copyWith(top: 0),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(title, style: AppTypography.headerMediumFor(context)),
+              const SizedBox(height: AppSpacing.x3),
+              ...result.entries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.x2),
+                  child: _AiResultRow(
+                    label: entry.key,
+                    value: _formatAiValue(entry.value),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Xong'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AiResultRow extends StatelessWidget {
+  const _AiResultRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.x3),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.48),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.label(color: scheme.primary)),
+          const SizedBox(height: 4),
+          Text(value, style: AppTypography.bodyFor(context)),
+        ],
+      ),
+    );
+  }
+}
+
+Map<String, dynamic> _aiProfilePayload(
+  UserModel user, {
+  required int age,
+  required double weight,
+  required double height,
+  required String activityLevel,
+}) {
+  final goal =
+      user.goalType == null ? 'general fitness' : goalLabel(user.goalType!);
+  final gender = user.gender == null ? 'other' : genderLabel(user.gender!);
+  return {
+    'age': age,
+    'gender': gender,
+    'weight': weight,
+    'height': height,
+    'goal': goal,
+    'activity_level': activityLevel.isEmpty ? 'moderate' : activityLevel,
+  };
+}
+
+int _ageFromDate(DateTime? dateOfBirth) {
+  if (dateOfBirth == null) {
+    return 25;
+  }
+  final now = DateTime.now();
+  var age = now.year - dateOfBirth.year;
+  if (now.month < dateOfBirth.month ||
+      (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
+    age--;
+  }
+  return age.clamp(13, 100);
+}
+
+String _formatAiValue(Object? value) {
+  if (value is Map) {
+    return value.entries
+        .map((entry) => '${entry.key}: ${_formatAiValue(entry.value)}')
+        .join('\n');
+  }
+  if (value is Iterable) {
+    return value.map(_formatAiValue).join('\n');
+  }
+  return value?.toString() ?? '-';
 }
 
 class _AiRealtimeActionTile extends StatelessWidget {

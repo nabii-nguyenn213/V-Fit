@@ -9,11 +9,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/responsive.dart';
+import '../../../../core/utils/enum_parsers.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
 import '../../../../presentation/theme/app_spacing.dart';
 import '../../../../presentation/theme/app_typography.dart';
+import '../../../ai/data/repositories/ai_recommendation_repository.dart';
+import '../../../auth/application/auth_controller.dart';
+import '../../../profile/data/models/user_model.dart';
 import '../../data/models/food_calorie_estimate_model.dart';
 import '../../data/repositories/food_repository_impl.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -50,6 +54,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
   @override
   Widget build(BuildContext context) {
     final repository = ref.watch(foodRepositoryProvider);
+    final user = ref.watch(authControllerProvider).user;
     return BlocProvider(
       create: (_) => NutritionCalculatorBloc(
         searchFoods: SearchFoods(repository),
@@ -82,6 +87,10 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
                 _FoodScanCard(
                   loading: _scanLoading,
                   onTap: _scanFood,
+                ),
+                const SizedBox(height: AppSpacing.x3),
+                _MealPlanCard(
+                  onTap: () => _openMealPlanner(user),
                 ),
                 const SizedBox(height: AppSpacing.x4),
                 _NutritionSearchBar(
@@ -171,6 +180,26 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
         setState(() => _scanLoading = false);
       }
     }
+  }
+
+  Future<void> _openMealPlanner(UserModel? user) async {
+    if (user == null) {
+      AppFeedback.error(
+        'Bạn cần đăng nhập để tạo thực đơn AI.',
+        title: 'Chưa đăng nhập',
+      );
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (context) => _MealPlannerSheet(
+        user: user,
+        onSubmit: ref.read(aiRecommendationRepositoryProvider).createMealPlan,
+      ),
+    );
   }
 }
 
@@ -390,6 +419,448 @@ class _FoodScanSheetState extends State<_FoodScanSheet> {
       ),
     );
   }
+}
+
+class _MealPlannerSheet extends StatefulWidget {
+  const _MealPlannerSheet({
+    required this.user,
+    required this.onSubmit,
+  });
+
+  final UserModel user;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> payload)
+      onSubmit;
+
+  @override
+  State<_MealPlannerSheet> createState() => _MealPlannerSheetStateV2();
+}
+
+class _MealPlannerSheetStateV2 extends State<_MealPlannerSheet> {
+  String _activityLevel = 'moderate';
+  bool _loading = false;
+
+  Future<void> _submit() async {
+    if (_loading) {
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final result = await widget.onSubmit({
+        'activity_level': _activityLevel,
+      });
+      if (!mounted) return;
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (context) => _AiMealResultSheet(result: result),
+      );
+    } catch (error) {
+      if (mounted) {
+        AppFeedback.error(error.toString(), title: 'Chua tao duoc thuc don AI');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: AppResponsive.pagePadding(context).copyWith(
+          top: 0,
+          bottom: AppSpacing.x4 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Tao thuc don AI',
+                  style: AppTypography.headerMediumFor(context)),
+              const SizedBox(height: AppSpacing.x3),
+              Text(
+                'V-FIT lay tuoi, gioi tinh, muc tieu, chieu cao va can nang tu ho so cua ban.',
+                style: AppTypography.bodySmallFor(context),
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              DropdownButtonFormField<String>(
+                value: _activityLevel,
+                decoration: const InputDecoration(
+                  labelText: 'Muc van dong',
+                  prefixIcon: Icon(Icons.directions_run_rounded),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'low', child: Text('Thap')),
+                  DropdownMenuItem(value: 'moderate', child: Text('Vua')),
+                  DropdownMenuItem(value: 'high', child: Text('Cao')),
+                ],
+                onChanged: _loading
+                    ? null
+                    : (value) {
+                        if (value != null) {
+                          setState(() => _activityLevel = value);
+                        }
+                      },
+              ),
+              const SizedBox(height: AppSpacing.x2),
+              Text(
+                'So bua moi ngay se do AI tu phan tich va de xuat trong ket qua.',
+                style: AppTypography.bodySmallFor(context),
+              ),
+              const SizedBox(height: AppSpacing.x4),
+              FilledButton.icon(
+                onPressed: _loading ? null : _submit,
+                icon: _loading
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome_rounded),
+                label: Text(_loading ? 'Dang phan tich...' : 'Tao thuc don'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ignore: unused_element
+class _MealPlannerSheetState extends State<_MealPlannerSheet> {
+  late final TextEditingController _ageController;
+  late final TextEditingController _weightController;
+  late final TextEditingController _heightController;
+  late final TextEditingController _activityController;
+  late final TextEditingController _mealsController;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ageController = TextEditingController(
+      text: _ageFromDate(widget.user.dateOfBirth).toString(),
+    );
+    _weightController = TextEditingController(text: '70');
+    _heightController = TextEditingController(text: '170');
+    _activityController = TextEditingController(text: 'moderate');
+    _mealsController = TextEditingController(text: '3');
+  }
+
+  @override
+  void dispose() {
+    _ageController.dispose();
+    _weightController.dispose();
+    _heightController.dispose();
+    _activityController.dispose();
+    _mealsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_loading) {
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final result = await widget.onSubmit({
+        ..._aiProfilePayload(
+          widget.user,
+          age: int.tryParse(_ageController.text) ?? 25,
+          weight: double.tryParse(_weightController.text) ?? 70,
+          height: double.tryParse(_heightController.text) ?? 170,
+          activityLevel: _activityController.text.trim(),
+        ),
+        'meals_per_day': int.tryParse(_mealsController.text) ?? 3,
+      });
+      if (!mounted) return;
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (context) => _AiMealResultSheet(result: result),
+      );
+    } catch (error) {
+      if (mounted) {
+        AppFeedback.error(error.toString(), title: 'Chưa tạo được thực đơn AI');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: AppResponsive.pagePadding(context).copyWith(
+          top: 0,
+          bottom: AppSpacing.x4 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Tạo thực đơn AI',
+                style: AppTypography.headerMediumFor(context),
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _ageController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Tuổi'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x2),
+                  Expanded(
+                    child: TextField(
+                      controller: _weightController,
+                      keyboardType: TextInputType.number,
+                      decoration:
+                          const InputDecoration(labelText: 'Cân nặng kg'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x2),
+                  Expanded(
+                    child: TextField(
+                      controller: _heightController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Cao cm'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              TextField(
+                controller: _activityController,
+                decoration: const InputDecoration(
+                  labelText: 'Mức vận động',
+                  prefixIcon: Icon(Icons.directions_run_rounded),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              TextField(
+                controller: _mealsController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Số bữa/ngày',
+                  prefixIcon: Icon(Icons.restaurant_rounded),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.x4),
+              FilledButton.icon(
+                onPressed: _loading ? null : _submit,
+                icon: _loading
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome_rounded),
+                label: Text(_loading ? 'Đang phân tích...' : 'Tạo thực đơn'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AiMealResultSheet extends StatelessWidget {
+  const _AiMealResultSheet({required this.result});
+
+  final Map<String, dynamic> result;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: AppResponsive.pagePadding(context).copyWith(top: 0),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Thực đơn AI',
+                style: AppTypography.headerMediumFor(context),
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              ...result.entries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.x2),
+                  child: _AiMealResultRow(
+                    label: entry.key,
+                    value: _formatAiValue(entry.value),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Xong'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AiMealResultRow extends StatelessWidget {
+  const _AiMealResultRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.x3),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.48),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.label(color: scheme.primary)),
+          const SizedBox(height: 4),
+          Text(value, style: AppTypography.bodyFor(context)),
+        ],
+      ),
+    );
+  }
+}
+
+class _MealPlanCard extends StatelessWidget {
+  const _MealPlanCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface1Of(context),
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.x4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.borderSubtleOf(context)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: AppColors.limePerformance.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(AppRadius.input),
+                  border: Border.all(
+                    color: AppColors.limePerformance.withValues(alpha: 0.32),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: AppColors.limePerformance,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tạo thực đơn AI',
+                      style: AppTypography.headerMediumFor(context),
+                    ),
+                    const SizedBox(height: AppSpacing.x1),
+                    Text(
+                      'Meal Planner gợi ý calories, macro và bữa ăn theo mục tiêu.',
+                      style: AppTypography.bodySmallFor(context),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              FilledButton.icon(
+                onPressed: onTap,
+                icon: const Icon(Icons.restaurant_menu_rounded),
+                label: const Text('Tạo'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Map<String, dynamic> _aiProfilePayload(
+  UserModel user, {
+  required int age,
+  required double weight,
+  required double height,
+  required String activityLevel,
+}) {
+  final goal =
+      user.goalType == null ? 'general fitness' : goalLabel(user.goalType!);
+  final gender = user.gender == null ? 'other' : genderLabel(user.gender!);
+  return {
+    'age': age,
+    'gender': gender,
+    'weight': weight,
+    'height': height,
+    'goal': goal,
+    'activity_level': activityLevel.isEmpty ? 'moderate' : activityLevel,
+  };
+}
+
+int _ageFromDate(DateTime? dateOfBirth) {
+  if (dateOfBirth == null) {
+    return 25;
+  }
+  final now = DateTime.now();
+  var age = now.year - dateOfBirth.year;
+  if (now.month < dateOfBirth.month ||
+      (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
+    age--;
+  }
+  return age.clamp(13, 100);
+}
+
+String _formatAiValue(Object? value) {
+  if (value is Map) {
+    return value.entries
+        .map((entry) => '${entry.key}: ${_formatAiValue(entry.value)}')
+        .join('\n');
+  }
+  if (value is Iterable) {
+    return value.map(_formatAiValue).join('\n');
+  }
+  return value?.toString() ?? '-';
 }
 
 class _TransientFoodImage {

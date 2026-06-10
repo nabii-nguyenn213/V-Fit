@@ -86,6 +86,7 @@ services:
       AI_RATE_LIMIT_FAIL_OPEN: "false"
       AI_CLIENT_MODE: "http"
       AI_BASE_URL: "http://vfit-ai-api:5000"
+      AI_RECOMMENDATION_BASE_URL: "${AI_RECOMMENDATION_BASE_URL:-http://host.docker.internal:8000}"
     volumes:
       - ./uploads:/app/uploads
     depends_on:

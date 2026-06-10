@@ -71,6 +71,69 @@ public class MockAiClient implements AiClient {
                 false);
     }
 
+    @Override
+    public Map<String, Object> askCoach(Map<String, Object> request) {
+        return Map.of(
+                "answer",
+                "Hãy bắt đầu bằng 5-10 phút khởi động, chọn mức tạ vừa sức và ưu tiên kỹ thuật ổn định trước khi tăng cường độ.",
+                "fallback",
+                false);
+    }
+
+    @Override
+    public Map<String, Object> createWorkoutPlan(Map<String, Object> request) {
+        return Map.of(
+                "plan_name",
+                "Lịch tập AI mẫu",
+                "goal",
+                request.getOrDefault("goal", "general fitness"),
+                "days_per_week",
+                request.getOrDefault("days_per_week", 4),
+                "weekly_schedule",
+                Map.of(
+                        "day_1",
+                        Map.of(
+                                "focus",
+                                "Full body strength",
+                                "warm_up",
+                                List.of("Đi bộ nhanh 5 phút", "Xoay khớp vai/hông"),
+                                "main_workout",
+                                List.of("Squat 3x10", "Push-up 3x8", "Row 3x10"),
+                                "cool_down",
+                                List.of("Giãn cơ đùi", "Thở chậm 2 phút"))),
+                "note",
+                "Mock plan for local development.",
+                "fallback",
+                false);
+    }
+
+    @Override
+    public Map<String, Object> createMealPlan(Map<String, Object> request) {
+        return Map.of(
+                "daily_calories",
+                2200,
+                "protein_g",
+                140,
+                "carbs_g",
+                240,
+                "fat_g",
+                65,
+                "meal_plan",
+                Map.of(
+                        "breakfast",
+                        List.of("Yến mạch, sữa chua, chuối"),
+                        "lunch",
+                        List.of("Cơm gạo lứt, ức gà, rau xanh"),
+                        "dinner",
+                        List.of("Cá hồi, khoai lang, salad"),
+                        "snack",
+                        List.of("Whey hoặc trứng luộc")),
+                "note",
+                "Mock meal plan for local development.",
+                "fallback",
+                false);
+    }
+
     public AiFormCheckFeedback analyzeFormFallback(
             String userId,
             String videoUrl,
