@@ -31,7 +31,15 @@ public class MockAiClient implements AiClient {
                 "down",
                 "squat_down",
                 0.86,
-                true);
+                true,
+                List.of(Map.of(
+                        "code", "knee_alignment",
+                        "warning", "Keep knees aligned with toes.",
+                        "correction", "Track knees over toes.")),
+                Map.of("knee_angle", 88, "hip_angle", 74),
+                33,
+                true,
+                12);
     }
 
     @Override

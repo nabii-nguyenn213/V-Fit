@@ -25,9 +25,16 @@ record FormCheckResponse(
         @JsonProperty("score") int score,
         @JsonProperty("errors") List<FormErrorDto> errors,
         @JsonProperty("feedback") Object feedback,
+        @JsonProperty("summary") String summary,
+        @JsonProperty("cue") String cue,
+        @JsonProperty("severity") String severity,
         @JsonProperty("metrics") Map<String, Object> metrics,
+        @JsonProperty("keypoints_count") Integer keypointsCount,
+        @JsonProperty("realtime") Boolean realtime,
+        @JsonProperty("frame_index") Integer frameIndex,
         @JsonProperty("rep_count") int repCount,
         @JsonProperty("phase") String phase,
+        @JsonProperty("rep_phase") String repPhase,
         @JsonProperty("rep_label") String repLabel,
         @JsonProperty("rep_confidence") Double repConfidence,
         @JsonProperty("rep_counter_enabled") Boolean repCounterEnabled) {
@@ -43,26 +50,35 @@ record FormCheckResponse(
                         e.landmarks() == null ? List.of() : e.landmarks()))
                 .toList();
         
-        List<String> affectedLandmarks = safeErrors.stream()
+                List<String> affectedLandmarks = safeErrors.stream()
                 .flatMap(e -> (e.landmarks() == null ? List.<String>of() : e.landmarks()).stream())
                 .distinct()
                 .toList();
         
-        String severity = safeErrors.isEmpty() ? "OK" : normalizeSeverity(safeErrors.get(0).severity());
+        String feedbackSeverity = valueOrDefault(
+                severity,
+                safeErrors.isEmpty() ? "OK" : normalizeSeverity(safeErrors.get(0).severity()));
+        String feedbackSummary = valueOrDefault(summary, feedbackPayload.summary());
+        String feedbackCue = valueOrDefault(cue, feedbackPayload.cue());
         
         return new AiFormCheckFeedback(
                 score,
-                feedbackPayload.summary(),
+                feedbackSummary,
                 formErrors,
                 affectedLandmarks,
-                feedbackPayload.cue(),
-                severity,
+                feedbackCue,
+                normalizeSeverity(feedbackSeverity),
                 false,
                 repCount,
-                valueOrDefault(phase, "unknown"),
+                valueOrDefault(valueOrDefault(phase, repPhase), "unknown"),
                 valueOrDefault(repLabel, "unknown"),
                 repConfidence == null ? 0.0 : repConfidence,
-                Boolean.TRUE.equals(repCounterEnabled));
+                Boolean.TRUE.equals(repCounterEnabled),
+                feedback == null ? List.of() : feedback,
+                metrics == null ? Map.of() : metrics,
+                keypointsCount == null ? 0 : keypointsCount,
+                !Boolean.FALSE.equals(realtime),
+                frameIndex == null ? 0 : frameIndex);
     }
 
     private static String valueOrDefault(String value, String fallback) {

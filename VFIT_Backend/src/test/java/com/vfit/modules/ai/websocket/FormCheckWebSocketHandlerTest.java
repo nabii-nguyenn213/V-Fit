@@ -99,7 +99,15 @@ class FormCheckWebSocketHandlerTest {
                         "down",
                         "squat_down",
                         0.91,
-                        true));
+                        true,
+                        java.util.List.of(Map.of(
+                                "code", "squat_depth",
+                                "warning", "Good depth.",
+                                "correction", "Stand tall.")),
+                        Map.of("knee_angle", 87),
+                        33,
+                        true,
+                        7));
 
         handler.handleBinaryMessage(session, new BinaryMessage(new byte[32]));
 
@@ -116,6 +124,10 @@ class FormCheckWebSocketHandlerTest {
         assertThat(feedback.getValue().getPayload())
                 .contains("\"rep_count\":1")
                 .contains("\"phase\":\"down\"")
-                .contains("\"rep_counter_enabled\":true");
+                .contains("\"rep_counter_enabled\":true")
+                .contains("\"feedback_details\"")
+                .contains("\"metrics\":{\"knee_angle\":87}")
+                .contains("\"keypoints_count\":33")
+                .contains("\"frame_index\":7");
     }
 }

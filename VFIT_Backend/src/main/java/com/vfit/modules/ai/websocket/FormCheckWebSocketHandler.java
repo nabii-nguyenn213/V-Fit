@@ -129,7 +129,12 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
                 "rate_limited",
                 "rate_limited",
                 0.0,
-                false);
+                false,
+                List.of(),
+                Map.of(),
+                0,
+                true,
+                0);
     }
 
     private AiFormCheckFeedback frameTooLargeFeedback(int maxFrameBytes) {
@@ -147,6 +152,11 @@ public class FormCheckWebSocketHandler extends BinaryWebSocketHandler {
                 "frame_too_large",
                 "frame_too_large",
                 0.0,
-                false);
+                false,
+                List.of(),
+                Map.of(),
+                0,
+                true,
+                0);
     }
 }
