@@ -61,4 +61,21 @@ class OnboardingRepository {
       throw ApiException.fromDio(error);
     }
   }
+
+  Future<UserModel> completeRealtimeBodyScan(Map<String, dynamic> bodyAnalysisResult) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        ApiEndpoints.onboardingRealtime,
+        data: bodyAnalysisResult,
+      );
+      return ApiResponseParser.unwrap(response, (json) {
+        final data = Map<String, dynamic>.from(json as Map);
+        return UserModel.fromJson(
+          Map<String, dynamic>.from(data['user'] as Map),
+        );
+      });
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
 }

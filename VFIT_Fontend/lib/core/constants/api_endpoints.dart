@@ -20,6 +20,7 @@ class ApiEndpoints {
   static const deleteAccount = '/api/users/me';
   static const onboardingProfile = '/api/v1/users/onboarding/profile';
   static const onboardingBodyScan = '/api/v1/users/onboarding';
+  static const onboardingRealtime = '/api/v1/users/onboarding/realtime';
   static const avatar = '/api/users/me/avatar';
   static const changePassword = '/api/users/change-password';
   static const bodyMetrics = '/api/users/me/body-metrics';

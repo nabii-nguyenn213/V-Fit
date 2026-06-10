@@ -35,4 +35,10 @@ public class OnboardingController {
         MultipartFile upload = file != null ? file : image != null ? image : video;
         return ApiResponse.ok(onboardingService.completeBodyScan(upload));
     }
+
+    @PostMapping("/realtime")
+    public ApiResponse<OnboardingResponse> completeRealtimeBodyScan(
+            @Valid @RequestBody com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult request) {
+        return ApiResponse.ok(onboardingService.completeRealtimeBodyScan(request));
+    }
 }

@@ -11,5 +11,7 @@ public interface OnboardingService {
 
     OnboardingResponse completeBodyScan(MultipartFile file);
 
+    OnboardingResponse completeRealtimeBodyScan(com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult request);
+
     UserResponse updateOnboardingMetrics(OnboardingMetricsRequest request);
 }

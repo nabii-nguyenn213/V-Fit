@@ -18,6 +18,7 @@ import '../../features/home/presentation/pages/home_page.dart';
 
 import '../../features/nutrition/presentation/pages/nutrition_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../../features/onboarding/presentation/pages/ai_onboarding_body_scan_page.dart';
 import '../../features/profile/presentation/pages/change_password_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
@@ -65,7 +66,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         '/forgot-password',
         '/reset-password',
       }.contains(path);
-      final isOnboardingRoute = path == '/onboarding';
+      final isOnboardingRoute = path == '/onboarding' || path == '/onboarding/body-scan-realtime';
       final isProtectedRoute = path.startsWith('/profile/edit') ||
           path.startsWith('/profile/change-password') ||
           path.startsWith('/admin');
@@ -138,6 +139,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingPage(),
+      ),
+      GoRoute(
+        path: '/onboarding/body-scan-realtime',
+        builder: (context, state) => const AiOnboardingBodyScanPage(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),

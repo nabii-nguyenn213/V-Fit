@@ -1,0 +1,54 @@
+﻿Analyzing VFIT_Fontend...                                       
+
+   info - Missing a required trailing comma - lib\core\network\network_providers.dart:274:6 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin\data\repositories\admin_repository.dart:30:51 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\bloc\admin_dashboard_bloc.dart:30:8 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\bloc\admin_dashboard_bloc.dart:56:8 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:184:76 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:186:76 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:258:68 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:303:43 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:308:77 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:310:72 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:312:71 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:370:60 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:379:30 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:401:78 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:401:79 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\admin_dashboard\presentation\widgets\financial_chart.dart:473:78 - require_trailing_commas
+   info - Don't invoke 'print' in production code - lib\features\ai\presentation\widgets\ai_realtime_camera_view.dart:238:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\ai\presentation\widgets\ai_realtime_camera_view.dart:242:7 - avoid_print
+   info - Missing a required trailing comma - lib\features\auth\presentation\pages\login_page.dart:477:60 - require_trailing_commas
+   info - The constant name 'STREAK' isn't a lowerCamelCase identifier - lib\features\challenges\data\models\challenge_model.dart:1:22 - constant_identifier_names
+   info - The constant name 'MILESTONE' isn't a lowerCamelCase identifier - lib\features\challenges\data\models\challenge_model.dart:1:30 - constant_identifier_names
+   info - The constant name 'TARGETED' isn't a lowerCamelCase identifier - lib\features\challenges\data\models\challenge_model.dart:1:41 - constant_identifier_names
+   info - Missing a required trailing comma - lib\features\challenges\presentation\widgets\challenge_progress_section.dart:89:65 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\challenges\presentation\widgets\challenge_progress_section.dart:102:121 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\challenges\presentation\widgets\challenge_progress_section.dart:106:57 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\exercise_library\data\models\exercise_catalog_model.dart:16:73 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\exercise_library\data\models\exercise_catalog_model.dart:46:76 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\exercise_library\data\models\exercise_catalog_model.dart:77:74 - require_trailing_commas
+   info - Use the null-aware operator '?.' rather than an explicit 'null' comparison - lib\features\personalized_workout\data\models\personalized_workout_model.dart:30:22 - prefer_null_aware_operators
+   info - Missing a required trailing comma - lib\features\personalized_workout\data\models\personalized_workout_model.dart:165:16 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\notifiers\workout_session_notifier.dart:77:58 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\notifiers\workout_session_notifier.dart:117:56 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\personal_workout_plan_widget.dart:70:17 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\personal_workout_plan_widget.dart:165:77 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\personal_workout_plan_widget.dart:184:71 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\personal_workout_plan_widget.dart:256:41 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\personal_workout_plan_widget.dart:286:16 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\personal_workout_plan_widget.dart:471:13 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\personal_workout_plan_widget.dart:652:56 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\personal_workout_plan_widget.dart:677:70 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\personal_workout_plan_widget.dart:710:72 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\personalized_workout\presentation\widgets\weekly_selector_widget.dart:127:25 - require_trailing_commas
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\features\profile\presentation\pages\edit_profile_page.dart:229:15 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\features\profile\presentation\pages\edit_profile_page.dart:250:23 - deprecated_member_use
+   info - Missing a required trailing comma - lib\features\progress\data\models\journey_snap_model.g.dart:10:34 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\progress\data\models\journey_snap_model.g.dart:19:40 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\progress\data\repositories\progress_repository.dart:104:26 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\workout\data\repositories\workout_repository.dart:112:9 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\workout\data\repositories\workout_repository.dart:115:49 - require_trailing_commas
+   info - Missing a required trailing comma - lib\features\workout\data\repositories\workout_repository.dart:127:51 - require_trailing_commas
+
+50 issues found. (ran in 59.8s)

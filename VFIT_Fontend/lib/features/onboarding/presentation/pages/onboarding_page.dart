@@ -220,6 +220,25 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       ),
                     ),
                     const SizedBox(height: 14),
+                    AppButton.primary(
+                      label: 'Bắt đầu quét cơ thể realtime',
+                      icon: Icons.accessibility_new_rounded,
+                      onPressed: _uploadingScan
+                          ? null
+                          : () => context.push('/onboarding/body-scan-realtime'),
+                    ),
+                    const SizedBox(height: 14),
+                    const Row(
+                      children: [
+                        Expanded(child: Divider()),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text('HOẶC TẢI ẢNH LÊN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                        Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
                     Row(
                       children: [
                         Expanded(

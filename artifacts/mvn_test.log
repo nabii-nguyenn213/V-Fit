@@ -1,0 +1,60 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.vfit:vfit-backend >------------------------
+[INFO] Building V-FIT Backend 0.1.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ vfit-backend ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ vfit-backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 284 source files with javac [debug parameters release 21] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ vfit-backend ---
+[INFO] skip non existing resourceDirectory D:\EXE_PRM\VFIT_Backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ vfit-backend ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 7 source files with javac [debug parameters release 21] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ vfit-backend ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.vfit.modules.auth.service.AuthServiceImplTest
+WARNING: A Java agent has been loaded dynamically (C:\Users\ADMIN\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.19\byte-buddy-agent-1.14.19.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+05:44:21.158 [main] INFO com.vfit.modules.auth.service.impl.AuthServiceImpl -- [SECURITY AUDIT] Social login success. provider=GOOGLE, userId=user-1
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.638 s -- in com.vfit.modules.auth.service.AuthServiceImplTest
+[INFO] Running com.vfit.modules.checkin.service.CheckinServiceImplTest
+05:44:23.272 [main] WARN com.vfit.modules.checkin.service.impl.CheckinServiceImpl -- Redis unavailable for check-in lock, using Mongo unique index fallback: redis down
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.377 s -- in com.vfit.modules.checkin.service.CheckinServiceImplTest
+[INFO] Running com.vfit.modules.exercise_library.service.ExerciseLibraryServiceImplTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.058 s -- in com.vfit.modules.exercise_library.service.ExerciseLibraryServiceImplTest
+[INFO] Running com.vfit.modules.progress.service.JourneySnapServiceImplTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.201 s -- in com.vfit.modules.progress.service.JourneySnapServiceImplTest
+[INFO] Running com.vfit.modules.user.service.OnboardingServiceImplTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.354 s -- in com.vfit.modules.user.service.OnboardingServiceImplTest
+[INFO] Running com.vfit.modules.user.service.UserServiceImplTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.042 s -- in com.vfit.modules.user.service.UserServiceImplTest
+[INFO] Running com.vfit.security.jwt.JwtTokenProviderTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.603 s -- in com.vfit.security.jwt.JwtTokenProviderTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  47.824 s
+[INFO] Finished at: 2026-06-10T05:44:25+07:00
+[INFO] ------------------------------------------------------------------------

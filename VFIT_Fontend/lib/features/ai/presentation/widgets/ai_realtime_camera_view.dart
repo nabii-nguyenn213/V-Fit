@@ -27,6 +27,7 @@ class AiRealtimeCameraView extends StatefulWidget {
     required this.stoppedText,
     required this.feedbackBuilder,
     this.captureInterval = const Duration(milliseconds: 800),
+    this.onFeedbackReceived,
   });
 
   final String title;
@@ -41,6 +42,7 @@ class AiRealtimeCameraView extends StatefulWidget {
     Map<String, dynamic>? feedback,
     String? statusText,
   ) feedbackBuilder;
+  final void Function(Map<String, dynamic> feedback)? onFeedbackReceived;
 
   @override
   State<AiRealtimeCameraView> createState() => _AiRealtimeCameraViewState();
@@ -261,10 +263,24 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
         }
         final decoded = jsonDecode(message);
         if (decoded is Map) {
+          final feedbackMap = Map<String, dynamic>.from(decoded);
           setState(() {
             _waitingForFeedback = false;
-            _latestFeedback = Map<String, dynamic>.from(decoded);
+            _latestFeedback = feedbackMap;
           });
+
+          if (widget.onFeedbackReceived != null) {
+            final isFallback = feedbackMap['fallback'] == true;
+            final estimate = feedbackMap['estimate'] is Map
+                ? Map<String, dynamic>.from(feedbackMap['estimate'] as Map)
+                : null;
+            final confidence = (estimate?['confidence'] as num?)?.toDouble() ?? 0.0;
+
+            if (!isFallback && confidence > 0) {
+              await _stopStreaming();
+              widget.onFeedbackReceived!(feedbackMap);
+            }
+          }
         }
       }
     } catch (error) {

@@ -16,6 +16,7 @@ import com.vfit.infrastructure.external.ai.AiClient;
 import com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult;
 import com.vfit.modules.ai.mapper.AiResultMapper;
 import com.vfit.modules.ai.repository.BodyAnalysisRepository;
+import com.vfit.modules.ai.document.BodyAnalysisResult;
 import com.vfit.modules.user.document.User;
 import com.vfit.modules.user.dto.response.OnboardingResponse;
 import com.vfit.modules.user.dto.response.UserResponse;
@@ -177,5 +178,50 @@ class OnboardingServiceImplTest {
                 null,
                 new CustomUserDetails(user).getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    @Test
+    void completeRealtimeBodyScanInfersGoalAndSavesResult() {
+        User user = pendingUserWithMetrics(180.0, 75.0, 15.0);
+        AiBodyAnalysisResult aiResult = bodyAnalysis(15.0, "strength training");
+        OnboardingServiceImpl service = service();
+
+        authenticate(user);
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(user));
+        when(aiResultMapper.toMap(any(ObjectMapper.class), any())).thenReturn(Map.of());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toResponse(any(User.class))).thenAnswer(invocation -> {
+            User saved = invocation.getArgument(0);
+            return UserResponse.builder()
+                    .id(saved.getId())
+                    .email(saved.getEmail())
+                    .fullName(saved.getFullName())
+                    .role(saved.getRole())
+                    .active(saved.isActive())
+                    .goalType(saved.getGoalType())
+                    .onboardingStatus(saved.getOnboardingStatus())
+                    .build();
+        });
+        when(aiResultMapper.toOnboardingResponse(any(), any(), any()))
+                .thenAnswer(invocation -> OnboardingResponse.builder()
+                        .onboardingStatus(invocation.getArgument(0))
+                        .user(invocation.getArgument(1))
+                        .fallback(false)
+                        .build());
+
+        OnboardingResponse response = service.completeRealtimeBodyScan(aiResult);
+
+        assertThat(response.getOnboardingStatus()).isEqualTo(OnboardingStatus.COMPLETED);
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        assertThat(userCaptor.getValue().getGoalType()).isEqualTo(GoalType.GAIN_MUSCLE);
+        assertThat(userCaptor.getValue().getOnboardingStatus()).isEqualTo(OnboardingStatus.COMPLETED);
+        assertThat(userCaptor.getValue().isActive()).isTrue();
+
+        ArgumentCaptor<BodyAnalysisResult> resultCaptor = ArgumentCaptor.forClass(BodyAnalysisResult.class);
+        verify(bodyAnalysisRepository).save(resultCaptor.capture());
+        assertThat(resultCaptor.getValue().getMetadata().get("source")).isEqualTo("onboarding-realtime");
+        assertThat(resultCaptor.getValue().getUserId()).isEqualTo("user-1");
     }
 }

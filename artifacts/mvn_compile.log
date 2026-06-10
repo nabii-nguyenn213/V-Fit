@@ -1,0 +1,23 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.vfit:vfit-backend >------------------------
+[INFO] Building V-FIT Backend 0.1.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.3.2:clean (default-clean) @ vfit-backend ---
+[INFO] Deleting D:\EXE_PRM\VFIT_Backend\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ vfit-backend ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ vfit-backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 284 source files with javac [debug parameters release 21] to target\classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  33.426 s
+[INFO] Finished at: 2026-06-10T05:43:34+07:00
+[INFO] ------------------------------------------------------------------------

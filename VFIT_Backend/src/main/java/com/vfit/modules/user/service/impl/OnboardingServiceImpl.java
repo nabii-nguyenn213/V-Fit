@@ -127,6 +127,44 @@ public class OnboardingServiceImpl implements OnboardingService {
                 aiResult);
     }
 
+    @Override
+    @CacheEvict(value = "personalized_workouts", key = "T(com.vfit.common.util.SecurityUtil).requireCurrentUserId()")
+    public OnboardingResponse completeRealtimeBodyScan(AiBodyAnalysisResult aiResult) {
+        if (aiResult == null) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Body analysis result is required");
+        }
+
+        User user = currentUser();
+        User.BodyMetrics metrics = user.getBodyMetrics();
+        if (metrics == null || metrics.getHeightCm() == null || metrics.getWeightKg() == null) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Physical profile must be completed before body scan");
+        }
+
+        GoalType inferredGoal = inferGoalType(metrics, aiResult);
+
+        bodyAnalysisRepository.save(BodyAnalysisResult.builder()
+                .userId(user.getId())
+                .metadata(Map.of(
+                        "source", "onboarding-realtime",
+                        "inferredGoalType", inferredGoal.name()))
+                .posture(aiResultMapper.toMap(objectMapper, aiResult.posture()))
+                .imbalance(aiResultMapper.toMap(objectMapper, aiResult.imbalance()))
+                .estimate(aiResultMapper.toMap(objectMapper, aiResult.estimate()))
+                .recommendation(aiResultMapper.toMap(objectMapper, aiResult.recommendation()))
+                .result(aiResultMapper.toMap(objectMapper, aiResult))
+                .build());
+
+        user.setGoalType(inferredGoal);
+        user.setOnboardingStatus(OnboardingStatus.COMPLETED);
+        user.setActive(true);
+        User saved = userRepository.save(user);
+
+        return aiResultMapper.toOnboardingResponse(
+                saved.getOnboardingStatus(),
+                userMapper.toResponse(saved),
+                aiResult);
+    }
+
     private User currentUser() {
         return userRepository.findById(SecurityUtil.requireCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
