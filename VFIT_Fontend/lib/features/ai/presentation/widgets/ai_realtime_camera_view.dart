@@ -278,6 +278,28 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     }
   }
 
+  Color get _feedbackBorderColor {
+    if (!_streaming || _latestFeedback == null) {
+      return Colors.transparent;
+    }
+    final severity = _latestFeedback?['severity']?.toString().toUpperCase();
+    if (severity != null) {
+      return switch (severity) {
+        'WARN' => AppColors.warning,
+        'RATE_LIMITED' => AppColors.error,
+        'ERROR' => AppColors.error,
+        'UNKNOWN' => AppColors.error,
+        'OK' => AppColors.success,
+        _ => AppColors.success,
+      };
+    }
+    final fallback = _latestFeedback?['fallback'] == true;
+    if (fallback) {
+      return AppColors.warning;
+    }
+    return AppColors.success;
+  }
+
   String _webSocketUrl(String token) {
     return WebSocketUrlBuilder.build(
       path: widget.webSocketPath,
@@ -327,9 +349,20 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        if (cameraReady)
-                          CameraPreview(controller)
-                        else
+                        if (cameraReady) ...[
+                          CameraPreview(controller),
+                          IgnorePointer(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: _feedbackBorderColor,
+                                  width: 6,
+                                ),
+                                borderRadius: BorderRadius.circular(AppRadius.large),
+                              ),
+                            ),
+                          ),
+                        ] else
                           Center(
                             child: _initializing
                                 ? const CircularProgressIndicator()

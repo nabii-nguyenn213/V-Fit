@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/network/network_providers.dart';
-import '../../../../core/widgets/app_feedback.dart';
 import '../../../challenges/data/repositories/challenge_repository.dart';
 import '../../data/repositories/workout_checkin_repository.dart';
 

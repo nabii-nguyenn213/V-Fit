@@ -23,6 +23,7 @@ class AiFormCheckPage extends StatelessWidget {
         'exerciseId': exerciseId,
         'cameraView': 'side',
       },
+      captureInterval: const Duration(milliseconds: 200),
       readyText: 'Camera da san sang.',
       streamingText: 'AI dang kiem tra chuyen dong...',
       stoppedText: 'Da dung kiem tra form.',
@@ -69,100 +70,42 @@ class _FeedbackPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome_rounded, color: color),
+              Icon(Icons.auto_awesome_rounded, color: color, size: 28),
               const SizedBox(width: AppSpacing.x2),
               Expanded(
                 child: feedback == null
                     ? Text(
-                        'Dang cho phan hoi AI',
+                        'Đang chờ phản hồi AI...',
                         style: AppTypography.headerMediumFor(context),
                       )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              'So lan: ${feedback!.repCount} - ${feedback!.phaseLabel}',
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.headerMediumFor(context)
-                                  .copyWith(
-                                color: AppColors.energyMagenta,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.x2),
-                          Text(
-                            'Diem: ${feedback!.score}/100',
-                            style:
-                                AppTypography.headerMediumFor(context).copyWith(
-                              color: color,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                    : Text(
+                        'Số lần: ${feedback!.repCount}',
+                        style: AppTypography.headerLargeFor(context).copyWith(
+                          color: AppColors.energyMagenta,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 28,
+                        ),
                       ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.x2),
+          const SizedBox(height: AppSpacing.x3),
           Text(
             feedback?.message ??
                 statusText ??
-                'Bat dau kiem tra va giu toan bo chuyen dong trong khung hinh.',
-            style: AppTypography.bodyFor(context),
+                'Bắt đầu kiểm tra và giữ toàn bộ chuyển động trong khung hình.',
+            style: AppTypography.headerMediumFor(context).copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          if (feedback?.coachingCue != null) ...[
-            const SizedBox(height: AppSpacing.x2),
+          if (feedback?.coachingCue != null && feedback?.coachingCue != 'Tiếp tục giữ nhịp độ và kiểm soát động tác.') ...[
+            const SizedBox(height: AppSpacing.x1),
             Text(
               feedback!.coachingCue!,
-              style: AppTypography.bodySmallFor(context),
-            ),
-          ],
-          if (feedback != null) ...[
-            const SizedBox(height: AppSpacing.x3),
-            Wrap(
-              spacing: AppSpacing.x2,
-              runSpacing: AppSpacing.x2,
-              children: [
-                _InfoChip(label: 'Phase', value: feedback!.phaseLabel),
-                _InfoChip(
-                  label: 'Rep AI',
-                  value: feedback!.repCounterEnabled ? 'online' : 'offline',
-                ),
-                _InfoChip(
-                  label: 'Tin cay',
-                  value: '${(feedback!.repConfidence * 100).round()}%',
-                ),
-                _InfoChip(
-                  label: 'Pose',
-                  value: '${feedback!.keypointsCount} diem',
-                ),
-                _InfoChip(label: 'Frame', value: '#${feedback!.frameIndex}'),
-              ],
-            ),
-          ],
-          if (feedback?.primaryError != null) ...[
-            const SizedBox(height: AppSpacing.x2),
-            Text(
-              feedback!.primaryError!,
-              style: AppTypography.bodySmallFor(context).copyWith(color: color),
-            ),
-          ],
-          if (feedback?.metricsSummary.isNotEmpty == true) ...[
-            const SizedBox(height: AppSpacing.x2),
-            Text(
-              feedback!.metricsSummary,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.bodySmallFor(context),
-            ),
-          ],
-          if (feedback?.fallback == true) ...[
-            const SizedBox(height: AppSpacing.x2),
-            Text(
-              'AI dang dung che do du phong.',
-              style: AppTypography.label(color: AppColors.warning),
+              style: AppTypography.bodyFor(context).copyWith(
+                color: AppColors.textSecondaryOf(context),
+              ),
             ),
           ],
         ],
