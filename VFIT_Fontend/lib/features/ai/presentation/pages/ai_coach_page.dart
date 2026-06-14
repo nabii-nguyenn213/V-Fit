@@ -283,7 +283,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
             children: [
               Text(
                 title,
-                style: AppTypography.titleFor(context).copyWith(
+                style: AppTypography.bodyFor(context).copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),

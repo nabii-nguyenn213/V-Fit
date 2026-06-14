@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/coach_message_model.dart';
 import '../../data/repositories/ai_coach_repository.dart';
 import '../../../auth/application/auth_controller.dart';
-import '../../data/repositories/profile_repository.dart';
+import '../../../profile/data/repositories/profile_repository.dart';
 import '../../../../core/utils/enum_parsers.dart';
 
 class AiCoachState {
