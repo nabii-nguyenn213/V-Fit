@@ -31,50 +31,50 @@ class _AiMealSheetState extends ConsumerState<AiMealSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final state = ref.watch(aiMealPlannerProvider);
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.82,
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.76,
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(28),
+            topRight: Radius.circular(28),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 15,
+              spreadRadius: 2,
+            )
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 15,
-            spreadRadius: 2,
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.dividerColor.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.dividerColor.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            'Thực đơn Dinh dưỡng AI',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'AI tự động phân chia Calorie & Macro cho gymer.',
-            style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 12),
-          ),
-          const Divider(height: 20),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: bottomInset),
+            const SizedBox(height: 14),
+            const Text(
+              'Thực đơn Dinh dưỡng AI',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'AI tự động phân chia Calorie & Macro cho gymer.',
+              style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 12),
+            ),
+            const Divider(height: 20),
+            Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
@@ -117,8 +117,8 @@ class _AiMealSheetState extends ConsumerState<AiMealSheet> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

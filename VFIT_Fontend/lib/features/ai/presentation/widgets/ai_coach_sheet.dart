@@ -48,60 +48,58 @@ class _AiCoachSheetState extends ConsumerState<AiCoachSheet> {
         );
       }
     });
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.82,
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.76,
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(28),
+            topRight: Radius.circular(28),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 15,
+              spreadRadius: 2,
+            )
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 15,
-            spreadRadius: 2,
-          )
-        ],
-      ),
-      child: DefaultTabController(
-        length: 2,
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.dividerColor.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
+        child: DefaultTabController(
+          length: 2,
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            // Header with TabBar
-            TabBar(
-              indicatorColor: AppColors.primaryOf(context),
-              labelColor: AppColors.primaryOf(context),
-              unselectedLabelColor: AppColors.textSecondaryOf(context),
-              labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-              tabs: const [
-                Tab(icon: Icon(Icons.chat_bubble_outline_rounded), text: 'AI Coach Chat'),
-                Tab(icon: Icon(Icons.fitness_center_rounded), text: 'Lập lịch tập AI'),
-              ],
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: bottomInset),
+              const SizedBox(height: 8),
+              // Header with TabBar
+              TabBar(
+                indicatorColor: AppColors.primaryOf(context),
+                labelColor: AppColors.primaryOf(context),
+                unselectedLabelColor: AppColors.textSecondaryOf(context),
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                tabs: const [
+                  Tab(icon: Icon(Icons.chat_bubble_outline_rounded), text: 'AI Coach Chat'),
+                  Tab(icon: Icon(Icons.fitness_center_rounded), text: 'Lập lịch tập AI'),
+                ],
+              ),
+              Expanded(
                 child: TabBarView(
                   children: [
                     _buildChatTab(context),
@@ -109,12 +107,14 @@ class _AiCoachSheetState extends ConsumerState<AiCoachSheet> {
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+
 
   // --- TAB 1: Chat ---
   Widget _buildChatTab(BuildContext context) {
