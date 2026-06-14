@@ -786,6 +786,7 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
   _TransientFoodImage? _image;
   Uint8List? _previewBytes;
   bool _loading = false;
+  String? _errorMessage;
 
   Future<void> _pick(ImageSource source) async {
     if (_loading) {
@@ -813,6 +814,7 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
         mimeType: picked.mimeType,
       );
       _previewBytes = bytes;
+      _errorMessage = null;
     });
     await _analyze();
   }
@@ -833,14 +835,21 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
     if (image == null || _loading) {
       return;
     }
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
     try {
       final estimate = await widget.onAnalyze(image);
       if (mounted) {
         Navigator.of(context).pop(estimate);
       }
     } catch (error) {
+      debugPrint('FOOD_SCAN_ERROR: $error');
       if (mounted) {
+        setState(() {
+          _errorMessage = error.toString();
+        });
         AppFeedback.error(
           error.toString(),
           title: 'Không quét được món ăn',
@@ -965,6 +974,37 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
                         ),
                 ),
               ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: scheme.errorContainer.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: scheme.error.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        color: scheme.error,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(
+                            color: scheme.onErrorContainer,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 14),
               Row(
                 children: [
