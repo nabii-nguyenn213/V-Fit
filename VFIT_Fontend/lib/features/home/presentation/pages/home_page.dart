@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/utils/enum_parsers.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -103,6 +104,12 @@ class HomePage extends ConsumerWidget {
                       subtitle: 'Theo dõi chỉ số, ảnh hành trình và thử thách.',
                       icon: Icons.show_chart_rounded,
                       onTap: () => context.go('/progress'),
+                    ),
+                    _HomeCommand(
+                      title: 'AI Coach',
+                      subtitle: 'Trò chuyện hỏi đáp cùng Huấn luyện viên ảo.',
+                      icon: Icons.chat_bubble_outline_rounded,
+                      onTap: () => context.go(AppRoutes.aiCoach),
                     ),
                   ],
                 ),

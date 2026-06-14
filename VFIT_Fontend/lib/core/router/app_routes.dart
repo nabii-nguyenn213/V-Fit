@@ -3,6 +3,7 @@ class AppRoutes {
 
   static const aiFormCheck = '/ai/form-check';
   static const aiBodyAnalysis = '/ai/body-analysis';
+  static const aiCoach = '/ai/coach';
 
   static String aiFormCheckLocation({required String exerciseId}) {
     return Uri(

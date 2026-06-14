@@ -1,0 +1,16 @@
+{
+  "endpoint": "/api/v1/coach/",
+  "method": "POST",
+  "request": {
+    "question": "Tôi nên tập gì hôm nay?",
+    "age": 25,
+    "gender": "male",
+    "weight": 70,
+    "height": 175,
+    "goal": "Tập cơ ngực và tăng cơ",
+    "activity_level": "moderate"
+  },
+  "response": {
+    "answer": "Chào bạn! Với mục tiêu tăng cơ ngực và mức hoạt động moderate, hôm nay bạn nên tập các bài Bench Press..."
+  }
+}

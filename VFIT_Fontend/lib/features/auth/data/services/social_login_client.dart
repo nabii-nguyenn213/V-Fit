@@ -44,7 +44,7 @@ class SocialLoginClient {
           ? Environment.googleWebClientId
           : null;
   static String? get _googleServerClientId =>
-      Environment.googleWebClientId.isNotEmpty
+      !kIsWeb && Environment.googleWebClientId.isNotEmpty
           ? Environment.googleWebClientId
           : null;
 

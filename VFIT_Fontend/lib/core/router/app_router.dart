@@ -14,6 +14,7 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/deactivated_page.dart';
 import '../../features/ai/presentation/pages/ai_body_analysis_page.dart';
 import '../../features/ai/presentation/pages/ai_form_check_page.dart';
+import '../../features/ai/presentation/pages/ai_coach_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 
 import '../../features/nutrition/presentation/pages/nutrition_page.dart';
@@ -188,6 +189,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.aiBodyAnalysis,
         builder: (context, state) => const AiBodyAnalysisPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.aiCoach,
+        builder: (context, state) => const AiCoachPage(),
       ),
       GoRoute(
         path: '/exercises/:id',

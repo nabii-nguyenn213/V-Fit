@@ -63,6 +63,32 @@ class Environment {
     };
   }
 
+  static const _aiBaseUrlOverride = String.fromEnvironment(
+    'AI_BASE_URL',
+    defaultValue: '',
+  );
+
+  static String get aiBaseUrl {
+    return aiBaseUrlCandidates.first;
+  }
+
+  static List<String> get aiBaseUrlCandidates {
+    if (_aiBaseUrlOverride.isNotEmpty) {
+      return [_aiBaseUrlOverride];
+    }
+    if (kIsWeb) {
+      return ['http://localhost:8000'];
+    }
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android => [
+          'http://192.168.1.93:8000',
+          'http://10.0.2.2:8000',
+          'http://127.0.0.1:8000',
+        ],
+      _ => ['http://localhost:8000'],
+    };
+  }
+
   static const debugNetwork = bool.fromEnvironment(
     'DEBUG_NETWORK',
     defaultValue: false,
