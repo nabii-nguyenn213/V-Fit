@@ -338,6 +338,33 @@ class _AiCoachSheetState extends ConsumerState<AiCoachSheet> {
               setState(() => _daysPerWeek = val.round());
             },
           ),
+          if (_daysPerWeek == 2) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tập 2 buổi/tuần không đảm bảo hiệu quả (Khuyến nghị >= 3 buổi)',
+                      style: TextStyle(
+                        color: Colors.orange.shade800,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           AppButton.primary(
             label: 'Tạo kế hoạch tập với AI',

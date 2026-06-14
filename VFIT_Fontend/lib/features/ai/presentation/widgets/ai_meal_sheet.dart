@@ -83,9 +83,9 @@ class _AiMealSheetState extends ConsumerState<AiMealSheet> {
                     _buildFormLabel('Số bữa ăn mong muốn: $_mealsPerDay bữa'),
                     Slider(
                       value: _mealsPerDay.toDouble(),
-                      min: 2,
+                      min: 3,
                       max: 5,
-                      divisions: 3,
+                      divisions: 2,
                       activeColor: AppColors.primaryOf(context),
                       onChanged: (val) {
                         setState(() => _mealsPerDay = val.round());
