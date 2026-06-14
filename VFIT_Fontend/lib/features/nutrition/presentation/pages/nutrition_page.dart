@@ -1242,11 +1242,12 @@ class _FoodEstimateSheet extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: AppResponsive.pagePadding(context).copyWith(top: 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
               children: [
                 Container(
                   width: 54,
@@ -1327,8 +1328,9 @@ class _FoodEstimateSheet extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _ScanMacroPill extends StatelessWidget {
