@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -790,33 +791,46 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
 
   Future<void> _pick(ImageSource source) async {
     if (_loading) {
+      debugPrint('FOOD_SCAN_PICK: Already loading, ignoring tap');
       return;
     }
-    final picked = await ImagePicker().pickImage(
-      source: source,
-      imageQuality: 85,
-      maxWidth: 1280,
-    );
-    if (picked == null || !mounted) {
-      return;
-    }
-    final bytes = await picked.readAsBytes();
-    if (source == ImageSource.camera) {
-      unawaited(_deleteTemporaryPickedImage(picked.path));
-    }
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _image = _TransientFoodImage(
-        bytes: bytes,
-        filename: picked.name,
-        mimeType: picked.mimeType,
+    debugPrint('FOOD_SCAN_PICK: Starting pick from source $source');
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1280,
       );
-      _previewBytes = bytes;
-      _errorMessage = null;
-    });
-    await _analyze();
+      debugPrint('FOOD_SCAN_PICK: picked = ${picked?.path}');
+      if (picked == null || !mounted) {
+        return;
+      }
+      final bytes = await picked.readAsBytes();
+      debugPrint('FOOD_SCAN_PICK: read bytes count = ${bytes.length}');
+      if (source == ImageSource.camera) {
+        unawaited(_deleteTemporaryPickedImage(picked.path));
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _image = _TransientFoodImage(
+          bytes: bytes,
+          filename: picked.name,
+          mimeType: picked.mimeType,
+        );
+        _previewBytes = bytes;
+        _errorMessage = null;
+      });
+      await _analyze();
+    } catch (e) {
+      debugPrint('FOOD_SCAN_PICK_ERROR: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Lỗi chọn ảnh: ${e.toString()}';
+        });
+      }
+    }
   }
 
   Future<void> _deleteTemporaryPickedImage(String path) async {
@@ -832,20 +846,27 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
 
   Future<void> _analyze() async {
     final image = _image;
-    if (image == null || _loading) {
+    if (image == null) {
+      debugPrint('FOOD_SCAN_ANALYZE: image is null, returning early');
       return;
     }
+    if (_loading) {
+      debugPrint('FOOD_SCAN_ANALYZE: already loading, returning early');
+      return;
+    }
+    debugPrint('FOOD_SCAN_ANALYZE: starting onAnalyze callback...');
     setState(() {
       _loading = true;
       _errorMessage = null;
     });
     try {
       final estimate = await widget.onAnalyze(image);
+      debugPrint('FOOD_SCAN_ANALYZE: success! estimate = $estimate');
       if (mounted) {
         Navigator.of(context).pop(estimate);
       }
     } catch (error) {
-      debugPrint('FOOD_SCAN_ERROR: $error');
+      debugPrint('FOOD_SCAN_ANALYZE: failed with error: $error');
       if (mounted) {
         setState(() {
           _errorMessage = error.toString();
@@ -866,193 +887,214 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final previewBytes = _previewBytes;
-    return SafeArea(
-      child: Padding(
-        padding: AppResponsive.pagePadding(context).copyWith(top: 0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
+    return Stack(
+      children: [
+        SafeArea(
+          child: Padding(
+            padding: AppResponsive.pagePadding(context).copyWith(top: 0),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: scheme.primary.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.document_scanner_rounded,
-                      color: scheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Quét calo món ăn',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w900),
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: scheme.primary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        Text(
-                          'Chụp hoặc chọn ảnh rõ món ăn để AI ước tính macro.',
-                          style: TextStyle(color: scheme.onSurfaceVariant),
+                        child: Icon(
+                          Icons.document_scanner_rounded,
+                          color: scheme.primary,
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              AspectRatio(
-                aspectRatio: 4 / 3,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: scheme.surfaceContainerHighest.withValues(
-                      alpha: 0.52,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: scheme.outlineVariant),
-                  ),
-                  child: previewBytes == null
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.restaurant_menu_rounded,
-                              size: 54,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(height: 10),
                             Text(
-                              'Chưa có ảnh món ăn',
-                              style: TextStyle(
-                                color: scheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w800,
-                              ),
+                              'Quét calo món ăn',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.w900),
+                            ),
+                            Text(
+                              'Chụp hoặc chọn ảnh rõ món ăn để AI ước tính macro.',
+                              style: TextStyle(color: scheme.onSurfaceVariant),
                             ),
                           ],
-                        )
-                      : Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            ClipRRect(
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest.withValues(
+                          alpha: 0.52,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: scheme.outlineVariant),
+                      ),
+                      child: previewBytes == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.restaurant_menu_rounded,
+                                  size: 54,
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Chưa có ảnh món ăn',
+                                  style: TextStyle(
+                                    color: scheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ClipRRect(
                               borderRadius: BorderRadius.circular(16),
                               child: Image.memory(
                                 previewBytes,
                                 fit: BoxFit.cover,
                               ),
                             ),
-                            if (_loading)
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    CircularProgressIndicator(color: Colors.white),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      'Đang phân tích món ăn...',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                ),
-              ),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: scheme.errorContainer.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: scheme.error.withValues(alpha: 0.3),
                     ),
                   ),
-                  child: Row(
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: scheme.errorContainer.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: scheme.error.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color: scheme.error,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                color: scheme.onErrorContainer,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  Row(
                     children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        color: scheme.error,
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed:
+                              _loading ? null : () => _pick(ImageSource.camera),
+                          icon: const Icon(Icons.photo_camera_outlined),
+                          label: const Text('Camera'),
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: TextStyle(
-                            color: scheme.onErrorContainer,
-                            fontSize: 13,
-                          ),
+                        child: OutlinedButton.icon(
+                          onPressed:
+                              _loading ? null : () => _pick(ImageSource.gallery),
+                          icon: const Icon(Icons.photo_library_outlined),
+                          label: const Text('Thư viện'),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          _loading ? null : () => _pick(ImageSource.camera),
-                      icon: const Icon(Icons.photo_camera_outlined),
-                      label: const Text('Camera'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          _loading ? null : () => _pick(ImageSource.gallery),
-                      icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text('Thư viện'),
-                    ),
+                  const SizedBox(height: 14),
+                  FilledButton.icon(
+                    onPressed: _image == null || _loading ? null : _analyze,
+                    icon: const Icon(Icons.auto_awesome_rounded),
+                    label: const Text('Phân tích calo'),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              FilledButton.icon(
-                onPressed: _image == null || _loading ? null : _analyze,
-                icon: _loading
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.auto_awesome_rounded),
-                label: Text(_loading ? 'Đang phân tích...' : 'Phân tích calo'),
-              ),
-              if (_loading) ...[
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                  label: const Text('Thoát phân tích'),
-                ),
-              ],
-            ],
+            ),
           ),
         ),
-      ),
+        if (_loading)
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  child: Center(
+                    child: Card(
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      color: Theme.of(context).colorScheme.surface,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 24,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Đang phân tích món ăn...',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'AI đang xác định calo & dinh dưỡng',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                            ),
+                            const SizedBox(height: 18),
+                            OutlinedButton.icon(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(Icons.close_rounded),
+                              label: const Text('Hủy quét'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
