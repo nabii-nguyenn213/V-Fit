@@ -98,7 +98,7 @@ bd close <id>         # Complete work
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read
-`specs/007-connect-ai-web2api/plan.md`.
+`specs/008-doc-cleanup/plan.md`.
 <!-- SPECKIT END -->
 
 ## Deploy Architecture Rules

@@ -1,362 +1,198 @@
-# V-FIT Recommendation System
+# V-FIT AI-Native Fitness Ecosystem
 
-## 1. Giới thiệu
-
-`RecommendationSystem` là backend AI riêng của V-FIT, được xây dựng bằng **FastAPI**.
-
-Module này phụ trách các chức năng AI Recommendation:
-
-* AI Coach
-* Workout Planner
-* Meal Planner
-* Food Scanner dạng text
-* Kết nối với `gemini-web2api` để gọi AI
-
-Hệ thống này chạy độc lập với backend chính Spring Boot của app.
+Chào mừng bạn đến với **V-FIT** – Hệ sinh thái hỗ trợ luyện tập thể hình thông minh tích hợp AI. Tài liệu này là nguồn thông tin duy nhất (Single Source of Truth) hướng dẫn cài đặt, kiến trúc hệ thống, phát triển local và triển khai thực tế.
 
 ---
 
-## 2. Kiến trúc
+## 1. Bản Đồ Thư Mục & Stack Công Nghệ
+
+### Bản đồ thư mục (Folder Map)
 
 ```text
-Flutter App
-      ↓
-Spring Boot Backend / hoặc gọi trực tiếp AI Service
-      ↓
-RecommendationSystem (FastAPI - port 8000)
-      ↓
-gemini-web2api (port 8081)
-      ↓
-Gemini
+V-FIT/
+├── VFIT_Backend/           # Java 21 & Spring Boot 3.3.5 Backend Gateway
+├── VFIT_Fontend/           # Flutter 3.x Mobile Client App
+├── AI-VFIT/
+│   └── V-Fit/              # AI Core (Recommendation System, CV Engine)
+│       ├── RecommendationSystem/  # FastAPI (port 8000) - AI Coach, Planners
+│       └── api_server.py          # Flask (port 5000) - Real-time Form Check
+├── gemini-web2api/         # AI Service Gateway nội bộ (port 8081)
+├── skills/
+│   ├── conversation/       # Quản lý prompts hệ thống tập trung
+│   └── tech-decision/      # Nhật ký quyết định kiến trúc
+└── specs/                  # Tài liệu đặc tả và kế hoạch Spec Kit
 ```
 
-Trong đó:
+### Stack Công Nghệ (Tech Stack)
 
-* Flutter không gọi trực tiếp `gemini-web2api`.
-* Flutter hoặc Spring Boot chỉ gọi `RecommendationSystem`.
-* `RecommendationSystem` tự gọi `gemini-web2api`.
-* `gemini-web2api` là AI service nội bộ, dùng để xử lý request AI.
+| Layer | Công nghệ |
+|---|---|
+| **Frontend** | Flutter 3.x · Dart ≥3.4 · Riverpod · BLoC · GoRouter · Dio · Hive · FL Chart · Freezed |
+| **Backend** | Java 21 · Spring Boot 3.3.5 · Spring Security 6 · JWT · MapStruct · Lombok · WebSocket · Resilience4j |
+| **AI Python Core** | FastAPI · Flask · OpenCV · MediaPipe Pose · Ultralytics YOLOv8 · Gemini API |
+| **Database** | MongoDB · Redis |
+| **DevOps** | Docker · Docker Compose · Cloudflare Tunnel |
 
 ---
 
-## 3. Các service cần chạy
+## 2. Các Nguyên Tắc Cốt Lõi & Hướng Dẫn Phát Triển
 
-Khi chạy local cần chạy 2 service:
+### Nguyên tắc Hiến pháp (Constitution Principles)
 
-### Service 1: gemini-web2api
+1. **AI-Native Control Plane**: AI là tầng quyết định cho huấn luyện và phân tích. Mọi logic phụ thuộc vào AI phải đi qua một hợp đồng rõ ràng. Backend Spring Boot thực hiện xác thực, giới hạn tần suất (rate-limit), lưu trữ và kiểm toán.
+2. **Prompt Governance**: Tất cả prompts chạy trong runtime phải nằm tại `skills/conversation/`.
+3. **Data Boundary Discipline**: Dữ liệu đầu vào gửi cho AI phải được tối giản hóa và cấp quyền. Đầu ra từ AI phải được parse thành DTO chặt chẽ và xử lý fallback trước khi hiển thị lên giao diện.
+4. **Observable Modular Monolith**: Backend duy trì cấu trúc Monolith phân rã theo module rõ ràng. Giao tiếp giữa các module ưu tiên sử dụng Spring Events để tăng tính độc lập.
 
-Chạy ở port:
+### Quy Trình Làm Việc Với Beads Issue Tracker
 
-```text
-8081
-```
-
-URL nội bộ:
-
-```text
-http://localhost:8081/v1/chat/completions
-```
-
-### Service 2: RecommendationSystem
-
-Chạy ở port:
-
-```text
-8000
-```
-
-Swagger:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
----
-
-## 4. Cài đặt gemini-web2api
-
-Clone repo:
+Dự án sử dụng **bd (beads)** để quản lý tác vụ:
 
 ```bash
-git clone https://github.com/Sophomoresty/gemini-web2api.git
+bd ready              # Tìm tác vụ sẵn sàng làm việc
+bd show <id>          # Xem chi tiết tác vụ
+bd update <id> --claim  # Nhận tác vụ để thực hiện
+bd close <id>         # Đóng tác vụ khi hoàn thành
+bd dolt push          # Đẩy dữ liệu beads lên remote
 ```
 
-Vào thư mục:
+**Quy trình kết thúc phiên làm việc (Session Completion)**:
+1. Tạo issue cho các công việc còn tồn đọng nếu cần thiết.
+2. Chạy các cổng kiểm thử chất lượng (Tests, linters, builds).
+3. Đóng các task hoàn thành và đồng bộ trạng thái.
+4. **PUSH TO REMOTE (Bắt buộc)**:
+   ```bash
+   git pull --rebase
+   git push
+   git status  # Phải hiển thị "up to date with origin"
+   ```
 
+---
+
+## 3. Danh Sách Tính Năng & Trạng Thái
+
+| Module | Tính năng | Trạng thái |
+|---|---|---|
+| **🔐 Auth** | Splash screen, Đăng ký/Đăng nhập, OTP qua email, Quên/Reset mật khẩu, Refresh token tự động, Social Login (Google/Facebook) | ✅ Hoàn chỉnh |
+| **🚀 Onboarding** | Điền thông tin cá nhân bắt buộc, Route Guard chuyển hướng người dùng mới | ✅ Hoàn chỉnh |
+| **🏠 Home** | Giao diện dashboard tổng hợp, Grid Command điều hướng | ✅ Hoàn chỉnh |
+| **💪 Workout** | Xem danh sách/chi tiết workout, Danh sách/chi tiết bài tập, Workout Session tracking | ✅ Hoàn chỉnh |
+| **🍎 Nutrition** | Nhật ký ăn uống, Tính macros/calories | ✅ Hoàn chỉnh |
+| **📈 Progress** | Biểu đồ cân nặng/BMI/Body Fat, Chụp ảnh tiến trình lưu trữ | ✅ Hoàn chỉnh |
+| **💳 Payment** | Gói VIP Premium, Webhook SePay VietQR tự động nâng cấp VIP | ✅ Hoàn chỉnh |
+| **🤖 AI Coach** | Chat trực tiếp nhận lời khuyên dinh dưỡng, tập luyện dựa trên body metrics (Gated VIP) | ✅ Hoàn chỉnh |
+| **🤖 AI Form Check** | Phát hiện sai tư thế thời gian thực qua camera và đưa ra âm thanh sửa đổi | ✅ Hoàn chỉnh |
+| **🤖 AI Body Scan** | Quét hình dáng người gầy/béo và lệch vẹo (imbalance) qua camera | ✅ Hoàn chỉnh |
+
+---
+
+## 4. Cấu Hình & Chạy Local
+
+Hệ thống AI và Backend của V-FIT gồm 4 thành phần chạy ở các port khác nhau khi phát triển dưới local:
+
+```text
+Flutter Client (App)
+       │
+       ├───► Spring Boot Backend Gateway (Port 8080) ───► Flask Real-time API (Port 5000)
+       │
+       └───► FastAPI Recommendation System (Port 8000) ──► gemini-web2api (Port 8081)
+```
+
+### Bước 1: Khởi động gemini-web2api (Port 8081)
+Dịch vụ dịch thuật API Gemini sang định dạng tương thích OpenAI:
 ```bash
 cd gemini-web2api
-```
-
-Cài thư viện:
-
-```bash
 pip install httpx
-```
-
-Chạy service:
-
-```bash
 python gemini_web2api.py
+# Lắng nghe tại: http://localhost:8081
 ```
 
-Nếu chạy đúng sẽ thấy:
-
-```text
-Listening: http://0.0.0.0:8081
-Base URL:  http://localhost:8081/v1
-```
-
-Không tắt terminal này.
-
----
-
-## 5. Cài đặt RecommendationSystem
-
-Vào thư mục:
-
+### Bước 2: Khởi động FastAPI RecommendationSystem (Port 8000)
+Chịu trách nhiệm cho AI Coach, Workout/Meal Planner:
 ```bash
-cd RecommendationSystem
-```
-
-Cài dependencies:
-
-```bash
+cd AI-VFIT/V-Fit/RecommendationSystem
 pip install -r requirements.txt
-```
-
-Chạy FastAPI:
-
-```bash
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
+# Swagger docs: http://127.0.0.1:8000/docs
 ```
 
-Mở Swagger:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
----
-
-## 6. API Endpoints
-
-### AI Coach
-
-```http
-POST /api/v1/coach/
-```
-
-Ví dụ request:
-
-```json
-{
-  "question": "Tôi nên tập gì hôm nay?",
-  "age": 22,
-  "gender": "male",
-  "weight": 70,
-  "height": 175,
-  "goal": "gain muscle",
-  "activity_level": "moderate"
-}
-```
-
----
-
-### Workout Planner
-
-```http
-POST /api/v1/workout-planner/
-```
-
-Ví dụ request:
-
-```json
-{
-  "age": 22,
-  "gender": "male",
-  "weight": 70,
-  "height": 175,
-  "goal": "gain muscle",
-  "activity_level": "moderate",
-  "level": "beginner",
-  "days_per_week": 4
-}
-```
-
----
-
-### Meal Planner
-
-```http
-POST /api/v1/meal-planner/
-```
-
-Ví dụ request:
-
-```json
-{
-  "age": 22,
-  "gender": "male",
-  "weight": 70,
-  "height": 175,
-  "goal": "gain muscle",
-  "activity_level": "moderate",
-  "meals_per_day": 3
-}
-```
-
----
-
-### Food Scanner Text
-
-```http
-POST /api/v1/food-scanner/text
-```
-
-Ví dụ request:
-
-```json
-{
-  "food_name": "cơm gà",
-  "portion": "1 đĩa"
-}
-```
-
----
-
-## 7. Kết nối với Flutter
-
-Trong Flutter đã tách riêng 2 backend:
-
-```text
-apiBaseUrl = Spring Boot backend, port 8080
-aiBaseUrl  = RecommendationSystem, port 8000
-```
-
-Ví dụ:
-
-```dart
-apiBaseUrl = http://192.168.1.93:8080
-aiBaseUrl  = http://192.168.1.93:8000
-```
-
-Flutter gọi AI thông qua:
-
-```dart
-aiDioProvider
-```
-
-Không gọi trực tiếp `web2api`.
-
----
-
-## 8. Luồng xử lý
-
-Ví dụ user hỏi AI Coach:
-
-```text
-Flutter
-→ RecommendationSystem /api/v1/coach/
-→ gemini-web2api localhost:8081
-→ Gemini
-→ RecommendationSystem trả kết quả
-→ Flutter hiển thị
-```
-
----
-
-## 9. Lưu ý khi chạy local
-
-Nếu chạy bằng Android Emulator:
-
-```text
-AI_BASE_URL=http://10.0.2.2:8000
-```
-
-Nếu chạy trên điện thoại thật cùng Wi-Fi:
-
-```text
-AI_BASE_URL=http://IP_MAY_TINH:8000
-```
-
-Ví dụ:
-
-```text
-http://192.168.1.93:8000
-```
-
-Không dùng:
-
-```text
-http://localhost:8000
-```
-
-trên điện thoại thật, vì `localhost` trên điện thoại là chính điện thoại đó.
-
----
-
-## 10. Lưu ý khi deploy
-
-Khi deploy lên VPS/server:
-
-```text
-Server
-├── RecommendationSystem :8000
-└── gemini-web2api       :8081
-```
-
-Trong code RecommendationSystem vẫn có thể gọi:
-
-```text
-http://localhost:8081/v1/chat/completions
-```
-
-vì lúc này `localhost` là localhost của server.
-
-Người dùng Flutter chỉ gọi domain public:
-
-```text
-https://api-vfit.com
-```
-
-hoặc endpoint backend đã deploy.
-
----
-
-## 11. Ghi chú quan trọng
-
-* `gemini-web2api` hiện dùng được tốt cho text.
-* Không dùng `gemini-web2api` cho scan ảnh vì hiện tại nó không xử lý được image input.
-* Food Scanner hiện nên dùng dạng text/manual input.
-* UI Flutter hiện có thể cần thêm màn hình hoặc button để gọi:
-
-  * `askCoach()`
-  * `createWorkoutPlan()`
-  * `createMealPlan()`
-* Repository Flutter đã có tầng gọi AI, nhưng UI cần gọi repository thì mới fetch dữ liệu thật.
-
----
-
-## 12. Tóm tắt chạy local
-
-Mở terminal 1:
-
+### Bước 3: Khởi động Flask AI API Server (Port 5000)
+Chạy AI Computer Vision phục vụ Form Check và Body Scan thời gian thực:
 ```bash
-cd gemini-web2api
-python gemini_web2api.py
+cd AI-VFIT/V-Fit
+pip install -r requirements.txt
+python api_server.py
+# Lắng nghe tại: http://localhost:5000
 ```
 
-Mở terminal 2:
+### Bước 4: Khởi động Spring Boot Backend (Port 8080)
+Cổng gateway chính của hệ sinh thái:
+1. Đảm bảo cấu hình file `VFIT_Backend/.env` trỏ đúng tới Flask API:
+   ```env
+   AI_CLIENT_MODE=http
+   AI_BASE_URL=http://localhost:5000
+   ```
+2. Chạy dịch vụ:
+   ```bash
+   cd VFIT_Backend
+   mvn spring-boot:run
+   ```
 
-```bash
-cd RecommendationSystem
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
-```
+### Bước 5: Chạy ứng dụng Flutter
+1. Đảm bảo file cấu hình `environment.dart` có `aiBaseUrlCandidates` trỏ đúng IP máy tính (nếu dùng thiết bị thật) hoặc `10.0.2.2` (nếu dùng Emulator):
+   - `apiBaseUrl` -> Cổng 8080 (Spring Boot)
+   - `aiBaseUrl` -> Cổng 8000 (FastAPI Recommendation System)
+2. Khởi chạy dự án:
+   ```bash
+   cd VFIT_Fontend
+   flutter run
+   ```
 
-Mở trình duyệt:
+---
+
+## 5. Tích Hợp Real-Time AI Camera (WebSocket)
+
+Để đạt hiệu năng thời gian thực và độ trễ thấp khi quét tư thế/dáng người, V-FIT sử dụng WebSocket truyền tải dữ liệu trực tiếp:
 
 ```text
-http://127.0.0.1:8000/docs
+Flutter App  ───(WebSocket stream video frame)───►  Spring Boot Backend Gateway
+                                                          │
+                                                    (HTTP POST frame)
+                                                          ▼
+Flutter App  ◄───(WebSocket send feedback)────────  Flask AI API (Port 5000)
 ```
 
-Nếu Swagger hiện lên và gọi API trả kết quả thì hệ thống AI backend đã chạy thành công.
+### Các Endpoint WebSocket Thực Tế (Backend & App):
+
+- **AI Form Checking**: `ws://<host>:8080/ws/ai/form-check`
+- **AI Body Analysis**: `ws://<host>:8080/ws/ai/body-analysis`
+
+*Lưu ý quan trọng*: Đường dẫn trong tài liệu phát triển cũ từng bị viết nhầm thành `/api/ai/form-check`. Đường dẫn chính xác bắt buộc phải sử dụng tiền tố `/ws/` để khớp với cơ chế lọc bảo mật và điều phối kết nối của Spring Security.
+
+---
+
+## 6. Ma Trận Cấu Hình Đồng Bộ (Configuration Verification Matrix)
+
+Dưới đây là bảng đối chiếu cấu hình quan trọng để đảm bảo quá trình đưa sản phẩm lên Server và App không bị lệch:
+
+| Cấu hình | Môi trường Local | Môi trường Staging/VPS | Ghi chú |
+|---|---|---|---|
+| **Spring Boot Gateway Port** | `8080` | `8080` (hoặc cấu hình thông qua Reverse Proxy HTTPS) | Cần mở cổng `8080` cho kết nối REST & WebSocket. |
+| **FastAPI RecSystem Port** | `8000` | `8000` | Cần mở cổng `8000` hoặc route domain riêng (ví dụ: `https://ai-coach.vfit.com`). |
+| **Flask API Server Port** | `5000` | `5000` (Không cần Public ra ngoài) | Chỉ Spring Boot kết nối nội bộ đến Flask qua mạng Docker. |
+| **gemini-web2api Port** | `8081` | `8081` (Không cần Public ra ngoài) | Chỉ FastAPI kết nối nội bộ đến dịch vụ này qua localhost. |
+| **Spring Boot -> Flask Link** | `AI_BASE_URL=http://localhost:5000` | `AI_BASE_URL=http://vfit-ai-api:5000` | Khi chạy Docker Compose, dùng tên service làm host. |
+| **FastAPI -> web2api Link** | `http://localhost:8081/v1` | `http://localhost:8081/v1` | Luôn gọi thông qua localhost nội bộ của server. |
+| **Flutter `apiBaseUrl`** | `http://10.0.2.2:8080` (Emulator) | `https://api.vfit.com` | Tên miền chính thức của API Gateway. |
+| **Flutter `aiBaseUrl`** | `http://10.0.2.2:8000` (Emulator) | `https://ai-coach.vfit.com` | Tên miền chính thức của FastAPI AI Recommendation. |
+
+### Hướng Dẫn Deploy VPS bằng Docker Compose
+Khi deploy lên môi trường Staging/Production bằng Docker:
+1. Chạy lệnh:
+   ```bash
+   cd VFIT_Backend
+   docker-compose up -d --build
+   ```
+2. Docker Compose sẽ tự động thiết lập và liên kết các container thông qua mạng nội bộ:
+   - Container `vfit-backend` giao tiếp với `vfit-ai-api` bằng alias `http://vfit-ai-api:5000`.
+   - Nginx hoặc Cloudflare Tunnel sẽ đảm nhận nhiệm vụ chuyển tiếp lưu lượng HTTPS ngoài internet tới các cổng tương ứng của Gateway.
