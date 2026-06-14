@@ -758,6 +758,8 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
       await showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         builder: (context) => _FoodEstimateSheet(estimate: estimate),
       );
     } catch (error) {
