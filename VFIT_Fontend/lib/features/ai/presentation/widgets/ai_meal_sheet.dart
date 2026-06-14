@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../presentation/theme/app_colors.dart';
-import '../../nutrition/data/repositories/nutrition_repository.dart';
+import '../../../nutrition/data/repositories/nutrition_repository.dart';
 import '../providers/ai_meal_planner_provider.dart';
 
 class AiMealSheet extends ConsumerStatefulWidget {
