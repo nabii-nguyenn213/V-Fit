@@ -25,6 +25,8 @@ import '../../../ai/data/repositories/ai_planners_repository.dart';
 import '../../../ai/presentation/widgets/ai_meal_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../auth/application/auth_controller.dart';
+import '../../../workout/presentation/pages/workout_page.dart';
 
 class NutritionPage extends ConsumerStatefulWidget {
   const NutritionPage({super.key});
@@ -349,6 +351,22 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
             label: 'Tạo ngay thực đơn AI',
             icon: Icons.bolt_rounded,
             onPressed: () async {
+              final user = ref.read(authControllerProvider).user;
+              if (user == null) {
+                await showDialog<void>(
+                  context: context,
+                  builder: (context) => const LoginRequiredModal(),
+                );
+                return;
+              }
+              if (!user.isVipActive) {
+                await showDialog<void>(
+                  context: context,
+                  builder: (context) => const VipRequiredModal(),
+                );
+                return;
+              }
+
               final result = await AiMealSheet.show(context);
               if (result == true) {
                 ref.invalidate(isAiMealPlanAppliedProvider);
@@ -368,6 +386,22 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
         const SizedBox(height: 10),
         ElevatedButton(
           onPressed: () async {
+            final user = ref.read(authControllerProvider).user;
+            if (user == null) {
+              await showDialog<void>(
+                context: context,
+                builder: (context) => const LoginRequiredModal(),
+              );
+              return;
+            }
+            if (!user.isVipActive) {
+              await showDialog<void>(
+                context: context,
+                builder: (context) => const VipRequiredModal(),
+              );
+              return;
+            }
+
             final result = await AiMealSheet.show(context);
             if (result == true) {
               ref.invalidate(isAiMealPlanAppliedProvider);

@@ -255,6 +255,8 @@ class _AiMealSheetState extends ConsumerState<AiMealSheet> {
               final repo = ref.read(nutritionRepositoryProvider);
               await repo.saveAiMealPlan(plan);
               await repo.applyAiMealPlan(true);
+              ref.invalidate(isAiMealPlanAppliedProvider);
+              ref.invalidate(aiMealPlanProvider);
               
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

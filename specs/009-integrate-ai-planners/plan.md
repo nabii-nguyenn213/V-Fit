@@ -1,61 +1,40 @@
-# Kế Hoạch Triển Khai: Tích hợp AI Planners & Food Scanner
+# Kế Hoạch Triển Khai: Tối ưu hoá & Sửa lỗi đồng bộ dữ liệu AI Planner
 
-**Nhánh**: `007-connect-ai-web2api` | **Ngày**: 2026-06-15 | **Đặc tả**: [spec.md](file:///d:/EXE_PRM/specs/009-integrate-ai-planners/spec.md)
+Tài liệu này chi tiết phương án giải quyết lỗi không cập nhật ngay lập tức giao diện "Không gian tập luyện" và "Workspace dinh dưỡng" khi người dùng nhấn "Áp dụng" kế hoạch AI.
 
-## Tóm tắt (Summary)
-
-Tích hợp 3 Chatbot AI Planners từ hệ thống FastAPI (`RecommendationSystem`) vào ứng dụng Flutter bao gồm: Workout Planner (Lên lịch tập), Meal Planner (Lên thực đơn ăn uống), và Food Scanner Text (Phân tích dinh dưỡng món ăn bằng văn bản).
-
-## Cấu trúc Dự án (Project Structure)
-
-### Tầng Dữ liệu (Data Layer)
-- **Repository mới**: `VFIT_Fontend/lib/features/ai/data/repositories/ai_planners_repository.dart`
-  - Đảm nhiệm việc gửi yêu cầu POST đến `/api/v1/workout-planner/`, `/api/v1/meal-planner/`, và `/api/v1/food-scanner/text`.
-  - Sử dụng `aiDioProvider` để tự động định phối kết nối (emulator vs thiết bị thật).
-
-### Tầng Trình bày (Presentation Layer)
-- **Providers mới**:
-  - `ai_workout_planner_provider.dart`
-  - `ai_meal_planner_provider.dart`
-  - `ai_food_scanner_provider.dart`
-- **Màn hình giao diện mới (UI Pages)**:
-  - `lib/features/ai/presentation/pages/ai_workout_planner_page.dart`: Form nhập số ngày tập, trình độ và hiển thị lịch trình tuần.
-  - `lib/features/ai/presentation/pages/ai_meal_planner_page.dart`: Chọn tần suất bữa ăn và hiển thị Macro (Calories, Carbs, Protein, Fat).
-  - Tích hợp thêm hộp thoại nhập text vào nhật ký ăn uống hiện tại để gọi Food Text Scanner.
+## Các thay đổi đề xuất (Proposed Changes)
 
 ---
 
-## Chi Tiết Các Bước Triển Khai (Proposed Changes)
+### 1. Tầng Dữ liệu (Data Layer)
 
-### Tầng Dữ liệu & Provider
+#### [MODIFY] [personalized_workout_repository.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/personalized_workout/domain/repositories/personalized_workout_repository.dart)
+- Bổ sung `Future<void> revertAiPlan();` vào interface để hỗ trợ hủy áp dụng lịch AI.
 
-#### [NEW] [ai_planners_repository.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/ai/data/repositories/ai_planners_repository.dart)
-Tạo repository chứa các hàm gọi API đến các dịch vụ Planners:
-- `Future<Map<String, dynamic>> createWorkoutPlan(...)`
-- `Future<Map<String, dynamic>> createMealPlan(...)`
-- `Future<Map<String, dynamic>> scanFoodText(...)`
-
-#### [NEW] [ai_workout_planner_provider.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/ai/presentation/providers/ai_workout_planner_provider.dart)
-Quản lý trạng thái tải (loading), kết quả lịch tập dạng JSON và lưu vào Local Cache nếu cần.
-
-#### [NEW] [ai_meal_planner_provider.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/ai/presentation/providers/ai_meal_planner_provider.dart)
-Quản lý trạng thái gọi thực đơn AI và phân bổ Calories/Macros.
-
-### Giao Diện Người Dùng (UI Layout)
-
-#### [NEW] [ai_workout_planner_page.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/ai/presentation/pages/ai_workout_planner_page.dart)
-- Giao diện Glassmorphism hiển thị kế hoạch tập luyện hàng tuần.
-- Tự động lấy body metrics hiện tại của người dùng.
-
-#### [NEW] [ai_meal_planner_page.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/ai/presentation/pages/ai_meal_planner_page.dart)
-- Hiển thị lượng Calorie khuyến nghị mỗi ngày kèm biểu đồ phân bổ các nhóm chất.
+#### [MODIFY] [personalized_workout_repository_impl.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/personalized_workout/data/repositories/personalized_workout_repository_impl.dart)
+- Khai báo Riverpod provider `isAiWorkoutPlanAppliedProvider` để lắng nghe cờ AI áp dụng cục bộ.
+- Triển khai `revertAiPlan()` gọi `localDataSource.setAiApplied(false)`.
+- Cập nhật `getPlan({bool forceRefresh = false})` để reset cờ AI áp dụng khi kéo xuống làm mới (`forceRefresh == true`).
 
 ---
+
+### 2. Tầng Giao diện (Presentation Layer)
+
+#### [MODIFY] [ai_coach_sheet.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/ai/presentation/widgets/ai_coach_sheet.dart)
+- Sau khi gọi `applyAiPlan(personalizedWorkout)`, thêm `ref.invalidate(isAiWorkoutPlanAppliedProvider);`.
+- Loại bỏ lệnh gọi BLoC thủ công vì BLoC sẽ tự động được làm mới phản ứng nhờ Key của `MultiBlocProvider`.
+
+#### [MODIFY] [ai_meal_sheet.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/ai/presentation/widgets/ai_meal_sheet.dart)
+- Sau khi lưu thực đơn thành công, thêm `ref.invalidate(isAiMealPlanAppliedProvider);` và `ref.invalidate(aiMealPlanProvider);` để các widget đang xem tự động cập nhật.
+
+#### [MODIFY] [workout_page.dart](file:///d:/EXE_PRM/VFIT_Fontend/lib/features/workout/presentation/pages/workout_page.dart)
+- Lắng nghe `isAiWorkoutPlanAppliedProvider` trong `_WorkoutPageState`.
+- Thêm cờ `isAiApplied` vào `ValueKey` của `MultiBlocProvider` (`key: ValueKey('${user?.goalType}_$isAiApplied')`).
+- Cập nhật hàm `_refresh(context)` gọi `ref.invalidate(isAiWorkoutPlanAppliedProvider)` trước khi reload.
+- Thêm thông báo `_InfoNote` ở đầu trang lịch cá nhân khi đang dùng lịch AI kèm nút "Hủy áp dụng".
 
 ## Kế hoạch Nghiệm thu (Verification Plan)
 
 ### Kiểm thử Thủ công (Manual Verification)
-1. Mở trang AI Planners trên Flutter App.
-2. Kiểm tra chặn VIP Gate: Nếu tài khoản thường, hệ thống yêu cầu nâng cấp VIP.
-3. Nếu tài khoản VIP, chọn thông số và bấm "Tạo kế hoạch".
-4. Xác nhận kết quả hiển thị chính xác lịch tập/thực đơn từ API FastAPI trả về.
+1. **Lập lịch tập AI**: Tạo và áp dụng lịch tập -> Xác nhận màn hình Workout cập nhật lập tức -> Bấm "Hủy áp dụng" để chuyển về lịch mặc định.
+2. **Thực đơn dinh dưỡng AI**: Tạo và áp dụng thực đơn -> Xác nhận màn hình Dinh dưỡng cập nhật lập tức -> Bấm "Hủy áp dụng" (dấu x) để chuyển về danh sách món ăn phổ biến.

@@ -17,6 +17,10 @@ final personalizedWorkoutRepositoryProvider =
   );
 });
 
+final isAiWorkoutPlanAppliedProvider = FutureProvider<bool>((ref) {
+  return ref.watch(personalizedWorkoutRepositoryProvider).isAiPlanApplied();
+});
+
 final getPersonalizedWorkoutProvider = Provider<GetPersonalizedWorkout>((ref) {
   return GetPersonalizedWorkout(ref.watch(personalizedWorkoutRepositoryProvider));
 });
@@ -32,6 +36,9 @@ class PersonalizedWorkoutRepositoryImpl implements PersonalizedWorkoutRepository
 
   @override
   Future<PersonalizedWorkout> getPlan({bool forceRefresh = false}) async {
+    if (forceRefresh) {
+      await localDataSource.setAiApplied(false);
+    }
     final isAiApplied = await localDataSource.isAiApplied();
     if (isAiApplied) {
       final cached = await localDataSource.read();
@@ -117,5 +124,10 @@ class PersonalizedWorkoutRepositoryImpl implements PersonalizedWorkoutRepository
   @override
   Future<bool> isAiPlanApplied() async {
     return localDataSource.isAiApplied();
+  }
+
+  @override
+  Future<void> revertAiPlan() async {
+    await localDataSource.setAiApplied(false);
   }
 }

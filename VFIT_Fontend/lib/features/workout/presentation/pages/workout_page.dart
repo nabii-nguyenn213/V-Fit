@@ -36,9 +36,10 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user;
     final hasGoal = user?.goalType != null;
+    final isAiApplied = ref.watch(isAiWorkoutPlanAppliedProvider).value ?? false;
 
     return MultiBlocProvider(
-      key: ValueKey(user?.goalType),
+      key: ValueKey('${user?.goalType}_$isAiApplied'),
       providers: [
         BlocProvider<ExerciseLibraryBloc>(
           create: (_) =>
@@ -715,6 +716,8 @@ class PersonalizedWorkoutView extends ConsumerWidget {
       );
     }
 
+    final isAiApplied = ref.watch(isAiWorkoutPlanAppliedProvider).value ?? false;
+
     return BlocBuilder<PersonalizedWorkoutBloc, PersonalizedWorkoutState>(
       builder: (context, state) {
         if (state is WorkoutInitial || state is WorkoutLoading) {
@@ -744,6 +747,21 @@ class PersonalizedWorkoutView extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 32),
             children: [
+              if (isAiApplied)
+                _InfoNote(
+                  icon: Icons.auto_awesome_rounded,
+                  message: 'Bạn đang sử dụng lịch tập cá nhân hóa do AI đề xuất.',
+                  action: TextButton(
+                    onPressed: () async {
+                      await ref.read(personalizedWorkoutRepositoryProvider).revertAiPlan();
+                      ref.invalidate(isAiWorkoutPlanAppliedProvider);
+                    },
+                    child: const Text(
+                      'Hủy áp dụng',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent),
+                    ),
+                  ),
+                ),
               if (plan.isStale == true)
                 _InfoNote(
                   icon: Icons.wifi_off_rounded,
@@ -771,11 +789,13 @@ class _InfoNote extends StatelessWidget {
     required this.icon,
     required this.message,
     this.isWarning = false,
+    this.action,
   });
 
   final IconData icon;
   final String message;
   final bool isWarning;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -798,6 +818,10 @@ class _InfoNote extends StatelessWidget {
           Expanded(
             child: Text(message, style: AppTypography.bodyFor(context)),
           ),
+          if (action != null) ...[
+            const SizedBox(width: AppSpacing.x2),
+            action!,
+          ],
         ],
       ),
     );

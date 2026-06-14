@@ -509,15 +509,9 @@ class _AiCoachSheetState extends ConsumerState<AiCoachSheet> {
             try {
               final personalizedWorkout = mapAiPlanToPersonalizedWorkout(plan);
               await ref.read(personalizedWorkoutRepositoryProvider).applyAiPlan(personalizedWorkout);
+              ref.invalidate(isAiWorkoutPlanAppliedProvider);
               
               if (context.mounted) {
-                // Refresh Bloc if available
-                try {
-                  BlocProvider.of<PersonalizedWorkoutBloc>(context).add(
-                    const PersonalizedWorkoutRequested(forceRefresh: true),
-                  );
-                } catch (_) {}
-
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Đã áp dụng lịch tập AI thành công!'),
