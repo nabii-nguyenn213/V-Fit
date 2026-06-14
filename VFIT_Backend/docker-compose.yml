@@ -68,6 +68,22 @@ services:
       timeout: 5s
       retries: 5
 
+  vfit-recommendation-api:
+    build:
+      context: ../AI-VFIT/V-Fit/RecommendationSystem
+      dockerfile: Dockerfile
+    container_name: vfit-recommendation-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ../AI-VFIT/V-Fit/RecommendationSystem:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   vfit-backend:
     build: .
     container_name: vfit-backend
@@ -86,6 +102,7 @@ services:
       AI_RATE_LIMIT_FAIL_OPEN: "false"
       AI_CLIENT_MODE: "http"
       AI_BASE_URL: "http://vfit-ai-api:5000"
+      AI_RECOMMENDATION_BASE_URL: "http://vfit-recommendation-api:8000"
     volumes:
       - ./uploads:/app/uploads
     depends_on:
@@ -95,7 +112,10 @@ services:
         condition: service_healthy
       vfit-ai-api:
         condition: service_healthy
+      vfit-recommendation-api:
+        condition: service_healthy
 
 volumes:
   mongodb_data:
   redis_data:
+

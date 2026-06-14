@@ -94,6 +94,7 @@ public class AppProperties {
     public static class Ai {
         private String clientMode = "mock";
         private String baseUrl = "http://localhost:8000";
+        private String recommendationBaseUrl = "http://localhost:8000";
         private String foodScannerPath = "/api/v1/food-scanner/";
     }
 

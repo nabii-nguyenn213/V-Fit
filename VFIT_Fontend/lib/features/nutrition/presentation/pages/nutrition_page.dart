@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../presentation/theme/app_colors.dart';
@@ -28,6 +29,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../../workout/presentation/pages/workout_page.dart';
+import '../widgets/food_scan_modal.dart';  // ✨ NEW: Import food scan modal
 
 class NutritionPage extends ConsumerStatefulWidget {
   const NutritionPage({super.key});
@@ -68,6 +70,62 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
     _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// ✨ NEW: Show food scan modal
+  Future<void> _scanFood() async {
+    try {
+      setState(() => _scanLoading = true);
+
+      final result = await showFoodScanModal(
+        context,
+        onFoodScanned: (scannedFood) {
+          // Handle scanned food
+          if (mounted) {
+            AppFeedback.success('Đã quét thành công!');
+            // Có thể add vào danh sách hoặc calculator
+          }
+        },
+      );
+
+      if (result != null && mounted) {
+        // Use the scanned result
+        final servingSizeGrams = (int.tryParse(result.servingSize.replaceAll(RegExp(r'[^0-9]'), ''))) ?? 100;
+        final calories = result.calories.toDouble();
+        final protein = result.proteinGrams;
+        final carbs = result.carbGrams;
+        final fat = result.fatGrams;
+        
+        final food = Food(
+          id: 'food-scanned-${DateTime.now().millisecondsSinceEpoch}',
+          name: result.foodName,
+          normalizedName: result.foodName.toLowerCase(),
+          servingSizeGrams: servingSizeGrams.toDouble(),
+          calories: calories,
+          protein: protein,
+          carbs: carbs,
+          fat: fat,
+          // Calculate per100g values
+          caloriesPer100g: servingSizeGrams > 0 ? (calories / servingSizeGrams * 100) : calories,
+          proteinPer100g: servingSizeGrams > 0 ? (protein / servingSizeGrams * 100) : protein,
+          carbsPer100g: servingSizeGrams > 0 ? (carbs / servingSizeGrams * 100) : carbs,
+          fatPer100g: servingSizeGrams > 0 ? (fat / servingSizeGrams * 100) : fat,
+          isGymFriendly: true,
+          searchCount: 0,
+          popularityScore: 0,
+        );
+
+        await _openCalculator(context, food);
+      }
+    } catch (e) {
+      if (mounted) {
+        AppFeedback.error('Lỗi quét ảnh: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _scanLoading = false);
+      }
+    }
   }
 
   Food parseFoodString(String text) {
@@ -715,64 +773,6 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
       builder: (_) => _MacroCalculatorSheet(food: food),
     );
   }
-
-  Future<void> _scanFood() async {
-    final user = ref.read(authControllerProvider).user;
-    if (user == null) {
-      await showDialog<void>(
-        context: context,
-        builder: (context) => const LoginRequiredModal(),
-      );
-      return;
-    }
-    if (!user.isVipActive) {
-      await showDialog<void>(
-        context: context,
-        builder: (context) => const VipRequiredModal(),
-      );
-      return;
-    }
-
-    if (_scanLoading) {
-      return;
-    }
-    setState(() => _scanLoading = true);
-    try {
-      final estimate = await showModalBottomSheet<FoodCalorieEstimateModel>(
-        context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        builder: (context) => _FoodScanSheet(
-          onAnalyze: (image) =>
-              ref.read(nutritionRepositoryProvider).estimateFoodCaloriesBytes(
-                    bytes: image.bytes,
-                    filename: image.filename,
-                    mimeType: image.mimeType,
-                  ),
-        ),
-      );
-      if (!mounted || estimate == null) {
-        return;
-      }
-      await showModalBottomSheet<void>(
-        context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        builder: (context) => _FoodEstimateSheet(estimate: estimate),
-      );
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      AppFeedback.error(error.toString(), title: 'Không quét được món ăn');
-    } finally {
-      if (mounted) {
-        setState(() => _scanLoading = false);
-      }
-    }
-  }
 }
 
 class _FoodScanSheet extends ConsumerStatefulWidget {
@@ -870,11 +870,14 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
     } catch (error) {
       debugPrint('FOOD_SCAN_ANALYZE: failed with error: $error');
       if (mounted) {
+        final userMessage = error is ApiException
+            ? error.message
+            : 'Không thể phân tích ảnh. Vui lòng thử lại.';
         setState(() {
-          _errorMessage = error.toString();
+          _errorMessage = userMessage;
         });
         AppFeedback.error(
-          error.toString(),
+          userMessage,
           title: 'Không quét được món ăn',
         );
       }

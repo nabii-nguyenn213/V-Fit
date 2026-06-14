@@ -91,7 +91,6 @@ class NutritionRepository {
                 _contentTypeFor(filename: filename, mimeType: mimeType),
           ),
         }),
-        options: Options(contentType: Headers.multipartFormDataContentType),
       );
       return ApiResponseParser.unwrap(
         response,

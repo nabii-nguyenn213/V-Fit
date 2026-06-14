@@ -24,11 +24,15 @@ import org.springframework.web.client.RestClientException;
 public class HttpAiClient implements AiClient {
     private final AppProperties.Ai aiProperties;
     private final RestClient restClient;
+    private final RestClient recommendationRestClient;
 
     public HttpAiClient(AppProperties appProperties) {
         this.aiProperties = appProperties.getAi();
         this.restClient = RestClient.builder()
                 .baseUrl(this.aiProperties.getBaseUrl())
+                .build();
+        this.recommendationRestClient = RestClient.builder()
+                .baseUrl(this.aiProperties.getRecommendationBaseUrl())
                 .build();
     }
 
@@ -118,7 +122,7 @@ public class HttpAiClient implements AiClient {
         body.add("file", new NamedByteArrayResource(imageBytes, imageReference));
 
         try {
-            FoodScannerResponse response = restClient.post()
+            FoodScannerResponse response = recommendationRestClient.post()
                     .uri(aiProperties.getFoodScannerPath())
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)

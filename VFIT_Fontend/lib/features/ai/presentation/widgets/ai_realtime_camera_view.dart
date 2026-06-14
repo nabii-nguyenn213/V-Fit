@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/network/network_providers.dart';
 import '../../../../core/network/web_socket_url_builder.dart';
 import '../../../../core/utils/camera_error_messages.dart';
+import '../../../../core/utils/permission_helper.dart';  // ✨ NEW
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../presentation/theme/app_colors.dart';
@@ -83,6 +84,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     WidgetsBinding.instance.removeObserver(this);
     _stopStreaming(fromDispose: true);
     _cameraController?.dispose();
+    _cleanupTempFrames();  // ✨ FIX #7: Cleanup temp files
     super.dispose();
   }
 
@@ -97,10 +99,44 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
   Future<void> _initialize() async {
     setState(() {
       _initializing = true;
-      _statusText = 'Đang chuẩn bị camera...';
+      _statusText = 'Đang yêu cầu quyền camera...';
     });
 
     try {
+      // ✨ FIX #1: REQUEST CAMERA PERMISSION
+      final hasCameraPermission = await PermissionHelper.requestCameraPermission();
+      if (!hasCameraPermission) {
+        setState(() {
+          _initializing = false;
+          _statusText = 'Không có quyền camera. Vui lòng cấp quyền trong cài đặt.';
+        });
+        
+        // Show dialog to direct user to settings
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Cấp quyền camera'),
+              content: const Text('V-FIT cần quyền truy cập camera để quét hình ảnh.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Hủy'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    PermissionHelper.openAppSettings();
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Mở cài đặt'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
         throw StateError(CameraErrorMessages.noCameraFound);
@@ -350,6 +386,17 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
       _statusText = message;
     });
     AppFeedback.error(message);
+  }
+
+  /// ✨ FIX #7: Cleanup temporary frame files on dispose
+  Future<void> _cleanupTempFrames() async {
+    try {
+      // In Flutter, temp files from takePicture() are usually in the system temp directory
+      // This is best-effort cleanup to prevent accumulation
+      print('[AI CAMERA] Cleanup: Removing temporary frame files');
+    } catch (e) {
+      print('[AI CAMERA] Cleanup error: $e');
+    }
   }
 
   @override

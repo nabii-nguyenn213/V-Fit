@@ -31,6 +31,34 @@ services:
       retries: 3
       start_period: 60s
 
+  vfit-recommendation-api:
+    build:
+      context: ../AI-VFIT/V-Fit/RecommendationSystem
+      dockerfile: Dockerfile
+    container_name: vfit-recommendation-api
+    restart: unless-stopped
+    init: true
+    expose:
+      - "8000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   vfit-backend:
     build: .
     container_name: vfit-backend
@@ -62,9 +90,13 @@ services:
       timeout: 5s
       retries: 3
       start_period: 40s
+      # Wait for AI services to be healthy before starting Spring Boot
     depends_on:
       vfit-ai-api:
+        condition: service_healthy
+      vfit-recommendation-api:
         condition: service_healthy
 
 volumes:
   uploads_data:
+

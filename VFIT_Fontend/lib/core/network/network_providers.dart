@@ -147,9 +147,32 @@ class AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     if (!_isPublicRequest(options)) {
-      final accessToken = await _tokenStorage.readAccessToken();
-      if (accessToken != null) {
-        options.headers['Authorization'] = 'Bearer $accessToken';
+      final stored = await _tokenStorage.read();
+      if (stored != null) {
+        String tokenToUse = stored.accessToken;
+        // Proactively refresh if the access token is expired or near expiry
+        if (!stored.isAccessTokenValid) {
+          try {
+            _refreshFuture ??= _refreshTokens();
+            await _refreshFuture;
+            _refreshFuture = null;
+            final fresh = await _tokenStorage.readAccessToken();
+            if (fresh != null) {
+              tokenToUse = fresh;
+            }
+          } catch (_) {
+            _refreshFuture = null;
+            // Will let the request proceed; 401 handler will log out if still invalid
+          }
+        }
+        options.headers['Authorization'] = 'Bearer $tokenToUse';
+      } else {
+        // Fallback: stored metadata missing (e.g. fresh install / storage cleared),
+        // still try to attach the raw token if it exists.
+        final rawToken = await _tokenStorage.readAccessToken();
+        if (rawToken != null) {
+          options.headers['Authorization'] = 'Bearer $rawToken';
+        }
       }
     }
     handler.next(options);
@@ -375,7 +398,7 @@ Future<String?> getOrRefreshAccessToken() async {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-    ));
+    ),);
     final response = await dio.post<dynamic>(
       ApiEndpoints.refreshToken,
       data: {'refreshToken': stored.refreshToken},
