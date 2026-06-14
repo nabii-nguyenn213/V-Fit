@@ -716,6 +716,22 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
   }
 
   Future<void> _scanFood() async {
+    final user = ref.read(authControllerProvider).user;
+    if (user == null) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => const LoginRequiredModal(),
+      );
+      return;
+    }
+    if (!user.isVipActive) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => const VipRequiredModal(),
+      );
+      return;
+    }
+
     if (_scanLoading) {
       return;
     }
@@ -809,6 +825,7 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
       );
       _previewBytes = bytes;
     });
+    await _analyze();
   }
 
   Future<void> _deleteTemporaryPickedImage(String path) async {
@@ -1001,12 +1018,38 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
                               ),
                             ],
                           )
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.memory(
-                              previewBytes,
-                              fit: BoxFit.cover,
-                            ),
+                        : Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.memory(
+                                  previewBytes,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              if (_loading)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      CircularProgressIndicator(color: Colors.white),
+                                      SizedBox(height: 12),
+                                      Text(
+                                        'Đang phân tích món ăn...',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
                   ),
                 ),
