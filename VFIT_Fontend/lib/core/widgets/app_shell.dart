@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../presentation/theme/app_colors.dart';
@@ -8,8 +9,11 @@ import '../../presentation/theme/app_spacing.dart';
 import '../../presentation/theme/app_typography.dart';
 import '../constants/app_assets.dart';
 import '../utils/responsive.dart';
+import '../../features/auth/application/auth_controller.dart';
+import '../../features/ai/presentation/widgets/ai_coach_sheet.dart';
+import '../../features/ai/presentation/widgets/ai_meal_sheet.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.child});
 
   final Widget child;
@@ -23,7 +27,7 @@ class AppShell extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final path = GoRouterState.of(context).uri.path;
     final selectedIndex = _routes.indexWhere((route) => path.startsWith(route));
     final safeIndex = selectedIndex < 0 ? 0 : selectedIndex;
@@ -36,44 +40,77 @@ class AppShell extends StatelessWidget {
     };
     final isDark = AppColors.isDark(context);
     final wide = AppResponsive.isWide(context);
-    final body = DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? const [
-                  AppColors.background,
-                  AppColors.surface1,
-                  Color(0xFF101328),
-                ]
-              : const [
-                  AppColors.lightBackground,
-                  AppColors.lightSurface1,
-                  Color(0xFFEAF1FF),
-                ],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _ShellHeader(title: title),
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: AppColors.borderSubtleOf(context),
-            ),
-            Expanded(
-              child: AppResponsive.centeredContent(
-                context: context,
-                maxWidth: wide ? 1080 : AppResponsive.maxContentWidth,
-                child: child,
+
+    final auth = ref.watch(authControllerProvider);
+    final isVip = auth.user?.isVipActive == true;
+
+    final body = Stack(
+      children: [
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? const [
+                        AppColors.background,
+                        AppColors.surface1,
+                        Color(0xFF101328),
+                      ]
+                    : const [
+                        AppColors.lightBackground,
+                        AppColors.lightSurface1,
+                        Color(0xFFEAF1FF),
+                      ],
               ),
             ),
-          ],
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  _ShellHeader(title: title),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: AppColors.borderSubtleOf(context),
+                  ),
+                  Expanded(
+                    child: AppResponsive.centeredContent(
+                      context: context,
+                      maxWidth: wide ? 1080 : AppResponsive.maxContentWidth,
+                      child: child,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
+        // Draggable floating buttons for VIP users in specific screens
+        if (isVip && !wide) ...[
+          if (path.startsWith('/workouts'))
+            DraggableFloatingButton(
+              key: const ValueKey('ai-coach-touch'),
+              icon: Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+              onTap: () => AiCoachSheet.show(context),
+            ),
+          if (path.startsWith('/nutrition'))
+            DraggableFloatingButton(
+              key: const ValueKey('ai-meal-touch'),
+              icon: Icon(
+                Icons.restaurant_menu_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+              onTap: () => AiMealSheet.show(context),
+            ),
+        ],
+      ],
     );
 
     return Scaffold(
@@ -96,6 +133,74 @@ class AppShell extends StatelessWidget {
               selectedIndex: safeIndex,
               onDestinationSelected: (value) => context.go(_routes[value]),
             ),
+    );
+  }
+}
+
+class DraggableFloatingButton extends StatefulWidget {
+  const DraggableFloatingButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final Widget icon;
+  final VoidCallback onTap;
+
+  @override
+  State<DraggableFloatingButton> createState() => _DraggableFloatingButtonState();
+}
+
+class _DraggableFloatingButtonState extends State<DraggableFloatingButton> {
+  Offset? _position;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final bottomNavOffset = 100.0;
+    
+    // Set initial position at bottom right if not set yet
+    _position ??= Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0);
+
+    return Positioned(
+      left: _position!.dx,
+      top: _position!.dy,
+      child: GestureDetector(
+        onPanUpdate: (details) {
+          setState(() {
+            _position = Offset(
+              (_position!.dx + details.delta.dx).clamp(16.0, size.width - 72.0),
+              (_position!.dy + details.delta.dy).clamp(80.0, size.height - bottomNavOffset - 72.0),
+            );
+          });
+        },
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2C3E50), Color(0xFF3498DB)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withValues(alpha: 0.35),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: InkWell(
+              onTap: widget.onTap,
+              customBorder: const CircleBorder(),
+              child: Center(child: widget.icon),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -344,7 +449,6 @@ class _ShellNavigationRail extends StatelessWidget {
       onDestinationSelected: onDestinationSelected,
       labelType: NavigationRailLabelType.all,
       minWidth: 92,
-      // Rail also uses primary for consistency — no magenta leaking through.
       selectedIconTheme: IconThemeData(color: AppColors.primaryOf(context)),
       unselectedIconTheme:
           IconThemeData(color: AppColors.textSecondaryOf(context)),
