@@ -48,6 +48,7 @@ class _AiCoachSheetState extends ConsumerState<AiCoachSheet> {
         );
       }
     });
+  }
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -423,9 +424,13 @@ class _AiCoachSheetState extends ConsumerState<AiCoachSheet> {
                           color: AppColors.primaryOf(context),
                         ),
                       ),
-                      Text(
-                        focus,
-                        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          focus,
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                        ),
                       ),
                     ],
                   ),
