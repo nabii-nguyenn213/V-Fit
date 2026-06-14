@@ -6,10 +6,10 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../core/utils/enum_parsers.dart';
-import '../../personalized_workout/domain/entities/personalized_workout.dart';
-import '../../personalized_workout/data/repositories/personalized_workout_repository_impl.dart';
-import '../../personalized_workout/presentation/bloc/personalized_workout_bloc.dart';
-import '../../personalized_workout/presentation/bloc/personalized_workout_event.dart';
+import '../../../personalized_workout/domain/entities/personalized_workout.dart';
+import '../../../personalized_workout/data/repositories/personalized_workout_repository_impl.dart';
+import '../../../personalized_workout/presentation/bloc/personalized_workout_bloc.dart';
+import '../../../personalized_workout/presentation/bloc/personalized_workout_event.dart';
 import '../providers/ai_coach_provider.dart';
 import '../providers/ai_workout_planner_provider.dart';
 
@@ -590,7 +590,7 @@ class _AiCoachSheetState extends ConsumerState<AiCoachSheet> {
     final goalStr = plan['goal']?.toString() ?? '';
     final goalType = goalStr.contains('Giảm') || goalStr.contains('giảm')
         ? GoalType.loseWeight
-        : GoalType.buildMuscle;
+        : GoalType.gainMuscle;
 
     final nutrition = const NutritionRecovery(
       caloriesTarget: '2000',
