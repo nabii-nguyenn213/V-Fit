@@ -786,17 +786,6 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
   _TransientFoodImage? _image;
   Uint8List? _previewBytes;
   bool _loading = false;
-  bool _isTextScan = false;
-
-  final TextEditingController _foodNameController = TextEditingController();
-  final TextEditingController _portionController = TextEditingController(text: '1 phần');
-
-  @override
-  void dispose() {
-    _foodNameController.dispose();
-    _portionController.dispose();
-    super.dispose();
-  }
 
   Future<void> _pick(ImageSource source) async {
     if (_loading) {
@@ -864,46 +853,6 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
     }
   }
 
-  Future<void> _analyzeText() async {
-    final foodName = _foodNameController.text.trim();
-    if (foodName.isEmpty || _loading) {
-      return;
-    }
-    setState(() => _loading = true);
-    try {
-      final repo = ref.read(aiPlannersRepositoryProvider);
-      final result = await repo.scanFoodText(
-        foodName: foodName,
-        portion: _portionController.text.trim(),
-      );
-      final estimate = FoodCalorieEstimateModel(
-        foodName: result['food_name'] ?? foodName,
-        servingSize: result['portion'] ?? _portionController.text.trim(),
-        calories: (result['total_calories'] as num?)?.toInt() ?? 0,
-        proteinGrams: (result['protein_g'] as num?)?.toDouble() ?? 0,
-        carbGrams: (result['carbs_g'] as num?)?.toDouble() ?? 0,
-        fatGrams: (result['fat_g'] as num?)?.toDouble() ?? 0,
-        confidence: (result['confidence'] as num?)?.toDouble() ?? 1.0,
-        notes: [result['note'] ?? ''],
-        estimatedAt: DateTime.now(),
-      );
-      if (mounted) {
-        Navigator.of(context).pop(estimate);
-      }
-    } catch (error) {
-      if (mounted) {
-        AppFeedback.error(
-          error.toString(),
-          title: 'Không phân tích được món ăn',
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -943,9 +892,7 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
                               ?.copyWith(fontWeight: FontWeight.w900),
                         ),
                         Text(
-                          _isTextScan
-                              ? 'Nhập tên món ăn để AI ước tính macro.'
-                              : 'Chụp hoặc chọn ảnh rõ món ăn để AI ước tính macro.',
+                          'Chụp hoặc chọn ảnh rõ món ăn để AI ước tính macro.',
                           style: TextStyle(color: scheme.onSurfaceVariant),
                         ),
                       ],
@@ -953,175 +900,107 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              // Segment selection
+              const SizedBox(height: 18),
+              AspectRatio(
+                aspectRatio: 4 / 3,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest.withValues(
+                      alpha: 0.52,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: scheme.outlineVariant),
+                  ),
+                  child: previewBytes == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.restaurant_menu_rounded,
+                              size: 54,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Chưa có ảnh món ăn',
+                              style: TextStyle(
+                                color: scheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.memory(
+                                previewBytes,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            if (_loading)
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(color: Colors.white),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      'Đang phân tích món ăn...',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                ),
+              ),
+              const SizedBox(height: 14),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ChoiceChip(
-                    label: const Text('Quét bằng ảnh'),
-                    selected: !_isTextScan,
-                    onSelected: (selected) {
-                      if (selected) setState(() => _isTextScan = false);
-                    },
-                    selectedColor: scheme.primary.withValues(alpha: 0.15),
-                    checkmarkColor: scheme.primary,
-                    labelStyle: TextStyle(
-                      color: !_isTextScan ? scheme.primary : scheme.onSurfaceVariant,
-                      fontWeight: !_isTextScan ? FontWeight.bold : FontWeight.normal,
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _loading ? null : () => _pick(ImageSource.camera),
+                      icon: const Icon(Icons.photo_camera_outlined),
+                      label: const Text('Camera'),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  ChoiceChip(
-                    label: const Text('Nhập bằng chữ'),
-                    selected: _isTextScan,
-                    onSelected: (selected) {
-                      if (selected) setState(() => _isTextScan = true);
-                    },
-                    selectedColor: scheme.primary.withValues(alpha: 0.15),
-                    checkmarkColor: scheme.primary,
-                    labelStyle: TextStyle(
-                      color: _isTextScan ? scheme.primary : scheme.onSurfaceVariant,
-                      fontWeight: _isTextScan ? FontWeight.bold : FontWeight.normal,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _loading ? null : () => _pick(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: const Text('Thư viện'),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              if (!_isTextScan) ...[
-                AspectRatio(
-                  aspectRatio: 4 / 3,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHighest.withValues(
-                        alpha: 0.52,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: scheme.outlineVariant),
-                    ),
-                    child: previewBytes == null
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.restaurant_menu_rounded,
-                                size: 54,
-                                color: scheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Chưa có ảnh món ăn',
-                                style: TextStyle(
-                                  color: scheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.memory(
-                                  previewBytes,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              if (_loading)
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: const Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      CircularProgressIndicator(color: Colors.white),
-                                      SizedBox(height: 12),
-                                      Text(
-                                        'Đang phân tích món ăn...',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            _loading ? null : () => _pick(ImageSource.camera),
-                        icon: const Icon(Icons.photo_camera_outlined),
-                        label: const Text('Camera'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            _loading ? null : () => _pick(ImageSource.gallery),
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('Thư viện'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                FilledButton.icon(
-                  onPressed: _image == null || _loading ? null : _analyze,
-                  icon: _loading
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.auto_awesome_rounded),
-                  label: Text(_loading ? 'Đang phân tích...' : 'Phân tích calo'),
-                ),
-              ] else ...[
-                TextField(
-                  controller: _foodNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Tên món ăn',
-                    hintText: 'ví dụ: Phở bò, ức gà luộc...',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _portionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Khẩu phần',
-                    hintText: 'ví dụ: 1 bát tô, 200g...',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: _loading ? null : _analyzeText,
-                  icon: _loading
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.auto_awesome_rounded),
-                  label: Text(_loading ? 'Đang phân tích...' : 'Phân tích calo'),
-                ),
-              ],
+              const SizedBox(height: 14),
+              FilledButton.icon(
+                onPressed: _image == null || _loading ? null : _analyze,
+                icon: _loading
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.auto_awesome_rounded),
+                label: Text(_loading ? 'Đang phân tích...' : 'Phân tích calo'),
+              ),
               if (_loading) ...[
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
