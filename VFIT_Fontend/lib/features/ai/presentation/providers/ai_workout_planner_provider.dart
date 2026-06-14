@@ -43,8 +43,11 @@ class AiWorkoutPlannerNotifier extends StateNotifier<AiWorkoutPlannerState> {
     try {
       final auth = _ref.read(authControllerProvider);
       final user = auth.user;
-      final bodyMetricsAsync = _ref.read(bodyMetricsProvider);
-      final bodyMetrics = bodyMetricsAsync.valueOrNull;
+      
+      var bodyMetrics = _ref.read(bodyMetricsProvider).valueOrNull;
+      try {
+        bodyMetrics = await _ref.read(profileRepositoryProvider).bodyMetrics();
+      } catch (_) {}
 
       final int age = user?.dateOfBirth != null
           ? DateTime.now().year - user!.dateOfBirth!.year

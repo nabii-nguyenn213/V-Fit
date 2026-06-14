@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../presentation/theme/app_colors.dart';
+import '../../nutrition/data/repositories/nutrition_repository.dart';
 import '../providers/ai_meal_planner_provider.dart';
 
 class AiMealSheet extends ConsumerStatefulWidget {
   const AiMealSheet({super.key});
 
-  static Future<void> show(BuildContext context) {
-    return showModalBottomSheet<void>(
+  static Future<bool?> show(BuildContext context) {
+    return showModalBottomSheet<bool?>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -24,6 +25,7 @@ class AiMealSheet extends ConsumerStatefulWidget {
 
 class _AiMealSheetState extends ConsumerState<AiMealSheet> {
   int _mealsPerDay = 3;
+  String _selectedDayKey = 'monday';
 
   @override
   Widget build(BuildContext context) {
@@ -124,16 +126,60 @@ class _AiMealSheetState extends ConsumerState<AiMealSheet> {
   }
 
   Widget _buildMealPlanResult(Map<String, dynamic> plan) {
-    final dailyCal = plan['daily_calories'] ?? 0;
-    final protein = plan['protein_g'] ?? 0;
-    final carbs = plan['carbs_g'] ?? 0;
-    final fat = plan['fat_g'] ?? 0;
-    final meals = plan['meal_plan'] as Map<String, dynamic>? ?? {};
+    final weeklyPlan = plan['weekly_plan'] as Map<String, dynamic>? ?? {};
+    final dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    final dayLabels = {
+      'monday': 'Thứ 2',
+      'tuesday': 'Thứ 3',
+      'wednesday': 'Thứ 4',
+      'thursday': 'Thứ 5',
+      'friday': 'Thứ 6',
+      'saturday': 'Thứ 7',
+      'sunday': 'Chủ Nhật',
+    };
+
+    final selectedDayData = weeklyPlan[_selectedDayKey] as Map<String, dynamic>? ?? {};
+    final dailyCal = selectedDayData['daily_calories'] ?? 0;
+    final protein = selectedDayData['protein_g'] ?? 0;
+    final carbs = selectedDayData['carbs_g'] ?? 0;
+    final fat = selectedDayData['fat_g'] ?? 0;
+    final meals = selectedDayData['meal_plan'] as Map<String, dynamic>? ?? {};
     final note = plan['note'] ?? '';
+
+    final scheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Horizontal Day Selector
+        SizedBox(
+          height: 40,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: dayKeys.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final key = dayKeys[index];
+              final isSelected = _selectedDayKey == key;
+              return ChoiceChip(
+                label: Text(dayLabels[key]!),
+                selected: isSelected,
+                onSelected: (val) {
+                  if (val) {
+                    setState(() => _selectedDayKey = key);
+                  }
+                },
+                selectedColor: scheme.primary.withValues(alpha: 0.2),
+                checkmarkColor: scheme.primary,
+                labelStyle: TextStyle(
+                  color: isSelected ? scheme.primary : scheme.onSurfaceVariant,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -143,7 +189,7 @@ class _AiMealSheetState extends ConsumerState<AiMealSheet> {
           ),
           child: Column(
             children: [
-              const Text('Khuyến nghị hàng ngày', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text('Khuyến nghị ${dayLabels[_selectedDayKey]}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 6),
               Text(
                 '$dailyCal kcal',
@@ -200,6 +246,37 @@ class _AiMealSheetState extends ConsumerState<AiMealSheet> {
             ),
           ),
         ],
+        const SizedBox(height: 20),
+        AppButton.primary(
+          label: 'Đồng ý áp dụng thực đơn tuần này',
+          icon: Icons.check_circle_rounded,
+          onPressed: () async {
+            try {
+              final repo = ref.read(nutritionRepositoryProvider);
+              await repo.saveAiMealPlan(plan);
+              await repo.applyAiMealPlan(true);
+              
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã áp dụng thực đơn tuần AI thành công!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.of(context).pop(true);
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Lỗi khi áp dụng thực đơn: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
       ],
     );
   }

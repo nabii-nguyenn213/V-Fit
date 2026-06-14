@@ -265,8 +265,10 @@ class LocalAiFallbackInterceptor extends Interceptor {
     }
 
     final request = err.requestOptions;
+    final cleanBaseUrl = request.baseUrl.replaceAll(RegExp(r'/+$'), '');
+    final cleanBaseUrls = _baseUrls.map((url) => url.replaceAll(RegExp(r'/+$'), '')).toList();
     final currentIndex = request.extra[_retryIndexKey] as int? ??
-        _baseUrls.indexOf(request.baseUrl);
+        cleanBaseUrls.indexOf(cleanBaseUrl);
     final nextIndex = currentIndex + 1;
     if (nextIndex >= _baseUrls.length) {
       handler.next(err);
@@ -278,8 +280,12 @@ class LocalAiFallbackInterceptor extends Interceptor {
       request.extra[_retryIndexKey] = nextIndex;
       final response = await _dio.fetch<dynamic>(request);
       handler.resolve(response);
-    } catch (_) {
-      handler.next(err);
+    } catch (e) {
+      if (e is DioException) {
+        handler.next(e);
+      } else {
+        handler.next(err);
+      }
     }
   }
 
@@ -318,8 +324,10 @@ class LocalApiFallbackInterceptor extends Interceptor {
     }
 
     final request = err.requestOptions;
+    final cleanBaseUrl = request.baseUrl.replaceAll(RegExp(r'/+$'), '');
+    final cleanBaseUrls = _baseUrls.map((url) => url.replaceAll(RegExp(r'/+$'), '')).toList();
     final currentIndex = request.extra[_retryIndexKey] as int? ??
-        _baseUrls.indexOf(request.baseUrl);
+        cleanBaseUrls.indexOf(cleanBaseUrl);
     final nextIndex = currentIndex + 1;
     if (nextIndex >= _baseUrls.length) {
       handler.next(err);
@@ -331,8 +339,12 @@ class LocalApiFallbackInterceptor extends Interceptor {
       request.extra[_retryIndexKey] = nextIndex;
       final response = await _dio.fetch<dynamic>(request);
       handler.resolve(response);
-    } catch (_) {
-      handler.next(err);
+    } catch (e) {
+      if (e is DioException) {
+        handler.next(e);
+      } else {
+        handler.next(err);
+      }
     }
   }
 

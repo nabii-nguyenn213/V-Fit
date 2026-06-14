@@ -1,0 +1,163 @@
+{
+  "weekly_plan": {
+    "monday": {
+      "daily_calories": 2700,
+      "protein_g": 160,
+      "carbs_g": 340,
+      "fat_g": 75,
+      "meal_plan": {
+        "breakfast": [
+          "100g Yến mạch nấu chín",
+          "2 quả Trứng gà ốp la",
+          "1 quả Chuối tiêu"
+        ],
+        "lunch": [
+          "150g Ức gà áp chảo",
+          "200g Cơm gạo lứt",
+          "150g Bông cải xanh luộc"
+        ],
+        "dinner": [
+          "150g Cá hồi áp chảo",
+          "200g Khoai lang luộc",
+          "1 đĩa Xà lách trộn dầu ô liu"
+        ]
+      }
+    },
+    "tuesday": {
+      "daily_calories": 2700,
+      "protein_g": 162,
+      "carbs_g": 335,
+      "fat_g": 76,
+      "meal_plan": {
+        "breakfast": [
+          "2 Lát bánh mì đen kèm 2 muỗng bơ đậu phộng",
+          "1 Ly sữa tươi không đường 250ml",
+          "3 Lòng trắng trứng luộc"
+        ],
+        "lunch": [
+          "150g Thịt bò xào hành tây với chút dầu hạt cải",
+          "200g Cơm trắng",
+          "150g Măng tây xào tỏi"
+        ],
+        "dinner": [
+          "150g Tôm hấp sả",
+          "200g Khoai tây nghiền",
+          "1 Bát canh rau cải nấu thịt bằm"
+        ]
+      }
+    },
+    "wednesday": {
+      "daily_calories": 2700,
+      "protein_g": 158,
+      "carbs_g": 342,
+      "fat_g": 74,
+      "meal_plan": {
+        "breakfast": [
+          "1 Tô Phở bò nhiều thịt (bánh phở 150g, thịt bò 100g)",
+          "1 Quả trứng chần"
+        ],
+        "lunch": [
+          "150g Thịt heo thăn rim tiêu",
+          "200g Cơm gạo lứt",
+          "150g Đậu cô ve luộc"
+        ],
+        "dinner": [
+          "150g Phi lê cá chẽm nướng",
+          "200g Khoai lang hấp",
+          "1 Bát canh cà chua trứng"
+        ]
+      }
+    },
+    "thursday": {
+      "daily_calories": 2700,
+      "protein_g": 165,
+      "carbs_g": 330,
+      "fat_g": 78,
+      "meal_plan": {
+        "breakfast": [
+          "100g Yến mạch trộn với 1 hộp Sữa chua Hy Lạp",
+          "30g Hạt hạnh nhân",
+          "1 Quả táo"
+        ],
+        "lunch": [
+          "150g Ức gà xào nấm",
+          "200g Cơm trắng",
+          "150g Rau muống luộc"
+        ],
+        "dinner": [
+          "150g Bò bít tết kèm sốt tiêu",
+          "200g Bánh mì sandwich nguyên cám",
+          "1 Đĩa salad rau mầm và cà chua bi"
+        ]
+      }
+    },
+    "friday": {
+      "daily_calories": 2700,
+      "protein_g": 160,
+      "carbs_g": 338,
+      "fat_g": 76,
+      "meal_plan": {
+        "breakfast": [
+          "1 Bánh mì kẹp 2 quả trứng ốp la",
+          "1 Ly sữa đậu nành không đường 300ml"
+        ],
+        "lunch": [
+          "150g Mực ống hấp gừng",
+          "200g Cơm gạo lứt",
+          "150g Cải thìa xào tỏi với dầu hào"
+        ],
+        "dinner": [
+          "150g Thịt thăn cốt lết áp chảo",
+          "200g Khoai tây đút lò",
+          "1 Bát canh bí đao nấu tôm khô"
+        ]
+      }
+    },
+    "saturday": {
+      "daily_calories": 2700,
+      "protein_g": 163,
+      "carbs_g": 335,
+      "fat_g": 77,
+      "meal_plan": {
+        "breakfast": [
+          "150g Nui xào thịt bò (100g thịt bò)",
+          "1 Quả chuối tiêu"
+        ],
+        "lunch": [
+          "150g Cá thu sốt cà chua ít mỡ",
+          "200g Cơm trắng",
+          "150g Bí ngòi xào"
+        ],
+        "dinner": [
+          "150g Ức gà nướng mật ong",
+          "200g Khoai lang hấp",
+          "1 Đĩa salad bắp cải tím trộn sốt mè"
+        ]
+      }
+    },
+    "sunday": {
+      "daily_calories": 2700,
+      "protein_g": 159,
+      "carbs_g": 345,
+      "fat_g": 73,
+      "meal_plan": {
+        "breakfast": [
+          "2 Củ khoai lang luộc cỡ vừa",
+          "1 Ly sữa Whey Protein (hoặc 4 lòng trắng trứng luộc)",
+          "1 Quả cam"
+        ],
+        "lunch": [
+          "150g Thịt bò áp chảo",
+          "200g Mì Ý (khối lượng sau khi chín)",
+          "150g Bông cải xanh và súp lơ trắng luộc"
+        ],
+        "dinner": [
+          "150g Tôm rim nhạt",
+          "200g Cơm gạo lứt",
+          "1 Bát canh cải bẹ xanh nấu thịt băm"
+        ]
+      }
+    }
+  },
+  "note": "Kế hoạch dinh dưỡng này được thiết kế dựa trên TDEE tăng cường (thặng dư ~300-400 calo) để hỗ trợ mục tiêu tăng cơ (Gain Muscle) cho nam giới 70kg vận động vừa phải. Vì bạn chọn ăn 3 bữa/ngày, lượng thức ăn mỗi bữa tương đối lớn để đảm bảo nạp đủ calo và macro. Hãy uống từ 2.5 - 3 lít nước mỗi ngày, ăn đủ rau xanh để bổ sung chất xơ hỗ trợ tiêu hóa lượng protein lớn, và duy trì tập luyện kháng lực (tạ) đều đặn từ 4-5 buổi/tuần."
+}

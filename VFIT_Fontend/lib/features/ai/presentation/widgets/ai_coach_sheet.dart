@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../presentation/theme/app_colors.dart';
+import '../../../../core/utils/enum_parsers.dart';
+import '../../personalized_workout/domain/entities/personalized_workout.dart';
+import '../../personalized_workout/data/repositories/personalized_workout_repository_impl.dart';
+import '../../personalized_workout/presentation/bloc/personalized_workout_bloc.dart';
+import '../../personalized_workout/presentation/bloc/personalized_workout_event.dart';
 import '../providers/ai_coach_provider.dart';
 import '../providers/ai_workout_planner_provider.dart';
 
@@ -495,7 +501,155 @@ class _AiCoachSheetState extends ConsumerState<AiCoachSheet> {
             ),
           ),
         ],
+        const SizedBox(height: 16),
+        AppButton.primary(
+          label: 'Đồng ý áp dụng lịch tập này',
+          icon: Icons.check_circle_rounded,
+          onPressed: () async {
+            try {
+              final personalizedWorkout = mapAiPlanToPersonalizedWorkout(plan);
+              await ref.read(personalizedWorkoutRepositoryProvider).applyAiPlan(personalizedWorkout);
+              
+              if (context.mounted) {
+                // Refresh Bloc if available
+                try {
+                  BlocProvider.of<PersonalizedWorkoutBloc>(context).add(
+                    const PersonalizedWorkoutRequested(forceRefresh: true),
+                  );
+                } catch (_) {}
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã áp dụng lịch tập AI thành công!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.of(context).pop();
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Lỗi khi áp dụng lịch tập: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
       ],
+    );
+  }
+
+  PersonalizedWorkout mapAiPlanToPersonalizedWorkout(Map<String, dynamic> plan) {
+    final weeklySchedule = plan['weekly_schedule'] as Map<String, dynamic>? ?? {};
+    final schedule = <int, DaySchedule>{};
+
+    for (int i = 1; i <= 7; i++) {
+      final dayKey = 'day_$i';
+      final dayData = weeklySchedule[dayKey] as Map<String, dynamic>?;
+
+      if (dayData != null) {
+        final focus = dayData['focus']?.toString() ?? 'Nghỉ ngơi';
+        final warmUp = List<String>.from(dayData['warm_up'] ?? []);
+        final mainWorkout = List<String>.from(dayData['main_workout'] ?? []);
+        final coolDown = List<String>.from(dayData['cool_down'] ?? []);
+
+        final isRest = mainWorkout.isEmpty || focus.toLowerCase().contains('nghỉ') || focus.toLowerCase() == 'nghi';
+
+        final exercises = <ExerciseItemMetadata>[];
+        
+        for (final item in warmUp) {
+          exercises.add(parseExerciseString(item, prefix: 'warm-up'));
+        }
+        for (final item in mainWorkout) {
+          exercises.add(parseExerciseString(item, prefix: 'main'));
+        }
+        for (final item in coolDown) {
+          exercises.add(parseExerciseString(item, prefix: 'cool-down'));
+        }
+
+        schedule[i] = DaySchedule(
+          dayName: focus,
+          dayType: focus,
+          restDay: isRest,
+          exercises: exercises,
+          cardioAfterWorkout: coolDown.isNotEmpty ? coolDown.join(', ') : null,
+        );
+      } else {
+        schedule[i] = const DaySchedule(
+          dayName: 'Nghỉ ngơi',
+          dayType: 'Nghỉ ngơi',
+          restDay: true,
+          exercises: [],
+        );
+      }
+    }
+
+    final goalStr = plan['goal']?.toString() ?? '';
+    final goalType = goalStr.contains('Giảm') || goalStr.contains('giảm')
+        ? GoalType.loseWeight
+        : GoalType.buildMuscle;
+
+    final nutrition = const NutritionRecovery(
+      caloriesTarget: '2000',
+      proteinTarget: '130',
+      weightTarget: '70',
+      sleepTarget: '8',
+      waterTarget: '2.5',
+    );
+
+    return PersonalizedWorkout(
+      hasGoal: true,
+      goalType: goalType,
+      schedule: schedule,
+      nutritionRecovery: nutrition,
+      rules: const WorkoutRules(
+        compound: RuleDetail(reps: '8-12', rest: '2-3 mins', rir: '1-2'),
+        isolation: RuleDetail(reps: '10-15', rest: '1-2 mins', rir: '0-1'),
+      ),
+    );
+  }
+
+  ExerciseItemMetadata parseExerciseString(String item, {required String prefix}) {
+    final colonIndex = item.indexOf(':');
+    String name = item;
+    String details = '';
+    
+    if (colonIndex != -1) {
+      name = item.substring(0, colonIndex).trim();
+      details = item.substring(colonIndex + 1).trim();
+    }
+
+    int sets = 3;
+    String reps = '10-12';
+    
+    final setsMatch = RegExp(r'(\d+)\s*(sets|hiệp|x)').firstMatch(details.toLowerCase()) ??
+                      RegExp(r'(\d+)\s*(sets|hiệp|x)').firstMatch(name.toLowerCase());
+    if (setsMatch != null) {
+      sets = int.tryParse(setsMatch.group(1) ?? '') ?? 3;
+    }
+
+    final repsMatch = RegExp(r'x\s*([\d\-\–\s]+)\s*(reps|lần|cái)?').firstMatch(details.toLowerCase()) ??
+                      RegExp(r'([\d\-\–\s]+)\s*(reps|lần|cái)').firstMatch(details.toLowerCase());
+    if (repsMatch != null) {
+      reps = repsMatch.group(1)?.trim() ?? '10-12';
+    }
+
+    final cleanName = name
+        .replaceAll(RegExp(r'[^\w\s\-]'), '')
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '-');
+    
+    final exerciseId = cleanName.isEmpty ? 'exercise' : cleanName;
+
+    return ExerciseItemMetadata(
+      exerciseId: exerciseId,
+      sets: sets,
+      reps: reps,
+      notes: name,
     );
   }
 

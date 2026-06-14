@@ -22,6 +22,9 @@ import '../../domain/usecases/remember_food.dart';
 import '../../domain/usecases/search_foods.dart';
 import '../bloc/nutrition_calculator_bloc.dart';
 import '../../../ai/data/repositories/ai_planners_repository.dart';
+import '../../../ai/presentation/widgets/ai_meal_sheet.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_card.dart';
 
 class NutritionPage extends ConsumerStatefulWidget {
   const NutritionPage({super.key});
@@ -34,11 +37,27 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
   late final TextEditingController _searchController;
   Timer? _debounce;
   bool _scanLoading = false;
+  String _nutritionSelectedDayKey = 'monday';
+  bool _itemResolving = false;
+
+  String _currentDayKey() {
+    switch (DateTime.now().weekday) {
+      case DateTime.monday: return 'monday';
+      case DateTime.tuesday: return 'tuesday';
+      case DateTime.wednesday: return 'wednesday';
+      case DateTime.thursday: return 'thursday';
+      case DateTime.friday: return 'friday';
+      case DateTime.saturday: return 'saturday';
+      case DateTime.sunday: return 'sunday';
+      default: return 'monday';
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _nutritionSelectedDayKey = _currentDayKey();
   }
 
   @override
@@ -48,9 +67,151 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
     super.dispose();
   }
 
+  Food parseFoodString(String text) {
+    final lowerText = text.toLowerCase();
+    
+    double grams = 100;
+    final gramMatch = RegExp(r'(\d+)\s*g').firstMatch(lowerText);
+    if (gramMatch != null) {
+      grams = double.tryParse(gramMatch.group(1) ?? '') ?? 100.0;
+    } else {
+      final unitMatch = RegExp(r'(\d+)\s*(quả|lát|chén|bát|muỗng|hộp)').firstMatch(lowerText);
+      if (unitMatch != null) {
+        final units = double.tryParse(unitMatch.group(1) ?? '') ?? 1.0;
+        if (lowerText.contains('trứng')) {
+          grams = units * 50;
+        } else {
+          grams = units * 100;
+        }
+      }
+    }
+
+    double calPer100 = 150;
+    double proteinPer100 = 10;
+    double carbsPer100 = 15;
+    double fatPer100 = 5;
+    String name = text;
+    String id = 'food-custom';
+
+    if (lowerText.contains('ức gà') || lowerText.contains('uc ga')) {
+      id = 'food-chicken-breast-fillet';
+      name = 'Ức gà phi lê';
+      calPer100 = 165; proteinPer100 = 31; carbsPer100 = 0; fatPer100 = 3.6;
+    } else if (lowerText.contains('trứng') || lowerText.contains('trung')) {
+      id = 'food-whole-egg';
+      name = 'Trứng gà';
+      calPer100 = 143; proteinPer100 = 12.6; carbsPer100 = 0.7; fatPer100 = 9.5;
+    } else if (lowerText.contains('gạo lứt') || lowerText.contains('gao lut') || lowerText.contains('cơm lứt') || lowerText.contains('com lut')) {
+      id = 'food-brown-rice';
+      name = 'Gạo lứt';
+      calPer100 = 111; proteinPer100 = 2.6; carbsPer100 = 23; fatPer100 = 0.9;
+    } else if (lowerText.contains('thịt bò') || lowerText.contains('thit bo') || lowerText.contains('bò')) {
+      id = 'food-beef-tenderloin';
+      name = 'Thịt bò thăn';
+      calPer100 = 190; proteinPer100 = 29; carbsPer100 = 0; fatPer100 = 7.6;
+    } else if (lowerText.contains('whey')) {
+      id = 'food-whey-isolate';
+      name = 'Whey Protein';
+      calPer100 = 370; proteinPer100 = 88; carbsPer100 = 3; fatPer100 = 1;
+    } else if (lowerText.contains('cá hồi') || lowerText.contains('ca hoi')) {
+      id = 'food-salmon';
+      name = 'Cá hồi';
+      calPer100 = 208; proteinPer100 = 20; carbsPer100 = 0; fatPer100 = 13;
+    } else if (lowerText.contains('hạnh nhân') || lowerText.contains('hanh nhan') || lowerText.contains('hạt')) {
+      id = 'food-almond';
+      name = 'Hạt hạnh nhân';
+      calPer100 = 579; proteinPer100 = 21; carbsPer100 = 22; fatPer100 = 49;
+    } else if (lowerText.contains('yến mạch') || lowerText.contains('yen mach')) {
+      id = 'food-oats';
+      name = 'Yến mạch';
+      calPer100 = 389; proteinPer100 = 16.9; carbsPer100 = 66.3; fatPer100 = 6.9;
+    } else if (lowerText.contains('khoai lang')) {
+      id = 'food-sweet-potato';
+      name = 'Khoai lang';
+      calPer100 = 86; proteinPer100 = 1.6; carbsPer100 = 20; fatPer100 = 0.1;
+    } else if (lowerText.contains('rau') || lowerText.contains('súp lơ') || lowerText.contains('sup lo')) {
+      id = 'food-vegetable';
+      name = 'Rau xanh';
+      calPer100 = 25; proteinPer100 = 2; carbsPer100 = 5; fatPer100 = 0.1;
+    }
+
+    final factor = grams / 100.0;
+    return Food(
+      id: id,
+      name: name,
+      normalizedName: name.toLowerCase(),
+      servingSizeGrams: grams.toInt(),
+      calories: (calPer100 * factor).toInt(),
+      protein: (proteinPer100 * factor).toDouble(),
+      carbs: (carbsPer100 * factor).toDouble(),
+      fat: (fatPer100 * factor).toDouble(),
+      caloriesPer100g: calPer100.toInt(),
+      proteinPer100g: proteinPer100.toDouble(),
+      carbsPer100g: carbsPer100.toDouble(),
+      fatPer100g: fatPer100.toDouble(),
+      isGymFriendly: true,
+    );
+  }
+
+  Future<void> _handleAiFoodTap(BuildContext context, String foodItem) async {
+    if (_itemResolving) return;
+    
+    setState(() => _itemResolving = true);
+    
+    Food? resolvedFood;
+    try {
+      final repo = ref.read(aiPlannersRepositoryProvider);
+      final result = await repo.scanFoodText(
+        foodName: foodItem,
+        portion: '1 phần',
+      );
+      
+      final calories = (result['total_calories'] as num?)?.toInt() ?? 0;
+      final protein = (result['protein_g'] as num?)?.toDouble() ?? 0.0;
+      final carbs = (result['carbs_g'] as num?)?.toDouble() ?? 0.0;
+      final fat = (result['fat_g'] as num?)?.toDouble() ?? 0.0;
+      final portion = result['portion']?.toString() ?? '1 phần';
+
+      int servingGrams = 100;
+      final gramMatch = RegExp(r'(\d+)\s*g').firstMatch(portion.toLowerCase());
+      if (gramMatch != null) {
+        servingGrams = int.tryParse(gramMatch.group(1) ?? '') ?? 100;
+      }
+
+      resolvedFood = Food(
+        id: 'food-ai-resolved-${DateTime.now().millisecondsSinceEpoch}',
+        name: result['food_name']?.toString() ?? foodItem,
+        normalizedName: (result['food_name']?.toString() ?? foodItem).toLowerCase(),
+        servingSizeGrams: servingGrams,
+        calories: calories,
+        protein: protein,
+        carbs: carbs,
+        fat: fat,
+        caloriesPer100g: servingGrams > 0 ? ((calories / servingGrams) * 100).toInt() : calories,
+        proteinPer100g: servingGrams > 0 ? ((protein / servingGrams) * 100).toDouble() : protein,
+        carbsPer100g: servingGrams > 0 ? ((carbs / servingGrams) * 100).toDouble() : carbs,
+        fatPer100g: servingGrams > 0 ? ((fat / servingGrams) * 100).toDouble() : fat,
+        isGymFriendly: true,
+      );
+    } catch (_) {
+      resolvedFood = parseFoodString(foodItem);
+    } finally {
+      if (mounted) {
+        setState(() => _itemResolving = false);
+      }
+    }
+
+    if (resolvedFood != null && mounted) {
+      await _openCalculator(context, resolvedFood);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final repository = ref.watch(foodRepositoryProvider);
+    final isAiAppliedAsync = ref.watch(isAiMealPlanAppliedProvider);
+    final aiPlanAsync = ref.watch(aiMealPlanProvider);
+
     return BlocProvider(
       create: (_) => NutritionCalculatorBloc(
         searchFoods: SearchFoods(repository),
@@ -63,6 +224,8 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
               context
                   .read<NutritionCalculatorBloc>()
                   .add(NutritionSearchRequested(_searchController.text));
+              ref.invalidate(isAiMealPlanAppliedProvider);
+              ref.invalidate(aiMealPlanProvider);
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -95,13 +258,57 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
                   _ErrorStrip(message: state.errorMessage!)
                 else if (state.isEmptyResult)
                   _EmptyFoodState(keyword: state.keyword)
-                else
+                else if (state.hasKeyword)
                   _FoodListSection(
-                    title: state.hasKeyword
-                        ? 'Kết quả phù hợp'
-                        : 'Món ăn phổ biến cho gymer',
+                    title: 'Kết quả phù hợp',
                     foods: state.foods,
                     onFoodTap: (food) => _openCalculator(context, food),
+                  )
+                else
+                  isAiAppliedAsync.when(
+                    data: (isAiApplied) {
+                      if (isAiApplied) {
+                        return aiPlanAsync.when(
+                          data: (plan) {
+                            if (plan != null) {
+                              return _buildAiWeeklyPlanSection(context, plan);
+                            }
+                            return _buildNoAiPlanPlaceholder(context);
+                          },
+                          loading: () => const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          error: (err, _) => Text('Lỗi tải thực đơn AI: $err'),
+                        );
+                      } else {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildAiBanner(context),
+                            const SizedBox(height: 18),
+                            _FoodListSection(
+                              title: 'Món ăn phổ biến cho gymer',
+                              foods: state.foods,
+                              onFoodTap: (food) => _openCalculator(context, food),
+                            ),
+                          ],
+                        );
+                      }
+                    },
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                    error: (err, _) => _FoodListSection(
+                      title: 'Món ăn phổ biến cho gymer',
+                      foods: state.foods,
+                      onFoodTap: (food) => _openCalculator(context, food),
+                    ),
                   ),
               ],
             ),
@@ -109,6 +316,342 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
         },
       ),
     );
+  }
+
+  Widget _buildAiBanner(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: scheme.primary, size: 24),
+              const SizedBox(width: 8),
+              const Text(
+                'Thiết lập Thực đơn AI',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Hãy để AI thiết kế một thực đơn dinh dưỡng 7 ngày đầy đủ protein, tinh bột, chất béo phù hợp hoàn hảo với thể trạng của bạn.',
+            style: TextStyle(fontSize: 13, height: 1.4),
+          ),
+          const SizedBox(height: 14),
+          AppButton.primary(
+            label: 'Tạo ngay thực đơn AI',
+            icon: Icons.bolt_rounded,
+            onPressed: () async {
+              final result = await AiMealSheet.show(context);
+              if (result == true) {
+                ref.invalidate(isAiMealPlanAppliedProvider);
+                ref.invalidate(aiMealPlanProvider);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoAiPlanPlaceholder(BuildContext context) {
+    return Column(
+      children: [
+        const Text('Không tìm thấy thực đơn AI.'),
+        const SizedBox(height: 10),
+        ElevatedButton(
+          onPressed: () async {
+            final result = await AiMealSheet.show(context);
+            if (result == true) {
+              ref.invalidate(isAiMealPlanAppliedProvider);
+              ref.invalidate(aiMealPlanProvider);
+            }
+          },
+          child: const Text('Tạo thực đơn AI mới'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAiWeeklyPlanSection(BuildContext context, Map<String, dynamic> plan) {
+    final weeklyPlan = plan['weekly_plan'] as Map<String, dynamic>? ?? {};
+    final dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    final dayLabels = {
+      'monday': 'Thứ 2',
+      'tuesday': 'Thứ 3',
+      'wednesday': 'Thứ 4',
+      'thursday': 'Thứ 5',
+      'friday': 'Thứ 6',
+      'saturday': 'Thứ 7',
+      'sunday': 'Chủ Nhật',
+    };
+
+    final selectedDayData = weeklyPlan[_nutritionSelectedDayKey] as Map<String, dynamic>? ?? {};
+    final dailyCal = selectedDayData['daily_calories'] ?? 0;
+    final protein = selectedDayData['protein_g'] ?? 0;
+    final carbs = selectedDayData['carbs_g'] ?? 0;
+    final fat = selectedDayData['fat_g'] ?? 0;
+    final meals = selectedDayData['meal_plan'] as Map<String, dynamic>? ?? {};
+    final note = plan['note'] ?? '';
+
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded, color: scheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Thực đơn tuần AI',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            IconButton.outlined(
+              icon: const Icon(Icons.close_rounded, size: 18),
+              tooltip: 'Hủy áp dụng',
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Hủy áp dụng thực đơn AI?'),
+                    content: const Text('Bạn có chắc chắn muốn quay lại danh sách món ăn phổ biến không?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: const Text('Không'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: const Text('Có'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await ref.read(nutritionRepositoryProvider).applyAiMealPlan(false);
+                  ref.invalidate(isAiMealPlanAppliedProvider);
+                  ref.invalidate(aiMealPlanProvider);
+                }
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 42,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: dayKeys.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final key = dayKeys[index];
+              final isSelected = _nutritionSelectedDayKey == key;
+              return ChoiceChip(
+                label: Text(dayLabels[key]!),
+                selected: isSelected,
+                onSelected: (val) {
+                  if (val) {
+                    setState(() => _nutritionSelectedDayKey = key);
+                  }
+                },
+                selectedColor: scheme.primary.withValues(alpha: 0.18),
+                checkmarkColor: scheme.primary,
+                labelStyle: TextStyle(
+                  color: isSelected ? scheme.primary : scheme.onSurfaceVariant,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.teal.withValues(alpha: 0.18),
+                scheme.primary.withValues(alpha: 0.08),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.teal.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'Mục tiêu dinh dưỡng ${dayLabels[_nutritionSelectedDayKey]}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$dailyCal kcal',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: scheme.primary,
+                ),
+              ),
+              const Divider(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildMacroDetailItem('Protein', '${protein}g', Colors.orange),
+                  _buildMacroDetailItem('Tinh bột', '${carbs}g', Colors.blue),
+                  _buildMacroDetailItem('Chất béo', '${fat}g', Colors.red),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (_itemResolving) ...[
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.0),
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 8),
+                  Text('Đang nạp dữ liệu món ăn...', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+          ),
+        ],
+        ...meals.entries.map((entry) {
+          final mealName = entry.key;
+          final mealItems = List<String>.from(entry.value ?? []);
+
+          if (mealItems.isEmpty) return const SizedBox.shrink();
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: AppCard(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getMealDisplayName(mealName),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  const Divider(height: 16),
+                  ...mealItems.map((item) {
+                    return InkWell(
+                      onTap: () => _handleAiFoodTap(context, item),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: scheme.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.calculate_rounded, size: 16, color: scheme.primary),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                item,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                            Icon(Icons.chevron_right_rounded, size: 18, color: scheme.onSurfaceVariant),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          );
+        }),
+        if (note.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline_rounded, size: 18, color: scheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Lời khuyên tuần: $note',
+                    style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        AppButton.secondary(
+          label: 'Thiết lập lại thực đơn AI',
+          icon: Icons.auto_awesome_rounded,
+          onPressed: () async {
+            final result = await AiMealSheet.show(context);
+            if (result == true) {
+              ref.invalidate(isAiMealPlanAppliedProvider);
+              ref.invalidate(aiMealPlanProvider);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMacroDetailItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+        ),
+      ],
+    );
+  }
+
+  String _getMealDisplayName(String key) {
+    switch (key.toLowerCase()) {
+      case 'breakfast': return 'Bữa sáng';
+      case 'lunch': return 'Bữa trưa';
+      case 'dinner': return 'Bữa tối';
+      case 'snack': return 'Bữa phụ / Ăn nhẹ';
+      default: return key;
+    }
   }
 
   void _onSearchChanged(BuildContext context, String value) {

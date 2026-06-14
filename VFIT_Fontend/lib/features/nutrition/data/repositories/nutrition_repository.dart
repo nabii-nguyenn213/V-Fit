@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -13,10 +15,57 @@ final nutritionRepositoryProvider = Provider<NutritionRepository>((ref) {
   return NutritionRepository(ref.watch(dioProvider));
 });
 
+final isAiMealPlanAppliedProvider = FutureProvider<bool>((ref) {
+  return ref.watch(nutritionRepositoryProvider).isAiMealPlanApplied();
+});
+
+final aiMealPlanProvider = FutureProvider<Map<String, dynamic>?>((ref) {
+  return ref.watch(nutritionRepositoryProvider).getAiMealPlan();
+});
+
 class NutritionRepository {
   const NutritionRepository(this._dio);
 
   final Dio _dio;
+
+  static const _mealPlanBoxName = 'ai_meal_plan_cache';
+  static const _mealPlanKey = 'ai_meal_plan_json';
+  static const _isMealAppliedKey = 'is_ai_meal_applied';
+
+  Future<Box<dynamic>> _box() async {
+    if (Hive.isBoxOpen(_mealPlanBoxName)) {
+      return Hive.box<dynamic>(_mealPlanBoxName);
+    }
+    return Hive.openBox<dynamic>(_mealPlanBoxName);
+  }
+
+  Future<void> saveAiMealPlan(Map<String, dynamic> planJson) async {
+    final box = await _box();
+    await box.put(_mealPlanKey, jsonEncode(planJson));
+  }
+
+  Future<Map<String, dynamic>?> getAiMealPlan() async {
+    final box = await _box();
+    final jsonStr = box.get(_mealPlanKey) as String?;
+    if (jsonStr != null) {
+      try {
+        return jsonDecode(jsonStr) as Map<String, dynamic>;
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  Future<void> applyAiMealPlan(bool apply) async {
+    final box = await _box();
+    await box.put(_isMealAppliedKey, apply);
+  }
+
+  Future<bool> isAiMealPlanApplied() async {
+    final box = await _box();
+    return box.get(_isMealAppliedKey) as bool? ?? false;
+  }
 
   Future<FoodCalorieEstimateModel> estimateFoodCalories(XFile image) async {
     return estimateFoodCaloriesBytes(
