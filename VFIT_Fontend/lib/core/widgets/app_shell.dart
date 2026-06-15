@@ -14,6 +14,9 @@ import '../../features/auth/application/auth_controller.dart';
 import '../../features/ai/presentation/widgets/ai_coach_sheet.dart';
 import '../../features/ai/presentation/widgets/ai_meal_sheet.dart';
 
+final aiCoachButtonPositionProvider = StateProvider<Offset?>((ref) => null);
+final aiMealButtonPositionProvider = StateProvider<Offset?>((ref) => null);
+
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child});
 
@@ -75,6 +78,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               size: 26,
             ),
             initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0),
+            positionProvider: aiCoachButtonPositionProvider,
             onTap: () => AiCoachSheet.show(context),
           ),
         );
@@ -90,6 +94,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               size: 26,
             ),
             initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0),
+            positionProvider: aiMealButtonPositionProvider,
             onTap: () => AiMealSheet.show(context),
           ),
         );
@@ -192,23 +197,25 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 }
 
-class DraggableFloatingButton extends StatefulWidget {
+class DraggableFloatingButton extends ConsumerStatefulWidget {
   const DraggableFloatingButton({
     super.key,
     required this.icon,
     required this.onTap,
     required this.initialOffset,
+    required this.positionProvider,
   });
 
   final Widget icon;
   final VoidCallback onTap;
   final Offset initialOffset;
+  final StateProvider<Offset?> positionProvider;
 
   @override
-  State<DraggableFloatingButton> createState() => _DraggableFloatingButtonState();
+  ConsumerState<DraggableFloatingButton> createState() => _DraggableFloatingButtonState();
 }
 
-class _DraggableFloatingButtonState extends State<DraggableFloatingButton> {
+class _DraggableFloatingButtonState extends ConsumerState<DraggableFloatingButton> {
   late Offset _position;
   bool _isDragging = false;
   double _opacity = 1.0;
@@ -217,7 +224,8 @@ class _DraggableFloatingButtonState extends State<DraggableFloatingButton> {
   @override
   void initState() {
     super.initState();
-    _position = widget.initialOffset;
+    final saved = ref.read(widget.positionProvider);
+    _position = saved ?? widget.initialOffset;
     _resetFadeTimer();
   }
 
@@ -250,10 +258,12 @@ class _DraggableFloatingButtonState extends State<DraggableFloatingButton> {
         ? 16.0
         : screenSize.width - 72.0;
 
+    final newPos = Offset(targetX, y);
     setState(() {
       _isDragging = false;
-      _position = Offset(targetX, y);
+      _position = newPos;
     });
+    ref.read(widget.positionProvider.notifier).state = newPos;
     _resetFadeTimer();
   }
 
@@ -262,11 +272,16 @@ class _DraggableFloatingButtonState extends State<DraggableFloatingButton> {
     final size = MediaQuery.of(context).size;
     final bottomNavOffset = 100.0;
 
+    final clampedPos = Offset(
+      _position.dx.clamp(16.0, size.width - 72.0),
+      _position.dy.clamp(80.0, size.height - bottomNavOffset - 72.0),
+    );
+
     return AnimatedPositioned(
       duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
       curve: Curves.easeOutBack,
-      left: _position.dx,
-      top: _position.dy,
+      left: clampedPos.dx,
+      top: clampedPos.dy,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanStart: (_) {
