@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -40,6 +41,8 @@ class AppShell extends ConsumerWidget {
     };
     final isDark = AppColors.isDark(context);
     final wide = AppResponsive.isWide(context);
+    final size = MediaQuery.of(context).size;
+    const bottomNavOffset = 100.0;
 
     final auth = ref.watch(authControllerProvider);
     final isVip = auth.user?.isVipActive == true;
@@ -87,7 +90,28 @@ class AppShell extends ConsumerWidget {
             ),
           ),
         ),
-
+        if (isVip && !wide) ...[
+          DraggableFloatingButton(
+            key: const ValueKey('ai-coach-touch'),
+            icon: const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0),
+            onTap: () => AiCoachSheet.show(context),
+          ),
+          DraggableFloatingButton(
+            key: const ValueKey('ai-meal-touch'),
+            icon: const Icon(
+              Icons.restaurant_menu_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0),
+            onTap: () => AiMealSheet.show(context),
+          ),
+        ],
       ],
     );
 
@@ -120,61 +144,123 @@ class DraggableFloatingButton extends StatefulWidget {
     super.key,
     required this.icon,
     required this.onTap,
+    required this.initialOffset,
   });
 
   final Widget icon;
   final VoidCallback onTap;
+  final Offset initialOffset;
 
   @override
   State<DraggableFloatingButton> createState() => _DraggableFloatingButtonState();
 }
 
 class _DraggableFloatingButtonState extends State<DraggableFloatingButton> {
-  Offset? _position;
+  late Offset _position;
+  bool _isDragging = false;
+  double _opacity = 1.0;
+  Timer? _fadeTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _position = widget.initialOffset;
+    _resetFadeTimer();
+  }
+
+  @override
+  void dispose() {
+    _fadeTimer?.cancel();
+    super.dispose();
+  }
+
+  void _resetFadeTimer() {
+    _fadeTimer?.cancel();
+    setState(() {
+      _opacity = 1.0;
+    });
+    _fadeTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _opacity = 0.3;
+        });
+      }
+    });
+  }
+
+  void _snapToEdge(Size screenSize, double bottomNavOffset) {
+    final x = _position.dx;
+    final y = _position.dy;
+
+    // Nearest horizontal edge
+    final double targetX = (x + 28) < (screenSize.width / 2)
+        ? 16.0
+        : screenSize.width - 72.0;
+
+    setState(() {
+      _isDragging = false;
+      _position = Offset(targetX, y);
+    });
+    _resetFadeTimer();
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final bottomNavOffset = 100.0;
-    
-    // Set initial position at bottom right if not set yet
-    _position ??= Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0);
 
-    return Positioned(
-      left: _position!.dx,
-      top: _position!.dy,
+    return AnimatedPositioned(
+      duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
+      curve: Curves.easeOutBack,
+      left: _position.dx,
+      top: _position.dy,
       child: GestureDetector(
+        onPanStart: (_) {
+          setState(() {
+            _isDragging = true;
+            _opacity = 1.0;
+          });
+          _fadeTimer?.cancel();
+        },
         onPanUpdate: (details) {
           setState(() {
             _position = Offset(
-              (_position!.dx + details.delta.dx).clamp(16.0, size.width - 72.0),
-              (_position!.dy + details.delta.dy).clamp(80.0, size.height - bottomNavOffset - 72.0),
+              (_position.dx + details.delta.dx).clamp(16.0, size.width - 72.0),
+              (_position.dy + details.delta.dy).clamp(80.0, size.height - bottomNavOffset - 72.0),
             );
           });
         },
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2C3E50), Color(0xFF3498DB)],
+        onPanEnd: (_) => _snapToEdge(size, bottomNavOffset),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: _opacity,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2C3E50), Color(0xFF3498DB)],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  )
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.withValues(alpha: 0.35),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 4),
-                )
-              ],
-            ),
-            child: InkWell(
-              onTap: widget.onTap,
-              customBorder: const CircleBorder(),
-              child: Center(child: widget.icon),
+              child: InkWell(
+                onTap: () {
+                  _resetFadeTimer();
+                  widget.onTap();
+                },
+                customBorder: const CircleBorder(),
+                child: Center(child: widget.icon),
+              ),
             ),
           ),
         ),
