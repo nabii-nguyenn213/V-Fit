@@ -56,9 +56,6 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authControllerProvider);
-    final user = auth.user;
-    final isVip = user?.isVipActive == true;
 
     return DefaultTabController(
       length: 4,
@@ -211,20 +208,8 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
         body: TabBarView(
           children: [
             _buildChatInterface(context),
-            isVip
-                ? _buildWorkoutPlanner(context)
-                : _buildTabVipGate(
-                    context,
-                    'Lập lịch tập luyện cá nhân',
-                    'Thiết kế giáo án chi tiết và toàn diện dựa trên chỉ số hình thể cùng trình độ của bạn thông qua thuật toán AI tối tân.',
-                  ),
-            isVip
-                ? _buildMealPlanner(context)
-                : _buildTabVipGate(
-                    context,
-                    'Thực đơn ăn uống thông minh',
-                    'AI hỗ trợ chia calo và phân tích tỉ lệ macro (Protein, Carbs, Fat) chính xác dành riêng cho gymer theo mục tiêu.',
-                  ),
+            _buildWorkoutPlanner(context),
+            _buildMealPlanner(context),
             _buildFoodScanner(context),
           ],
         ),
@@ -232,205 +217,6 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     );
   }
 
-  Widget _buildTabVipGate(BuildContext context, String featureName, String featureDesc) {
-    final isDark = AppColors.isDark(context);
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? [
-                  const Color(0xFF0F172A),
-                  const Color(0xFF020617),
-                ]
-              : [
-                  const Color(0xFFF8FAFC),
-                  const Color(0xFFF1F5F9),
-                ],
-        ),
-      ),
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFFFB03A),
-                      Color(0xFFFF7E00),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.orange.withValues(alpha: 0.4),
-                      blurRadius: 25,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.workspace_premium_rounded,
-                  color: Colors.white,
-                  size: 50,
-                ),
-              ),
-              const SizedBox(height: 28),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFB03A).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFFB03A).withValues(alpha: 0.3), width: 1),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.workspace_premium_outlined, color: Colors.amber.shade700, size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      'V-FIT VIP ACCESS ONLY',
-                      style: TextStyle(
-                        color: Colors.amber.shade800,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                featureName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 24,
-                  letterSpacing: 0.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                featureDesc,
-                style: TextStyle(
-                  color: AppColors.textSecondaryOf(context),
-                  height: 1.6,
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.surface1 : Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark ? _ZincColors.shade800 : _ZincColors.shade200,
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildVipBenefitItem(
-                      context,
-                      Icons.auto_awesome_rounded,
-                      'Giải Pháp Cá Nhân Hóa Toàn Diện',
-                      'Thuật toán AI tự động phân tích chỉ số cơ thể, độ tuổi và mục tiêu để đề xuất tối ưu.',
-                    ),
-                    const Divider(height: 24, thickness: 0.8),
-                    _buildVipBenefitItem(
-                      context,
-                      Icons.trending_up_rounded,
-                      'Đẩy Nhanh Tiến Độ Tập Luyện',
-                      'Tiết kiệm 80% thời gian tự nghiên cứu lịch tập và thực đơn dinh dưỡng.',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 40),
-              Container(
-                width: double.infinity,
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.orange.withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: EdgeInsets.zero,
-                  ),
-                  onPressed: () {
-                    context.go('/profile');
-                  },
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFFFB03A),
-                          Color(0xFFFF7E00),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.workspace_premium_rounded, color: Colors.white),
-                          SizedBox(width: 12),
-                          Text(
-                            'NÂNG CẤP VIP NGAY',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.0,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildVipBenefitItem(BuildContext context, IconData icon, String title, String desc) {
     return Row(
@@ -469,6 +255,200 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showVipUpgradeDialog(BuildContext pageContext) {
+    final isDark = AppColors.isDark(pageContext);
+    showDialog<void>(
+      context: pageContext,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFFFB03A),
+                          Color(0xFFFF7E00),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withValues(alpha: 0.4),
+                          blurRadius: 15,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.workspace_premium_rounded,
+                      color: Colors.white,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFB03A).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFFFB03A).withValues(alpha: 0.3), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.workspace_premium_outlined, color: Colors.amber.shade700, size: 14),
+                        const SizedBox(width: 6),
+                        Text(
+                          'V-FIT VIP MEMBER',
+                          style: TextStyle(
+                            color: Colors.amber.shade800,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Nâng Cấp Trải Nghiệm VIP',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Tính năng Lập lịch tập AI và Thực đơn Dinh dưỡng AI chỉ dành cho thành viên VIP.',
+                    style: TextStyle(
+                      color: AppColors.textSecondaryOf(context),
+                      height: 1.5,
+                      fontSize: 13,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.surface1 : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark ? _ZincColors.shade800 : _ZincColors.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildVipBenefitItem(
+                          context,
+                          Icons.auto_awesome_rounded,
+                          'Giải Pháp Cá Nhân Hóa AI',
+                          'Tự động thiết kế lịch trình tập và thực đơn theo chỉ số cơ thể riêng.',
+                        ),
+                        const Divider(height: 20, thickness: 0.8),
+                        _buildVipBenefitItem(
+                          context,
+                          Icons.trending_up_rounded,
+                          'Bứt Phá Kết Quả Tập Luyện',
+                          'Tối ưu hóa tỉ lệ dinh dưỡng đa lượng để đạt mục tiêu nhanh hơn.',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        pageContext.go('/profile');
+                      },
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFFFFB03A),
+                              Color(0xFFFF7E00),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orange.withValues(alpha: 0.35),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'NÂNG CẤP VIP NGAY',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.8,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -670,6 +650,8 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
   Widget _buildWorkoutPlanner(BuildContext context) {
     final state = ref.watch(aiWorkoutPlannerProvider);
     final isDark = AppColors.isDark(context);
+    final auth = ref.watch(authControllerProvider);
+    final isVip = auth.user?.isVipActive == true;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -835,10 +817,14 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                     onPressed: state.isLoading
                         ? null
                         : () {
-                            ref.read(aiWorkoutPlannerProvider.notifier).generateWorkoutPlan(
-                                  level: _selectedLevel,
-                                  daysPerWeek: _daysPerWeek,
-                                );
+                            if (!isVip) {
+                              _showVipUpgradeDialog(context);
+                            } else {
+                              ref.read(aiWorkoutPlannerProvider.notifier).generateWorkoutPlan(
+                                    level: _selectedLevel,
+                                    daysPerWeek: _daysPerWeek,
+                                  );
+                            }
                           },
                     child: Ink(
                       decoration: BoxDecoration(
@@ -1201,6 +1187,8 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
   Widget _buildMealPlanner(BuildContext context) {
     final state = ref.watch(aiMealPlannerProvider);
     final isDark = AppColors.isDark(context);
+    final auth = ref.watch(authControllerProvider);
+    final isVip = auth.user?.isVipActive == true;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -1336,9 +1324,13 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                     onPressed: state.isLoading
                         ? null
                         : () {
-                            ref.read(aiMealPlannerProvider.notifier).generateMealPlan(
-                                  mealsPerDay: _mealsPerDay,
-                                );
+                            if (!isVip) {
+                              _showVipUpgradeDialog(context);
+                            } else {
+                              ref.read(aiMealPlannerProvider.notifier).generateMealPlan(
+                                    mealsPerDay: _mealsPerDay,
+                                  );
+                            }
                           },
                     child: Ink(
                       decoration: BoxDecoration(
