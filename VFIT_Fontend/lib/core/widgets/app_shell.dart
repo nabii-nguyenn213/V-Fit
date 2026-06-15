@@ -15,9 +15,7 @@ import '../../features/ai/presentation/widgets/ai_coach_sheet.dart';
 import '../../features/ai/presentation/widgets/ai_meal_sheet.dart';
 
 final aiCoachButtonPositionProvider = StateProvider<Offset?>((ref) => null);
-final aiMealButtonPositionProvider = StateProvider<Offset?>((ref) => null);
 final aiCoachDraggingProvider = StateProvider<bool>((ref) => false);
-final aiMealDraggingProvider = StateProvider<bool>((ref) => false);
 
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.child});
@@ -51,10 +49,9 @@ class AppShell extends ConsumerWidget {
     final bottomBarHeight = 64.0;
     final bottomBarMargin = bottomPadding > 0 ? bottomPadding : 24.0;
     final bottomBarTop = size.height - bottomBarHeight - bottomBarMargin;
-    final maxButtonY = bottomBarTop - 56.0 - 16.0;
+    final maxButtonY = bottomBarTop - 60.0 - 16.0;
 
-    final coachInitialOffset = Offset(size.width - 72.0, maxButtonY);
-    final mealInitialOffset = Offset(size.width - 72.0, maxButtonY - 72.0);
+    final coachInitialOffset = Offset(size.width - 76.0, maxButtonY);
 
     final auth = ref.watch(authControllerProvider);
     final isVip = auth.user?.isVipActive == true;
@@ -129,50 +126,13 @@ class AppShell extends ConsumerWidget {
     );
 
     if (showButtons) {
-      final coachPos = ref.watch(aiCoachButtonPositionProvider) ?? coachInitialOffset;
-      final coachDragging = ref.watch(aiCoachDraggingProvider);
-
-      final mealPos = ref.watch(aiMealButtonPositionProvider) ?? mealInitialOffset;
-      final mealDragging = ref.watch(aiMealDraggingProvider);
-
       return Stack(
         children: [
           scaffold,
-          AnimatedPositioned(
-            duration: coachDragging ? Duration.zero : const Duration(milliseconds: 300),
-            curve: Curves.easeOutBack,
-            left: coachPos.dx.clamp(16.0, size.width - 72.0),
-            top: coachPos.dy.clamp(80.0, maxButtonY),
-            child: DraggableFloatingButton(
-              key: const ValueKey('ai-coach-touch'),
-              icon: const Icon(
-                Icons.chat_bubble_outline_rounded,
-                color: Colors.white,
-                size: 26,
-              ),
-              positionProvider: aiCoachButtonPositionProvider,
-              draggingProvider: aiCoachDraggingProvider,
-              initialOffset: coachInitialOffset,
-              onTap: () => AiCoachSheet.show(context),
-            ),
-          ),
-          AnimatedPositioned(
-            duration: mealDragging ? Duration.zero : const Duration(milliseconds: 300),
-            curve: Curves.easeOutBack,
-            left: mealPos.dx.clamp(16.0, size.width - 72.0),
-            top: mealPos.dy.clamp(80.0, maxButtonY),
-            child: DraggableFloatingButton(
-              key: const ValueKey('ai-meal-touch'),
-              icon: const Icon(
-                Icons.restaurant_menu_rounded,
-                color: Colors.white,
-                size: 26,
-              ),
-              positionProvider: aiMealButtonPositionProvider,
-              draggingProvider: aiMealDraggingProvider,
-              initialOffset: mealInitialOffset,
-              onTap: () => AiMealSheet.show(context),
-            ),
+          DraggablePremiumAiSpeedDial(
+            positionProvider: aiCoachButtonPositionProvider,
+            draggingProvider: aiCoachDraggingProvider,
+            initialOffset: coachInitialOffset,
           ),
         ],
       );
@@ -182,54 +142,84 @@ class AppShell extends ConsumerWidget {
   }
 }
 
-class DraggableFloatingButton extends ConsumerStatefulWidget {
-  const DraggableFloatingButton({
+class DraggablePremiumAiSpeedDial extends ConsumerStatefulWidget {
+  const DraggablePremiumAiSpeedDial({
     super.key,
-    required this.icon,
-    required this.onTap,
     required this.positionProvider,
     required this.draggingProvider,
     required this.initialOffset,
   });
 
-  final Widget icon;
-  final VoidCallback onTap;
   final StateProvider<Offset?> positionProvider;
   final StateProvider<bool> draggingProvider;
   final Offset initialOffset;
 
   @override
-  ConsumerState<DraggableFloatingButton> createState() => _DraggableFloatingButtonState();
+  ConsumerState<DraggablePremiumAiSpeedDial> createState() => _DraggablePremiumAiSpeedDialState();
 }
 
-class _DraggableFloatingButtonState extends ConsumerState<DraggableFloatingButton> {
+class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAiSpeedDial>
+    with SingleTickerProviderStateMixin {
   double _opacity = 1.0;
   Timer? _fadeTimer;
+  bool _isOpen = false;
+  late AnimationController _animationController;
+  late Animation<double> _expandAnimation;
+  late Animation<double> _rotateAnimation;
 
   @override
   void initState() {
     super.initState();
     _resetFadeTimer();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.fastOutSlowIn,
+    );
+    _rotateAnimation = Tween<double>(begin: 0.0, end: 0.125).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOut,
+      ),
+    );
   }
 
   @override
   void dispose() {
     _fadeTimer?.cancel();
+    _animationController.dispose();
     super.dispose();
   }
 
   void _resetFadeTimer() {
     _fadeTimer?.cancel();
-    if (mounted) {
+    if (mounted && !_isOpen) {
       setState(() {
         _opacity = 1.0;
       });
     }
     _fadeTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) {
+      if (mounted && !_isOpen) {
         setState(() {
           _opacity = 0.3;
         });
+      }
+    });
+  }
+
+  void _toggleMenu() {
+    setState(() {
+      _isOpen = !_isOpen;
+      _opacity = 1.0;
+      if (_isOpen) {
+        _animationController.forward();
+        _fadeTimer?.cancel();
+      } else {
+        _animationController.reverse();
+        _resetFadeTimer();
       }
     });
   }
@@ -241,111 +231,182 @@ class _DraggableFloatingButtonState extends ConsumerState<DraggableFloatingButto
     final bottomBarHeight = 64.0;
     final bottomBarMargin = bottomPadding > 0 ? bottomPadding : 24.0;
     final bottomBarTop = size.height - bottomBarHeight - bottomBarMargin;
-    final maxButtonY = bottomBarTop - 56.0 - 16.0;
+    final maxButtonY = bottomBarTop - 60.0 - 16.0;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onPanStart: (_) {
-        ref.read(widget.draggingProvider.notifier).state = true;
-        _resetFadeTimer();
-      },
-      onPanUpdate: (details) {
-        final current = ref.read(widget.positionProvider) ?? widget.initialOffset;
-        final newX = (current.dx + details.delta.dx).clamp(16.0, size.width - 72.0);
-        double newY = (current.dy + details.delta.dy).clamp(80.0, maxButtonY);
+    final pos = ref.watch(widget.positionProvider) ?? widget.initialOffset;
+    final isDragging = ref.watch(widget.draggingProvider);
 
-        final otherProvider = widget.positionProvider == aiCoachButtonPositionProvider 
-            ? aiMealButtonPositionProvider 
-            : aiCoachButtonPositionProvider;
-        final otherPos = ref.read(otherProvider);
-        if (otherPos != null) {
-          final currentSide = (newX + 28) < (size.width / 2);
-          final otherSide = (otherPos.dx + 28) < (size.width / 2);
-          if (currentSide == otherSide) {
-            if ((newY - otherPos.dy).abs() < 72.0) {
-              if (newY < otherPos.dy) {
-                newY = (otherPos.dy - 72.0).clamp(80.0, maxButtonY);
-              } else {
-                newY = (otherPos.dy + 72.0).clamp(80.0, maxButtonY);
-              }
-            }
-          }
-        }
+    final isLeft = (pos.dx + 30) < (size.width / 2);
 
-        ref.read(widget.positionProvider.notifier).state = Offset(newX, newY);
-        _resetFadeTimer();
-      },
-      onPanEnd: (_) {
-        ref.read(widget.draggingProvider.notifier).state = false;
-        final current = ref.read(widget.positionProvider) ?? widget.initialOffset;
-        
-        final otherProvider = widget.positionProvider == aiCoachButtonPositionProvider 
-            ? aiMealButtonPositionProvider 
-            : aiCoachButtonPositionProvider;
-        final otherPos = ref.read(otherProvider);
-        
-        double targetX = (current.dx + 28) < (size.width / 2)
-            ? 16.0
-            : size.width - 72.0;
-            
-        double targetY = current.dy;
-        
-        if (otherPos != null) {
-          final otherX = (otherPos.dx + 28) < (size.width / 2) ? 16.0 : size.width - 72.0;
-          if (targetX == otherX) {
-            if ((targetY - otherPos.dy).abs() < 72.0) {
-              if (targetY < otherPos.dy) {
-                targetY = (otherPos.dy - 72.0).clamp(80.0, maxButtonY);
-              } else {
-                targetY = (otherPos.dy + 72.0).clamp(80.0, maxButtonY);
-              }
-              if ((targetY - otherPos.dy).abs() < 72.0) {
-                if (targetY == 80.0) {
-                  ref.read(otherProvider.notifier).state = Offset(otherX, 152.0);
-                } else if (targetY == maxButtonY) {
-                  ref.read(otherProvider.notifier).state = Offset(otherX, maxButtonY - 72.0);
-                }
-              }
-            }
-          }
-        }
-        
-        ref.read(widget.positionProvider.notifier).state = Offset(targetX, targetY);
-        _resetFadeTimer();
-      },
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: _opacity,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2C3E50), Color(0xFF3498DB)],
+    return AnimatedPositioned(
+      duration: isDragging ? Duration.zero : const Duration(milliseconds: 300),
+      curve: Curves.easeOutBack,
+      left: pos.dx.clamp(16.0, size.width - 76.0),
+      top: pos.dy.clamp(80.0, maxButtonY),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: isLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        children: [
+          if (_isOpen)
+            SizeTransition(
+              sizeFactor: _expandAnimation,
+              child: FadeTransition(
+                opacity: _expandAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Column(
+                    crossAxisAlignment: isLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                    children: [
+                      _buildMenuOption(
+                        context,
+                        title: 'Thực đơn AI',
+                        icon: Icons.restaurant_menu_rounded,
+                        color: const Color(0xFFFF7E00),
+                        isLeft: isLeft,
+                        onTap: () {
+                          _toggleMenu();
+                          context.push('/ai/coach?tab=2');
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      _buildMenuOption(
+                        context,
+                        title: 'Lập lịch AI',
+                        icon: Icons.fitness_center_rounded,
+                        color: const Color(0xFFE81CFF),
+                        isLeft: isLeft,
+                        onTap: () {
+                          _toggleMenu();
+                          context.push('/ai/coach?tab=1');
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      _buildMenuOption(
+                        context,
+                        title: 'AI Coach',
+                        icon: Icons.chat_bubble_outline_rounded,
+                        color: const Color(0xFF06B6D4),
+                        isLeft: isLeft,
+                        onTap: () {
+                          _toggleMenu();
+                          context.push('/ai/coach?tab=0');
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.withValues(alpha: 0.35),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 4),
-                )
-              ],
             ),
-            child: InkWell(
-              onTap: () {
-                _resetFadeTimer();
-                widget.onTap();
-              },
-              customBorder: const CircleBorder(),
-              child: Center(child: widget.icon),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanStart: (_) {
+              if (_isOpen) _toggleMenu();
+              ref.read(widget.draggingProvider.notifier).state = true;
+              _resetFadeTimer();
+            },
+            onPanUpdate: (details) {
+              final current = ref.read(widget.positionProvider) ?? widget.initialOffset;
+              ref.read(widget.positionProvider.notifier).state = Offset(
+                (current.dx + details.delta.dx).clamp(16.0, size.width - 76.0),
+                (current.dy + details.delta.dy).clamp(80.0, maxButtonY),
+              );
+              _resetFadeTimer();
+            },
+            onPanEnd: (_) {
+              ref.read(widget.draggingProvider.notifier).state = false;
+              final current = ref.read(widget.positionProvider) ?? widget.initialOffset;
+              final double targetX = (current.dx + 30) < (size.width / 2)
+                  ? 16.0
+                  : size.width - 76.0;
+              ref.read(widget.positionProvider.notifier).state = Offset(targetX, current.dy);
+              _resetFadeTimer();
+            },
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _opacity,
+              child: Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFE81CFF), Color(0xFF06B6D4)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFE81CFF).withOpacity(0.35),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: _toggleMenu,
+                    child: RotationTransition(
+                      turns: _rotateAnimation,
+                      child: const Icon(
+                        Icons.auto_awesome_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildMenuOption(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Color color,
+    required bool isLeft,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final label = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+      ),
+    );
+
+    final button = FloatingActionButton.small(
+      heroTag: 'speed_dial_$title',
+      backgroundColor: color,
+      foregroundColor: Colors.white,
+      onPressed: onTap,
+      child: Icon(icon),
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: isLeft
+          ? [button, const SizedBox(width: 10), label]
+          : [label, const SizedBox(width: 10), button],
     );
   }
 }

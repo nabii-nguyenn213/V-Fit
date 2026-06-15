@@ -8,7 +8,6 @@ import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../core/widgets/flashy_vip_required_modal.dart';
-import '../../../../core/widgets/premium_ai_speed_dial.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
 import '../../../../presentation/theme/app_spacing.dart';
@@ -56,26 +55,6 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           ),
       ],
       child: Scaffold(
-        floatingActionButton: PremiumAiSpeedDial(
-          firstOptionTitle: 'AI Coach',
-          firstOptionIcon: Icons.chat_bubble_outline_rounded,
-          firstOptionTap: () {
-            context.push('/ai/coach?tab=0');
-          },
-          secondOptionTitle: 'Lập lịch AI',
-          secondOptionIcon: Icons.fitness_center_rounded,
-          secondOptionTap: () {
-            if (user?.isVipActive == true) {
-              context.push('/ai/coach?tab=1');
-            } else {
-              showDialog<void>(
-                context: context,
-                builder: (context) => const FlashyVipRequiredModal(),
-              );
-            }
-          },
-          isVip: user?.isVipActive == true,
-        ),
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
