@@ -51,15 +51,16 @@ class Environment {
       return [_apiBaseUrlOverride];
     }
     if (kIsWeb) {
-      return ['http://localhost:8080'];
+      return ['http://localhost:8080', 'http://trungtranvfit.id.vn'];
     }
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => [
           'http://192.168.1.93:8080',
           'http://10.0.2.2:8080',
           'http://127.0.0.1:8080',
+          'http://trungtranvfit.id.vn',
         ],
-      _ => ['http://localhost:8080'],
+      _ => ['http://localhost:8080', 'http://trungtranvfit.id.vn'],
     };
   }
 
@@ -77,15 +78,16 @@ class Environment {
       return [_aiBaseUrlOverride];
     }
     if (kIsWeb) {
-      return ['http://localhost:8000'];
+      return ['http://localhost:8000', 'http://trungtranvfit.id.vn:8000'];
     }
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => [
           'http://192.168.1.93:8000',
           'http://10.0.2.2:8000',
           'http://127.0.0.1:8000',
+          'http://trungtranvfit.id.vn:8000',
         ],
-      _ => ['http://localhost:8000'],
+      _ => ['http://localhost:8000', 'http://trungtranvfit.id.vn:8000'],
     };
   }
 
