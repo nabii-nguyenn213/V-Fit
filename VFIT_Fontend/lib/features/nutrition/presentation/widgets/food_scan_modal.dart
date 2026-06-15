@@ -127,12 +127,6 @@ class _FoodScanModalState extends State<FoodScanModal> {
   /// 🖼️ Chọn ảnh từ gallery
   Future<void> _pickFromGallery() async {
     try {
-      final hasPermission = await PermissionHelper.requestPhotoLibraryPermission();
-      if (!hasPermission) {
-        AppFeedback.error('Cần cấp quyền truy cập thư viện ảnh');
-        return;
-      }
-
       setState(() => _isAnalyzing = true);
 
       final picker = ImagePicker();
@@ -293,30 +287,40 @@ class _FoodScanModalState extends State<FoodScanModal> {
       height: 300,
       width: double.infinity,
       color: Colors.black,
-      child: Stack(
-        children: [
-          CameraPreview(_cameraController!),
-          Positioned(
-            bottom: 16,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(12),
+      child: ClipRect(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: 100,
+                height: 100 * (_cameraController?.value.aspectRatio ?? 1.0),
+                child: CameraPreview(_cameraController!),
               ),
-              child: const Text(
-                '👉 Chọn "Chụp ảnh" để quét',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
+            ),
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  '👉 Chọn "Chụp ảnh" để quét',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

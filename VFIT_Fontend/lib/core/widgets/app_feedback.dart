@@ -161,6 +161,7 @@ class AppFeedbackPanel extends StatelessWidget {
       child: compactWidth
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 icon,
                 const SizedBox(height: 10),
@@ -192,11 +193,16 @@ class _AppFeedbackToast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppFeedbackPanel(
-      title: title,
-      message: message,
-      type: type,
-      compact: true,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppFeedbackPanel(
+          title: title,
+          message: message,
+          type: type,
+          compact: true,
+        ),
+      ],
     );
   }
 }
