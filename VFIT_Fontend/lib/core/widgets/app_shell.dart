@@ -251,19 +251,66 @@ class _DraggableFloatingButtonState extends ConsumerState<DraggableFloatingButto
       },
       onPanUpdate: (details) {
         final current = ref.read(widget.positionProvider) ?? widget.initialOffset;
-        ref.read(widget.positionProvider.notifier).state = Offset(
-          (current.dx + details.delta.dx).clamp(16.0, size.width - 72.0),
-          (current.dy + details.delta.dy).clamp(80.0, maxButtonY),
-        );
+        final newX = (current.dx + details.delta.dx).clamp(16.0, size.width - 72.0);
+        double newY = (current.dy + details.delta.dy).clamp(80.0, maxButtonY);
+
+        final otherProvider = widget.positionProvider == aiCoachButtonPositionProvider 
+            ? aiMealButtonPositionProvider 
+            : aiCoachButtonPositionProvider;
+        final otherPos = ref.read(otherProvider);
+        if (otherPos != null) {
+          final currentSide = (newX + 28) < (size.width / 2);
+          final otherSide = (otherPos.dx + 28) < (size.width / 2);
+          if (currentSide == otherSide) {
+            if ((newY - otherPos.dy).abs() < 72.0) {
+              if (newY < otherPos.dy) {
+                newY = (otherPos.dy - 72.0).clamp(80.0, maxButtonY);
+              } else {
+                newY = (otherPos.dy + 72.0).clamp(80.0, maxButtonY);
+              }
+            }
+          }
+        }
+
+        ref.read(widget.positionProvider.notifier).state = Offset(newX, newY);
         _resetFadeTimer();
       },
       onPanEnd: (_) {
         ref.read(widget.draggingProvider.notifier).state = false;
         final current = ref.read(widget.positionProvider) ?? widget.initialOffset;
-        final double targetX = (current.dx + 28) < (size.width / 2)
+        
+        final otherProvider = widget.positionProvider == aiCoachButtonPositionProvider 
+            ? aiMealButtonPositionProvider 
+            : aiCoachButtonPositionProvider;
+        final otherPos = ref.read(otherProvider);
+        
+        double targetX = (current.dx + 28) < (size.width / 2)
             ? 16.0
             : size.width - 72.0;
-        ref.read(widget.positionProvider.notifier).state = Offset(targetX, current.dy);
+            
+        double targetY = current.dy;
+        
+        if (otherPos != null) {
+          final otherX = (otherPos.dx + 28) < (size.width / 2) ? 16.0 : size.width - 72.0;
+          if (targetX == otherX) {
+            if ((targetY - otherPos.dy).abs() < 72.0) {
+              if (targetY < otherPos.dy) {
+                targetY = (otherPos.dy - 72.0).clamp(80.0, maxButtonY);
+              } else {
+                targetY = (otherPos.dy + 72.0).clamp(80.0, maxButtonY);
+              }
+              if ((targetY - otherPos.dy).abs() < 72.0) {
+                if (targetY == 80.0) {
+                  ref.read(otherProvider.notifier).state = Offset(otherX, 152.0);
+                } else if (targetY == maxButtonY) {
+                  ref.read(otherProvider.notifier).state = Offset(otherX, maxButtonY - 72.0);
+                }
+              }
+            }
+          }
+        }
+        
+        ref.read(widget.positionProvider.notifier).state = Offset(targetX, targetY);
         _resetFadeTimer();
       },
       child: AnimatedOpacity(
