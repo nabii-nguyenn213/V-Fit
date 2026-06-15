@@ -1794,12 +1794,19 @@ class _JourneyEntryImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final localSnap = entry.localSnap;
     if (localSnap != null) {
-      return Image.file(
-        localSnap.file,
-        fit: fit,
-        width: double.infinity,
-        height: double.infinity,
-      );
+      return kIsWeb
+          ? Image.network(
+              localSnap.file.path,
+              fit: fit,
+              width: double.infinity,
+              height: double.infinity,
+            )
+          : Image.file(
+              File(localSnap.file.path),
+              fit: fit,
+              width: double.infinity,
+              height: double.infinity,
+            );
     }
 
     final remoteSnap = entry.remoteSnap!;
@@ -1835,12 +1842,19 @@ class _LocalJourneySnapCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _JourneyPhotoTile(
-      image: Image.file(
-        snap.file,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      ),
+      image: kIsWeb
+          ? Image.network(
+              snap.file.path,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            )
+          : Image.file(
+              File(snap.file.path),
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            ),
       createdAt: snap.createdAt,
       note: snap.note,
       badge: 'Đang đồng bộ',

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -30,8 +31,6 @@ class _ForceCameraOverlayState extends ConsumerState<ForceCameraOverlay> {
 
       if (pickedFile == null || !mounted) return;
 
-      final File imageFile = File(pickedFile.path);
-
       // Prompt user for note/description
       final String? note = await showDialog<String>(
         context: context,
@@ -47,12 +46,19 @@ class _ForceCameraOverlayState extends ConsumerState<ForceCameraOverlay> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    imageFile,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                  child: kIsWeb
+                      ? Image.network(
+                          pickedFile.path,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.file(
+                          File(pickedFile.path),
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                 ),
                 const SizedBox(height: 14),
                 TextField(
@@ -88,7 +94,7 @@ class _ForceCameraOverlayState extends ConsumerState<ForceCameraOverlay> {
       setState(() => _isUploading = true);
 
       // Upload using progress repository
-      await ref.read(progressRepositoryProvider).uploadSnap(imageFile, note);
+      await ref.read(progressRepositoryProvider).uploadSnap(pickedFile, note);
 
       if (mounted) {
         AppFeedback.success(
