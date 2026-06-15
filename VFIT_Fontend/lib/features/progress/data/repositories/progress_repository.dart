@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -87,7 +87,7 @@ class ProgressRepository {
     }
   }
 
-  Future<JourneySnapModel> uploadSnap(File file, String? note) async {
+  Future<JourneySnapModel> uploadSnap(XFile file, String? note) async {
     // Check daily upload limit (max 5 snaps per day)
     final now = DateTime.now();
     final todayDate = DateTime(now.year, now.month, now.day);
@@ -104,8 +104,12 @@ class ProgressRepository {
           statusCode: 400);
     }
     try {
+      final bytes = await file.readAsBytes();
       final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(file.path),
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: file.name,
+        ),
         if (note != null && note.isNotEmpty) 'note': note,
       });
 

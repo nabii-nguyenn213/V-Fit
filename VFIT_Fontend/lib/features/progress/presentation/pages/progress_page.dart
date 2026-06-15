@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:camera/camera.dart' show XFile;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -101,11 +102,9 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
       return;
     }
 
-    final snapFile = File(capturedFile.path);
-
     final action = await showDialog<_JourneySnapAction>(
       context: context,
-      builder: (context) => _JourneySnapDialog(imageFile: snapFile),
+      builder: (context) => _JourneySnapDialog(imageFile: capturedFile),
     );
 
     if (action == null || !mounted) {
@@ -113,12 +112,12 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
     }
 
     if (action.type == _JourneySnapActionType.saveToDevice) {
-      await _saveSnapToDevice(snapFile);
+      await _saveSnapToDevice(capturedFile);
       return;
     }
 
     final localSnap = _LocalJourneySnap(
-      file: snapFile,
+      file: capturedFile,
       note: action.note.isEmpty ? null : action.note,
       createdAt: DateTime.now(),
     );
@@ -156,7 +155,16 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
     }
   }
 
-  Future<void> _saveSnapToDevice(File imageFile) async {
+  Future<void> _saveSnapToDevice(XFile imageFile) async {
+    if (kIsWeb) {
+      if (mounted) {
+        AppFeedback.warning(
+          'Không hỗ trợ lưu ảnh trực tiếp vào thư viện trên trình duyệt web.',
+          title: 'Tính năng không hỗ trợ',
+        );
+      }
+      return;
+    }
     try {
       await _mediaChannel.invokeMethod<String>(
         'saveImageToGallery',
@@ -523,7 +531,7 @@ class _LocalJourneySnap {
     this.note,
   });
 
-  final File file;
+  final XFile file;
   final DateTime createdAt;
   final String? note;
 }
@@ -559,7 +567,7 @@ class _JourneySnapDialog extends StatefulWidget {
     required this.imageFile,
   });
 
-  final File imageFile;
+  final XFile imageFile;
 
   @override
   State<_JourneySnapDialog> createState() => _JourneySnapDialogState();
@@ -726,12 +734,19 @@ class _JourneySnapDialogState extends State<_JourneySnapDialog> {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          Image.file(
-                            widget.imageFile,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                          ),
+                          kIsWeb
+                              ? Image.network(
+                                  widget.imageFile.path,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                )
+                              : Image.file(
+                                  File(widget.imageFile.path),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
                           const DecoratedBox(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
