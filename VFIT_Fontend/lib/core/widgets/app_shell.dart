@@ -245,12 +245,15 @@ class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAi
     final isDragging = ref.watch(widget.draggingProvider);
 
     final isLeft = (pos.dx + 30) < (size.width / 2);
+    final double clampedX = pos.dx.clamp(16.0, size.width - 76.0);
+    final double clampedY = pos.dy.clamp(80.0, maxButtonY);
 
     return AnimatedPositioned(
       duration: isDragging ? Duration.zero : const Duration(milliseconds: 300),
       curve: Curves.easeOutBack,
-      left: pos.dx.clamp(16.0, size.width - 76.0),
-      top: pos.dy.clamp(80.0, maxButtonY),
+      left: isLeft ? clampedX : null,
+      right: isLeft ? null : size.width - clampedX - 60.0,
+      top: clampedY,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: isLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end,
@@ -404,7 +407,11 @@ class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAi
           children: [
             Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 13,
+                decoration: TextDecoration.none,
+              ),
             ),
             if (isVipOption) ...[
               const SizedBox(width: 4),
@@ -418,14 +425,24 @@ class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAi
                 ),
                 child: const Text(
                   'VIP',
-                  style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 8, 
+                    color: Colors.white, 
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.none,
+                  ),
                 ),
               ),
             ] else ...[
               const SizedBox(width: 4),
               const Text(
                 'FREE',
-                style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 8, 
+                  color: Colors.green, 
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.none,
+                ),
               ),
             ],
           ],
@@ -441,11 +458,14 @@ class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAi
       child: Icon(icon),
     );
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: isLeft
-          ? [button, const SizedBox(width: 10), label]
-          : [label, const SizedBox(width: 10), button],
+    return Material(
+      type: MaterialType.transparency,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: isLeft
+            ? [button, const SizedBox(width: 10), label]
+            : [label, const SizedBox(width: 10), button],
+      ),
     );
   }
 }
