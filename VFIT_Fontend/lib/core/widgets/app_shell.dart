@@ -17,7 +17,7 @@ import '../../features/ai/presentation/widgets/ai_meal_sheet.dart';
 final aiCoachButtonPositionProvider = StateProvider<Offset?>((ref) => null);
 final aiMealButtonPositionProvider = StateProvider<Offset?>((ref) => null);
 
-class AppShell extends ConsumerStatefulWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.child});
 
   final Widget child;
@@ -31,91 +31,9 @@ class AppShell extends ConsumerStatefulWidget {
   ];
 
   @override
-  ConsumerState<AppShell> createState() => _AppShellState();
-}
-
-class _AppShellState extends ConsumerState<AppShell> {
-  OverlayEntry? _coachEntry;
-  OverlayEntry? _mealEntry;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _updateOverlay();
-    });
-  }
-
-  @override
-  void dispose() {
-    _coachEntry?.remove();
-    _coachEntry = null;
-    _mealEntry?.remove();
-    _mealEntry = null;
-    super.dispose();
-  }
-
-  void _updateOverlay() {
-    if (!mounted) return;
-    final rootOverlay = Navigator.of(context, rootNavigator: true).overlay;
-    if (rootOverlay == null) return;
-
-    final auth = ref.read(authControllerProvider);
-    final isVip = auth.user?.isVipActive == true;
-    final size = MediaQuery.of(context).size;
-    final wide = AppResponsive.isWide(context);
-    final showButtons = isVip && !wide;
-    const bottomNavOffset = 100.0;
-
-    if (showButtons) {
-      if (_coachEntry == null) {
-        _coachEntry = OverlayEntry(
-          builder: (context) => DraggableFloatingButton(
-            key: const ValueKey('ai-coach-touch'),
-            icon: const Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: Colors.white,
-              size: 26,
-            ),
-            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0),
-            positionProvider: aiCoachButtonPositionProvider,
-            onTap: () => AiCoachSheet.show(context),
-          ),
-        );
-        rootOverlay.insert(_coachEntry!);
-      }
-      if (_mealEntry == null) {
-        _mealEntry = OverlayEntry(
-          builder: (context) => DraggableFloatingButton(
-            key: const ValueKey('ai-meal-touch'),
-            icon: const Icon(
-              Icons.restaurant_menu_rounded,
-              color: Colors.white,
-              size: 26,
-            ),
-            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0),
-            positionProvider: aiMealButtonPositionProvider,
-            onTap: () => AiMealSheet.show(context),
-          ),
-        );
-        rootOverlay.insert(_mealEntry!);
-      }
-    } else {
-      _coachEntry?.remove();
-      _coachEntry = null;
-      _mealEntry?.remove();
-      _mealEntry = null;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _updateOverlay();
-    });
-
+  Widget build(BuildContext context, WidgetRef ref) {
     final path = GoRouterState.of(context).uri.path;
-    final selectedIndex = AppShell._routes.indexWhere((route) => path.startsWith(route));
+    final selectedIndex = _routes.indexWhere((route) => path.startsWith(route));
     final safeIndex = selectedIndex < 0 ? 0 : selectedIndex;
     final title = switch (safeIndex) {
       0 => 'Trang chủ',
@@ -126,6 +44,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     };
     final isDark = AppColors.isDark(context);
     final wide = AppResponsive.isWide(context);
+    final size = MediaQuery.of(context).size;
+    const bottomNavOffset = 100.0;
+
+    final auth = ref.watch(authControllerProvider);
+    final isVip = auth.user?.isVipActive == true;
+    final showButtons = isVip && !wide;
 
     final body = Stack(
       children: [
@@ -162,7 +86,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                     child: AppResponsive.centeredContent(
                       context: context,
                       maxWidth: wide ? 1080 : AppResponsive.maxContentWidth,
-                      child: widget.child,
+                      child: child,
                     ),
                   ),
                 ],
@@ -173,7 +97,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       ],
     );
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       extendBody: true,
       body: wide
@@ -181,7 +105,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               children: [
                 _ShellNavigationRail(
                   selectedIndex: safeIndex,
-                  onDestinationSelected: (value) => context.go(AppShell._routes[value]),
+                  onDestinationSelected: (value) => context.go(_routes[value]),
                 ),
                 Expanded(child: body),
               ],
@@ -191,9 +115,41 @@ class _AppShellState extends ConsumerState<AppShell> {
           ? null
           : _ShellNavigationBar(
               selectedIndex: safeIndex,
-              onDestinationSelected: (value) => context.go(AppShell._routes[value]),
+              onDestinationSelected: (value) => context.go(_routes[value]),
             ),
     );
+
+    if (showButtons) {
+      return Stack(
+        children: [
+          Positioned.fill(child: scaffold),
+          DraggableFloatingButton(
+            key: const ValueKey('ai-coach-touch'),
+            icon: const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0),
+            positionProvider: aiCoachButtonPositionProvider,
+            onTap: () => AiCoachSheet.show(context),
+          ),
+          DraggableFloatingButton(
+            key: const ValueKey('ai-meal-touch'),
+            icon: const Icon(
+              Icons.restaurant_menu_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0),
+            positionProvider: aiMealButtonPositionProvider,
+            onTap: () => AiMealSheet.show(context),
+          ),
+        ],
+      );
+    }
+
+    return scaffold;
   }
 }
 
