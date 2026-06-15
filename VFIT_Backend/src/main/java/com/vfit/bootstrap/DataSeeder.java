@@ -67,11 +67,13 @@ public class DataSeeder implements CommandLineRunner {
         // Critical production data — always run regardless of sample-data-enabled flag.
         // Both methods are idempotent: exercise catalog replaces by ID, workout metadata
         // always loads the latest expert plans.
-        log.info("[DataSeeder] Seeding critical production data (exercise catalog + workout metadata)...");
+        log.info("[DataSeeder] Seeding critical production data (exercise catalog + workout metadata + gamification)...");
         exerciseLibraryService.seedDefaultCatalog("vi-VN");
         log.info("[DataSeeder] Exercise catalog seeded.");
         seedPersonalizedWorkoutMetadata();
         log.info("[DataSeeder] Personalized workout metadata seeded.");
+        seedBadgesAndChallenges();
+        log.info("[DataSeeder] Badges and challenges seeded.");
 
         if (appProperties.getBootstrap().isSampleDataEnabled()) {
             log.info("[DataSeeder] sample-data-enabled=true — running full seed...");
@@ -79,7 +81,6 @@ public class DataSeeder implements CommandLineRunner {
             seedExercises();
             log.info("[DataSeeder] Exercises seeded.");
             seedWorkoutPrograms();
-            seedBadgesAndChallenges();
             seedFoods();
             log.info("[DataSeeder] All sample data seeded successfully.");
         } else {
