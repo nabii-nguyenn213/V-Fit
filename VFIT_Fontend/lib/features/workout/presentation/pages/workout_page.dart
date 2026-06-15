@@ -7,6 +7,8 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../../core/widgets/flashy_vip_required_modal.dart';
+import '../../../../core/widgets/premium_ai_speed_dial.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
 import '../../../../presentation/theme/app_spacing.dart';
@@ -54,6 +56,26 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           ),
       ],
       child: Scaffold(
+        floatingActionButton: PremiumAiSpeedDial(
+          firstOptionTitle: 'AI Coach',
+          firstOptionIcon: Icons.chat_bubble_outline_rounded,
+          firstOptionTap: () {
+            context.push('/ai/coach?tab=0');
+          },
+          secondOptionTitle: 'Lập lịch AI',
+          secondOptionIcon: Icons.fitness_center_rounded,
+          secondOptionTap: () {
+            if (user?.isVipActive == true) {
+              context.push('/ai/coach?tab=1');
+            } else {
+              showDialog<void>(
+                context: context,
+                builder: (context) => const FlashyVipRequiredModal(),
+              );
+            }
+          },
+          isVip: user?.isVipActive == true,
+        ),
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -380,7 +402,7 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
     if (!user.isVipActive) {
       await showDialog<void>(
         context: context,
-        builder: (context) => const VipRequiredModal(),
+        builder: (context) => const FlashyVipRequiredModal(),
       );
       return;
     }
@@ -544,33 +566,6 @@ class LoginRequiredModal extends StatelessWidget {
   }
 }
 
-class VipRequiredModal extends StatelessWidget {
-  const VipRequiredModal({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      icon: const Icon(Icons.workspace_premium_rounded),
-      title: const Text('Tính năng dành cho V-FIT VIP'),
-      content: const Text(
-        'Nâng cấp VIP để sử dụng AI Scan Body, phân tích cơ thể và giáo án cá nhân hóa.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Để sau'),
-        ),
-        FilledButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            context.go('/premium');
-          },
-          child: const Text('Nâng cấp VIP'),
-        ),
-      ],
-    );
-  }
-}
 
 // Shared card structure used by LoginToSetGoalState and GoalRequiredState.
 // Both states have identical layout: icon-container, gradient card, title,

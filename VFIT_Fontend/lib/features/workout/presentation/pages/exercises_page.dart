@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../../core/widgets/flashy_vip_required_modal.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../data/repositories/workout_repository.dart';
 import 'workout_page.dart';
@@ -160,7 +161,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
     if (user.isVipActive != true) {
       await showDialog<void>(
         context: context,
-        builder: (context) => const VipRequiredModal(),
+        builder: (context) => const FlashyVipRequiredModal(),
       );
       return;
     }

@@ -87,29 +87,7 @@ class AppShell extends ConsumerWidget {
             ),
           ),
         ),
-        // Draggable floating buttons for VIP users in specific screens
-        if (isVip && !wide) ...[
-          if (path.startsWith('/workouts'))
-            DraggableFloatingButton(
-              key: const ValueKey('ai-coach-touch'),
-              icon: Icon(
-                Icons.chat_bubble_outline_rounded,
-                color: Colors.white,
-                size: 26,
-              ),
-              onTap: () => AiCoachSheet.show(context),
-            ),
-          if (path.startsWith('/nutrition'))
-            DraggableFloatingButton(
-              key: const ValueKey('ai-meal-touch'),
-              icon: Icon(
-                Icons.restaurant_menu_rounded,
-                color: Colors.white,
-                size: 26,
-              ),
-              onTap: () => AiMealSheet.show(context),
-            ),
-        ],
+
       ],
     );
 

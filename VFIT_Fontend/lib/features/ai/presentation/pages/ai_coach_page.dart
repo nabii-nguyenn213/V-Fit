@@ -12,7 +12,8 @@ import '../providers/ai_meal_planner_provider.dart';
 import '../providers/ai_food_scanner_provider.dart';
 
 class AiCoachPage extends ConsumerStatefulWidget {
-  const AiCoachPage({super.key});
+  final int initialTab;
+  const AiCoachPage({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<AiCoachPage> createState() => _AiCoachPageState();
@@ -59,6 +60,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
 
     return DefaultTabController(
       length: 4,
+      initialIndex: widget.initialTab,
       child: Scaffold(
         extendBodyBehindAppBar: false,
         appBar: AppBar(

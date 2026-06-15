@@ -13,6 +13,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/widgets/flashy_vip_required_modal.dart';
+import '../../../../core/widgets/premium_ai_speed_dial.dart';
 import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
 import '../../../../presentation/theme/app_spacing.dart';
@@ -277,116 +279,139 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
     final repository = ref.watch(foodRepositoryProvider);
     final isAiAppliedAsync = ref.watch(isAiMealPlanAppliedProvider);
     final aiPlanAsync = ref.watch(aiMealPlanProvider);
+    final user = ref.watch(authControllerProvider).user;
 
-    return BlocProvider(
-      create: (_) => NutritionCalculatorBloc(
-        searchFoods: SearchFoods(repository),
-        rememberFood: RememberFood(repository),
-      )..add(const NutritionSearchRequested('')),
-      child: BlocBuilder<NutritionCalculatorBloc, NutritionCalculatorState>(
-        builder: (context, state) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              context
-                  .read<NutritionCalculatorBloc>()
-                  .add(NutritionSearchRequested(_searchController.text));
-              ref.invalidate(isAiMealPlanAppliedProvider);
-              ref.invalidate(aiMealPlanProvider);
-            },
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: AppResponsive.pagePadding(context).copyWith(
-                bottom: AppResponsive.pagePadding(context).bottom + 96,
-              ),
-              children: [
-                Text(
-                  'Trung tâm dinh dưỡng',
-                  style: AppTypography.headerLargeFor(context),
+    return Scaffold(
+      floatingActionButton: PremiumAiSpeedDial(
+        firstOptionTitle: 'AI Coach',
+        firstOptionIcon: Icons.chat_bubble_outline_rounded,
+        firstOptionTap: () {
+          context.push('/ai/coach?tab=0');
+        },
+        secondOptionTitle: 'Lên thực đơn AI',
+        secondOptionIcon: Icons.restaurant_menu_rounded,
+        secondOptionTap: () {
+          if (user?.isVipActive == true) {
+            context.push('/ai/coach?tab=2');
+          } else {
+            showDialog<void>(
+              context: context,
+              builder: (context) => const FlashyVipRequiredModal(),
+            );
+          }
+        },
+        isVip: user?.isVipActive == true,
+      ),
+      body: BlocProvider(
+        create: (_) => NutritionCalculatorBloc(
+          searchFoods: SearchFoods(repository),
+          rememberFood: RememberFood(repository),
+        )..add(const NutritionSearchRequested('')),
+        child: BlocBuilder<NutritionCalculatorBloc, NutritionCalculatorState>(
+          builder: (context, state) {
+            return RefreshIndicator(
+              onRefresh: () async {
+                context
+                    .read<NutritionCalculatorBloc>()
+                    .add(NutritionSearchRequested(_searchController.text));
+                ref.invalidate(isAiMealPlanAppliedProvider);
+                ref.invalidate(aiMealPlanProvider);
+              },
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: AppResponsive.pagePadding(context).copyWith(
+                  bottom: AppResponsive.pagePadding(context).bottom + 96,
                 ),
-                const SizedBox(height: AppSpacing.x2),
-                Text(
-                  'Quét món ăn, tra cứu calo và tính macro trong một workspace gọn.',
-                  style: AppTypography.bodySmallFor(context),
-                ),
-                const SizedBox(height: AppSpacing.x4),
-                _FoodScanCard(
-                  loading: _scanLoading,
-                  onTap: () => _scanFood(context),
-                ),
-                const SizedBox(height: AppSpacing.x4),
-                _NutritionSearchBar(
-                  controller: _searchController,
-                  loading: state.loading,
-                  onChanged: (value) => _onSearchChanged(context, value),
-                ),
-                const SizedBox(height: 18),
-                if (state.errorMessage != null)
-                  _ErrorStrip(message: state.errorMessage!)
-                else if (state.isEmptyResult)
-                  _EmptyFoodState(keyword: state.keyword)
-                else if (state.hasKeyword)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _FoodListSection(
-                        title: 'Kết quả phù hợp',
+                children: [
+                  Text(
+                    'Trung tâm dinh dưỡng',
+                    style: AppTypography.headerLargeFor(context),
+                  ),
+                  const SizedBox(height: AppSpacing.x2),
+                  Text(
+                    'Quét món ăn, tra cứu calo và tính macro trong một workspace gọn.',
+                    style: AppTypography.bodySmallFor(context),
+                  ),
+                  const SizedBox(height: AppSpacing.x4),
+                  _FoodScanCard(
+                    loading: _scanLoading,
+                    onTap: () => _scanFood(context),
+                  ),
+                  const SizedBox(height: AppSpacing.x4),
+                  _NutritionSearchBar(
+                    controller: _searchController,
+                    loading: state.loading,
+                    onChanged: (value) => _onSearchChanged(context, value),
+                  ),
+                  const SizedBox(height: 18),
+                  if (state.errorMessage != null)
+                    _ErrorStrip(message: state.errorMessage!)
+                  else if (state.isEmptyResult)
+                    _EmptyFoodState(keyword: state.keyword)
+                  else if (state.hasKeyword)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _FoodListSection(
+                          title: 'Kết quả phù hợp',
+                          foods: state.foods,
+                          onFoodTap: (food) => _openCalculator(context, food),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildSearchAiPlanButton(context),
+                      ],
+                    )
+                  else
+                    isAiAppliedAsync.when(
+                      data: (isAiApplied) {
+                        if (isAiApplied) {
+                          return aiPlanAsync.when(
+                            data: (plan) {
+                              if (plan != null) {
+                                return _buildAiWeeklyPlanSection(context, plan);
+                              }
+                              return _buildNoAiPlanPlaceholder(context);
+                            },
+                            loading: () => const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(24.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                            error: (err, _) => Text('Lỗi tải thực đơn AI: $err'),
+                          );
+                        } else {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildAiBanner(context),
+                              const SizedBox(height: 18),
+                              _FoodListSection(
+                                title: 'Món ăn phổ biến cho gymer',
+                                foods: state.foods,
+                                onFoodTap: (food) => _openCalculator(context, food),
+                              ),
+                            ],
+                          );
+                        }
+                      },
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                      error: (err, _) => _FoodListSection(
+                        title: 'Món ăn phổ biến cho gymer',
                         foods: state.foods,
                         onFoodTap: (food) => _openCalculator(context, food),
                       ),
-                      const SizedBox(height: 20),
-                      _buildSearchAiPlanButton(context),
-                    ],
-                  )
-                else
-                  isAiAppliedAsync.when(
-                    data: (isAiApplied) {
-                      if (isAiApplied) {
-                        return aiPlanAsync.when(
-                          data: (plan) {
-                            if (plan != null) {
-                              return _buildAiWeeklyPlanSection(context, plan);
-                            }
-                            return _buildNoAiPlanPlaceholder(context);
-                          },
-                          loading: () => const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(24.0),
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                          error: (err, _) => Text('Lỗi tải thực đơn AI: $err'),
-                        );
-                      } else {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildAiBanner(context),
-                            const SizedBox(height: 18),
-                            _FoodListSection(
-                              title: 'Món ăn phổ biến cho gymer',
-                              foods: state.foods,
-                              onFoodTap: (food) => _openCalculator(context, food),
-                            ),
-                          ],
-                        );
-                      }
-                    },
-                    loading: () => const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24.0),
-                        child: CircularProgressIndicator(),
-                      ),
                     ),
-                    error: (err, _) => _FoodListSection(
-                      title: 'Món ăn phổ biến cho gymer',
-                      foods: state.foods,
-                      onFoodTap: (food) => _openCalculator(context, food),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -2047,244 +2072,5 @@ class _EmptyPlatePainter extends CustomPainter {
   }
 }
 
-class FlashyVipRequiredModal extends StatelessWidget {
-  const FlashyVipRequiredModal({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.topCenter,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark 
-                    ? [const Color(0xFF1E1B4B), const Color(0xFF311042)]
-                    : [Colors.white, const Color(0xFFFAF5FF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                width: 2,
-                color: const Color(0xFFE81CFF).withOpacity(0.3),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFE81CFF).withOpacity(0.25),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-                BoxShadow(
-                  color: const Color(0xFF06B6D4).withOpacity(0.15),
-                  blurRadius: 15,
-                  spreadRadius: -5,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFFE81CFF), Color(0xFF06B6D4), Color(0xFFD9F920)],
-                  ).createShader(bounds),
-                  child: Text(
-                    'V-FIT VIP MEMBER',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.black,
-                      letterSpacing: 2,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: const Color(0xFFE81CFF).withOpacity(0.5),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Mở Khóa Thực Đơn AI Cá Nhân Hóa',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Tính năng tự động thiết lập thực đơn 7 ngày cân bằng tối ưu riêng theo mục tiêu và thể trạng chỉ có tại gói VIP.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildVipFeatureRow(
-                  context, 
-                  Icons.auto_awesome_rounded, 
-                  'AI Meal Planner', 
-                  'Tự động lên thực đơn 7 ngày cân bằng Macro.',
-                  const Color(0xFFE81CFF),
-                ),
-                const SizedBox(height: 12),
-                _buildVipFeatureRow(
-                  context, 
-                  Icons.center_focus_strong_rounded, 
-                  'AI Body Scan', 
-                  'Quét cơ thể qua camera để tính lượng mỡ thừa.',
-                  const Color(0xFF06B6D4),
-                ),
-                const SizedBox(height: 12),
-                _buildVipFeatureRow(
-                  context, 
-                  Icons.bolt_rounded, 
-                  'Tối Ưu Calo Tùy Chọn', 
-                  'Gợi ý dinh dưỡng nâng cao theo lịch tập luyện.',
-                  const Color(0xFFD9F920),
-                ),
-                const SizedBox(height: 32),
-                Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFE81CFF), Color(0xFF06B6D4)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFE81CFF).withOpacity(0.4),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      context.go('/premium');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.workspace_premium_rounded, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(
-                          'NÂNG CẤP VIP NGAY',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.black,
-                            fontSize: 14,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    'Để sau',
-                    style: TextStyle(
-                      color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: -36,
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFFD700).withOpacity(0.5),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.workspace_premium_rounded,
-                size: 38,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildVipFeatureRow(
-    BuildContext context, 
-    IconData icon, 
-    String title, 
-    String subtitle,
-    Color accentColor,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: accentColor.withOpacity(0.15),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: accentColor, size: 18),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}

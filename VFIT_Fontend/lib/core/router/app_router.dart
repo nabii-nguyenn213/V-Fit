@@ -192,7 +192,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.aiCoach,
-        builder: (context, state) => const AiCoachPage(),
+        builder: (context, state) {
+          final tabStr = state.uri.queryParameters['tab'];
+          final initialTab = tabStr != null ? int.tryParse(tabStr) ?? 0 : 0;
+          return AiCoachPage(initialTab: initialTab);
+        },
       ),
       GoRoute(
         path: '/exercises/:id',
