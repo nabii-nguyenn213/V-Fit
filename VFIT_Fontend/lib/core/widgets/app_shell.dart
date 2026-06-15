@@ -122,7 +122,7 @@ class AppShell extends ConsumerWidget {
     if (showButtons) {
       return Stack(
         children: [
-          Positioned.fill(child: scaffold),
+          scaffold,
           DraggableFloatingButton(
             key: const ValueKey('ai-coach-touch'),
             icon: const Icon(
