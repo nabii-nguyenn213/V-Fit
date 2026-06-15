@@ -1070,20 +1070,25 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                             color: isRest ? Colors.grey : AppColors.primaryOf(context),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isRest
-                                ? Colors.grey.withValues(alpha: 0.15)
-                                : AppColors.primaryOf(context).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            focus,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: isRest ? Colors.grey : AppColors.primaryOf(context),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isRest
+                                  ? Colors.grey.withValues(alpha: 0.15)
+                                  : AppColors.primaryOf(context).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              focus,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: isRest ? Colors.grey : AppColors.primaryOf(context),
+                              ),
                             ),
                           ),
                         ),
