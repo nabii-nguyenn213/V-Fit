@@ -108,6 +108,12 @@ class AiPlannersRepository {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/food-scanner/',
       data: formData,
+      options: Options(
+        extra: {
+          'vfitFormDataBytes': bytes,
+          'vfitFormDataFilename': filename,
+        },
+      ),
     );
 
     if (response.statusCode == 200 && response.data != null) {

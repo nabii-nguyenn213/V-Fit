@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -288,6 +289,22 @@ class LocalAiFallbackInterceptor extends Interceptor {
     }
 
     final request = err.requestOptions;
+    if (request.data is FormData) {
+      if (request.extra.containsKey('vfitFormDataBytes')) {
+        final bytes = request.extra['vfitFormDataBytes'] as List<int>;
+        final filename = request.extra['vfitFormDataFilename'] as String;
+        request.data = FormData.fromMap({
+          'file': MultipartFile.fromBytes(
+            bytes,
+            filename: filename,
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        });
+      } else {
+        handler.next(err);
+        return;
+      }
+    }
     final cleanBaseUrl = request.baseUrl.replaceAll(RegExp(r'/+$'), '');
     final cleanBaseUrls = _baseUrls.map((url) => url.replaceAll(RegExp(r'/+$'), '')).toList();
     final currentIndex = request.extra[_retryIndexKey] as int? ??
@@ -347,6 +364,22 @@ class LocalApiFallbackInterceptor extends Interceptor {
     }
 
     final request = err.requestOptions;
+    if (request.data is FormData) {
+      if (request.extra.containsKey('vfitFormDataBytes')) {
+        final bytes = request.extra['vfitFormDataBytes'] as List<int>;
+        final filename = request.extra['vfitFormDataFilename'] as String;
+        request.data = FormData.fromMap({
+          'file': MultipartFile.fromBytes(
+            bytes,
+            filename: filename,
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        });
+      } else {
+        handler.next(err);
+        return;
+      }
+    }
     final cleanBaseUrl = request.baseUrl.replaceAll(RegExp(r'/+$'), '');
     final cleanBaseUrls = _baseUrls.map((url) => url.replaceAll(RegExp(r'/+$'), '')).toList();
     final currentIndex = request.extra[_retryIndexKey] as int? ??
