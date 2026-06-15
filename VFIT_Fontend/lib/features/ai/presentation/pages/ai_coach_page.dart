@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../presentation/theme/app_colors.dart';
-import '../../../../presentation/theme/app_typography.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../providers/ai_coach_provider.dart';
 import '../providers/ai_workout_planner_provider.dart';
@@ -79,11 +78,99 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
             labelColor: AppColors.primaryOf(context),
             unselectedLabelColor: AppColors.textSecondaryOf(context),
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            tabs: const [
-              Tab(icon: Icon(Icons.chat_bubble_outline_rounded), text: 'AI Coach'),
-              Tab(icon: Icon(Icons.fitness_center_rounded), text: 'Lập lịch tập'),
-              Tab(icon: Icon(Icons.restaurant_rounded), text: 'Thực đơn AI'),
-              Tab(icon: Icon(Icons.search_rounded), text: 'Tính calo món'),
+            tabs: [
+              const Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                    SizedBox(width: 6),
+                    Text('AI Coach'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.fitness_center_rounded, size: 18),
+                    const SizedBox(width: 6),
+                    const Text('Lập lịch tập'),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFB03A), Color(0xFFFF7E00)],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withValues(alpha: 0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'VIP',
+                        style: TextStyle(
+                          fontSize: 8.5,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.restaurant_rounded, size: 18),
+                    const SizedBox(width: 6),
+                    const Text('Thực đơn AI'),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFB03A), Color(0xFFFF7E00)],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withValues(alpha: 0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'VIP',
+                        style: TextStyle(
+                          fontSize: 8.5,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.search_rounded, size: 18),
+                    SizedBox(width: 6),
+                    Text('Tính calo món'),
+                  ],
+                ),
+              ),
             ],
           ),
           actions: [
@@ -129,14 +216,14 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                 : _buildTabVipGate(
                     context,
                     'Lập lịch tập luyện cá nhân',
-                    'Hệ thống AI sẽ tự động thiết kế lịch tập dựa trên thể trạng và trình độ của bạn.',
+                    'Thiết kế giáo án chi tiết và toàn diện dựa trên chỉ số hình thể cùng trình độ của bạn thông qua thuật toán AI tối tân.',
                   ),
             isVip
                 ? _buildMealPlanner(context)
                 : _buildTabVipGate(
                     context,
                     'Thực đơn ăn uống thông minh',
-                    'AI phân chia calo, carb, protein, fat chuẩn gymer theo mục tiêu của bạn.',
+                    'AI hỗ trợ chia calo và phân tích tỉ lệ macro (Protein, Carbs, Fat) chính xác dành riêng cho gymer theo mục tiêu.',
                   ),
             _buildFoodScanner(context),
           ],
@@ -145,76 +232,198 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     );
   }
 
-
   Widget _buildTabVipGate(BuildContext context, String featureName, String featureDesc) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+    final isDark = AppColors.isDark(context);
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark
+              ? [
+                  const Color(0xFF0F172A),
+                  const Color(0xFF020617),
+                ]
+              : [
+                  const Color(0xFFF8FAFC),
+                  const Color(0xFFF1F5F9),
+                ],
+        ),
+      ),
       child: Center(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 70,
-                height: 70,
+                width: 90,
+                height: 90,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [
-                      Colors.amber.shade400,
-                      Colors.orange.shade700,
+                      Color(0xFFFFB03A),
+                      Color(0xFFFF7E00),
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.orange.withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
+                      color: Colors.orange.withValues(alpha: 0.4),
+                      blurRadius: 25,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
                 child: const Icon(
                   Icons.workspace_premium_rounded,
                   color: Colors.white,
-                  size: 36,
+                  size: 50,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFB03A).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFFFB03A).withValues(alpha: 0.3), width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.workspace_premium_outlined, color: Colors.amber.shade700, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      'V-FIT VIP ACCESS ONLY',
+                      style: TextStyle(
+                        color: Colors.amber.shade800,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               Text(
                 featureName,
-                style: AppTypography.headerMediumFor(context).copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Tính năng dành riêng cho thành viên VIP',
-                style: TextStyle(
-                  color: Colors.amber.shade800,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 24,
+                  letterSpacing: 0.5,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 featureDesc,
-                style: AppTypography.bodyFor(context).copyWith(
+                style: TextStyle(
                   color: AppColors.textSecondaryOf(context),
-                  height: 1.5,
-                  fontSize: 13,
+                  height: 1.6,
+                  fontSize: 14,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              AppButton.add(
-                label: 'Nâng cấp lên VIP ngay',
-                fullWidth: true,
-                onPressed: () {
-                  context.go('/profile');
-                },
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surface1 : Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDark ? _ZincColors.shade800 : _ZincColors.shade200,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _buildVipBenefitItem(
+                      context,
+                      Icons.auto_awesome_rounded,
+                      'Giải Pháp Cá Nhân Hóa Toàn Diện',
+                      'Thuật toán AI tự động phân tích chỉ số cơ thể, độ tuổi và mục tiêu để đề xuất tối ưu.',
+                    ),
+                    const Divider(height: 24, thickness: 0.8),
+                    _buildVipBenefitItem(
+                      context,
+                      Icons.trending_up_rounded,
+                      'Đẩy Nhanh Tiến Độ Tập Luyện',
+                      'Tiết kiệm 80% thời gian tự nghiên cứu lịch tập và thực đơn dinh dưỡng.',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40),
+              Container(
+                width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.orange.withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: EdgeInsets.zero,
+                  ),
+                  onPressed: () {
+                    context.go('/profile');
+                  },
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFFFB03A),
+                          Color(0xFFFF7E00),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.workspace_premium_rounded, color: Colors.white),
+                          SizedBox(width: 12),
+                          Text(
+                            'NÂNG CẤP VIP NGAY',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -223,6 +432,45 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     );
   }
 
+  Widget _buildVipBenefitItem(BuildContext context, IconData icon, String title, String desc) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFB03A).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: Colors.orange.shade700, size: 20),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                desc,
+                style: TextStyle(
+                  color: AppColors.textSecondaryOf(context),
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   // --- TAB 1: AI Coach ---
   Widget _buildChatInterface(BuildContext context) {
@@ -236,6 +484,31 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
 
     return Column(
       children: [
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.blue.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.blue.withValues(alpha: 0.15)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: Colors.blue.shade400, size: 20),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Trò chuyện với AI Coach là tính năng MIỄN PHÍ dành cho mọi thành viên V-FIT.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         if (chatState.error != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -396,80 +669,245 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
   // --- TAB 2: AI Workout Planner ---
   Widget _buildWorkoutPlanner(BuildContext context) {
     final state = ref.watch(aiWorkoutPlannerProvider);
+    final isDark = AppColors.isDark(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Lập lịch tập cá nhân hóa',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Hệ thống AI sẽ tự động phân tích độ tuổi, cân nặng, chiều cao của bạn để tạo ra lịch trình phù hợp.',
-            style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 13),
-          ),
-          const SizedBox(height: 20),
-          _buildFormLabel('Trình độ tập luyện'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildChoiceChip(
-                label: 'Mới bắt đầu',
-                selected: _selectedLevel == 'Beginner',
-                onSelected: (selected) {
-                  if (selected) setState(() => _selectedLevel = 'Beginner');
-                },
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [Colors.teal.shade900.withValues(alpha: 0.4), Colors.cyan.shade900.withValues(alpha: 0.2)]
+                    : [Colors.teal.shade50, Colors.cyan.shade50],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(width: 8),
-              _buildChoiceChip(
-                label: 'Trung bình',
-                selected: _selectedLevel == 'Intermediate',
-                onSelected: (selected) {
-                  if (selected) setState(() => _selectedLevel = 'Intermediate');
-                },
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? Colors.teal.shade800.withValues(alpha: 0.5) : Colors.teal.shade100,
               ),
-              const SizedBox(width: 8),
-              _buildChoiceChip(
-                label: 'Nâng cao',
-                selected: _selectedLevel == 'Advanced',
-                onSelected: (selected) {
-                  if (selected) setState(() => _selectedLevel = 'Advanced');
-                },
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryOf(context).withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.auto_awesome_rounded, color: AppColors.primaryOf(context), size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Lập lịch tập luyện VIP AI',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Cá nhân hóa tối đa dựa trên chỉ số cơ thể của riêng bạn.',
+                        style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surface1 : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? _ZincColors.shade800 : _ZincColors.shade200,
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildFormLabel('Số ngày tập mỗi tuần: $_daysPerWeek ngày'),
-          Slider(
-            value: _daysPerWeek.toDouble(),
-            min: 2,
-            max: 6,
-            divisions: 4,
-            activeColor: AppColors.primaryOf(context),
-            onChanged: (val) {
-              setState(() => _daysPerWeek = val.round());
-            },
-          ),
-          const SizedBox(height: 20),
-          AppButton.primary(
-            label: 'Tạo kế hoạch tập luyện',
-            icon: Icons.auto_awesome_rounded,
-            loading: state.isLoading,
-            onPressed: () {
-              ref.read(aiWorkoutPlannerProvider.notifier).generateWorkoutPlan(
-                    level: _selectedLevel,
-                    daysPerWeek: _daysPerWeek,
-                  );
-            },
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildFormLabel('Trình độ hiện tại'),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildDifficultyCard(
+                      'Mới tập',
+                      'Beginner',
+                      'Dưới 6 tháng',
+                      Icons.fitness_center_rounded,
+                      Colors.teal.shade400,
+                    ),
+                    const SizedBox(width: 10),
+                    _buildDifficultyCard(
+                      'Trung bình',
+                      'Intermediate',
+                      'Có nền tảng',
+                      Icons.flash_on_rounded,
+                      Colors.cyan.shade400,
+                    ),
+                    const SizedBox(width: 10),
+                    _buildDifficultyCard(
+                      'Nâng cao',
+                      'Advanced',
+                      'Kinh nghiệm',
+                      Icons.local_fire_department_rounded,
+                      Colors.orange.shade400,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildFormLabel('Số ngày tập mong muốn'),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surface2 : _ZincColors.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Tập luyện:',
+                            style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 13),
+                          ),
+                          Text(
+                            '$_daysPerWeek ngày / tuần',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              color: AppColors.primaryOf(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: AppColors.primaryOf(context),
+                          inactiveTrackColor: AppColors.primaryOf(context).withValues(alpha: 0.15),
+                          thumbColor: AppColors.primaryOf(context),
+                          overlayColor: AppColors.primaryOf(context).withValues(alpha: 0.2),
+                        ),
+                        child: Slider(
+                          value: _daysPerWeek.toDouble(),
+                          min: 2,
+                          max: 6,
+                          divisions: 4,
+                          onChanged: (val) {
+                            setState(() => _daysPerWeek = val.round());
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryOf(context).withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: state.isLoading
+                        ? null
+                        : () {
+                            ref.read(aiWorkoutPlannerProvider.notifier).generateWorkoutPlan(
+                                  level: _selectedLevel,
+                                  daysPerWeek: _daysPerWeek,
+                                );
+                          },
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primaryOf(context),
+                            AppColors.primaryOf(context).withBlue(250),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: state.isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'THIẾT KẾ GIÁO ÁN TẬP LUYỆN',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.8,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           if (state.error != null) ...[
             const SizedBox(height: 16),
-            Text(
-              state.error!,
-              style: const TextStyle(color: Colors.red, fontSize: 13),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      state.error!,
+                      style: const TextStyle(color: Colors.red, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
           if (state.plan != null) ...[
@@ -481,11 +919,73 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     );
   }
 
+  Widget _buildDifficultyCard(String label, String value, String desc, IconData icon, Color activeColor) {
+    final isSelected = _selectedLevel == value;
+    final isDark = AppColors.isDark(context);
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedLevel = value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? activeColor.withValues(alpha: 0.12)
+                : (isDark ? AppColors.surface2 : Colors.white),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? activeColor : (isDark ? _ZincColors.shade800 : _ZincColors.shade200),
+              width: isSelected ? 2 : 1.2,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: activeColor.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? activeColor : Colors.grey,
+                size: 24,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isSelected ? activeColor : AppColors.textPrimaryOf(context),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                desc,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textSecondaryOf(context),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildWorkoutPlanResult(Map<String, dynamic> plan) {
     final planName = plan['plan_name'] ?? 'Lịch tập V-FIT AI';
     final goal = plan['goal'] ?? '';
     final note = plan['note'] ?? '';
     final schedule = plan['weekly_schedule'] as Map<String, dynamic>? ?? {};
+    final isDark = AppColors.isDark(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -493,20 +993,35 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.primaryOf(context).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primaryOf(context).withValues(alpha: 0.3)),
+            color: const Color(0xFFFFB03A).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFFB03A).withValues(alpha: 0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                planName,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Row(
+                children: [
+                  const Icon(Icons.workspace_premium, color: Color(0xFFFFB03A), size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      planName,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ],
               ),
               if (goal.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text('Mục tiêu: $goal', style: const TextStyle(fontSize: 13)),
+                const SizedBox(height: 6),
+                Text(
+                  'Mục tiêu: $goal',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondaryOf(context),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ],
           ),
@@ -521,61 +1036,160 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
           final coolDown = List<String>.from(dayData['cool_down'] ?? []);
 
           final formattedDayName = dayKey.replaceAll('_', ' ').toUpperCase();
+          final isRest = focus.toLowerCase().contains('nghỉ') || focus.toLowerCase() == 'nghi';
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: AppCard(
-              padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.surface1 : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isRest
+                      ? (isDark ? _ZincColors.shade900 : _ZincColors.shade100)
+                      : (isDark ? Colors.teal.shade900.withValues(alpha: 0.5) : Colors.teal.shade100),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        formattedDayName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primaryOf(context),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isRest
+                          ? (isDark ? _ZincColors.shade900.withValues(alpha: 0.5) : _ZincColors.shade50)
+                          : (isDark ? Colors.teal.shade900.withValues(alpha: 0.2) : Colors.teal.shade50.withValues(alpha: 0.5)),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          formattedDayName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: isRest ? Colors.grey : AppColors.primaryOf(context),
+                          ),
                         ),
-                      ),
-                      Text(
-                        focus,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isRest
+                                ? Colors.grey.withValues(alpha: 0.15)
+                                : AppColors.primaryOf(context).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            focus,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isRest ? Colors.grey : AppColors.primaryOf(context),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const Divider(height: 20),
-                  if (warmUp.isNotEmpty) ...[
-                    _buildSubSectionTitle('Khởi động (Warm-up)'),
-                    ...warmUp.map((item) => _buildBulletPoint(item)),
-                    const SizedBox(height: 10),
-                  ],
-                  if (mainWorkout.isNotEmpty) ...[
-                    _buildSubSectionTitle('Bài tập chính (Main workout)'),
-                    ...mainWorkout.map((item) => _buildBulletPoint(item)),
-                    const SizedBox(height: 10),
-                  ],
-                  if (coolDown.isNotEmpty) ...[
-                    _buildSubSectionTitle('Hồi phục (Cool-down)'),
-                    ...coolDown.map((item) => _buildBulletPoint(item)),
-                  ],
+                  const Divider(height: 1, thickness: 0.8),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isRest)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.hotel_rounded, size: 40, color: _ZincColors.shade400),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Hôm nay là ngày nghỉ ngơi phục hồi cơ bắp.',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondaryOf(context),
+                                      fontSize: 13,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        if (!isRest) ...[
+                          if (warmUp.isNotEmpty) ...[
+                            _buildSubSectionTitle('Khởi động (Warm-up)'),
+                            const SizedBox(height: 6),
+                            ...warmUp.map((item) => _buildBulletPoint(item)),
+                            const SizedBox(height: 16),
+                          ],
+                          if (mainWorkout.isNotEmpty) ...[
+                            _buildSubSectionTitle('Bài tập chính (Main workout)'),
+                            const SizedBox(height: 6),
+                            ...mainWorkout.map((item) => _buildBulletPoint(item)),
+                            const SizedBox(height: 16),
+                          ],
+                          if (coolDown.isNotEmpty) ...[
+                            _buildSubSectionTitle('Hồi phục (Cool-down)'),
+                            const SizedBox(height: 6),
+                            ...coolDown.map((item) => _buildBulletPoint(item)),
+                          ],
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
           );
         }),
         if (note.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(10),
+              color: isDark ? AppColors.surface1 : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? _ZincColors.shade800 : _ZincColors.shade200),
             ),
-            child: Text(
-              'Lưu ý từ AI: $note',
-              style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.tips_and_updates_rounded, color: Colors.amber.shade600, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Lời khuyên từ AI Coach',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        note,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.5,
+                          color: AppColors.textSecondaryOf(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -586,49 +1200,214 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
   // --- TAB 3: AI Meal Planner ---
   Widget _buildMealPlanner(BuildContext context) {
     final state = ref.watch(aiMealPlannerProvider);
+    final isDark = AppColors.isDark(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Lên thực đơn dinh dưỡng',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [Colors.orange.shade900.withValues(alpha: 0.4), Colors.amber.shade900.withValues(alpha: 0.2)]
+                    : [Colors.orange.shade50, Colors.amber.shade50],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? Colors.orange.shade800.withValues(alpha: 0.5) : Colors.orange.shade100,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.restaurant_rounded, color: Colors.orange, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Thực đơn Dinh dưỡng VIP AI',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tính toán calo chính xác cho từng mục tiêu của bạn.',
+                        style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'AI sẽ tính toán Calo hàng ngày cần thiết dựa trên chiều cao, cân nặng và đề xuất bữa ăn phù hợp.',
-            style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 13),
-          ),
-          const SizedBox(height: 20),
-          _buildFormLabel('Số bữa ăn mong muốn trong ngày: $_mealsPerDay bữa'),
-          Slider(
-            value: _mealsPerDay.toDouble(),
-            min: 2,
-            max: 5,
-            divisions: 3,
-            activeColor: AppColors.primaryOf(context),
-            onChanged: (val) {
-              setState(() => _mealsPerDay = val.round());
-            },
-          ),
-          const SizedBox(height: 20),
-          AppButton.primary(
-            label: 'Tạo thực đơn dinh dưỡng',
-            icon: Icons.auto_awesome_rounded,
-            loading: state.isLoading,
-            onPressed: () {
-              ref.read(aiMealPlannerProvider.notifier).generateMealPlan(
-                    mealsPerDay: _mealsPerDay,
-                  );
-            },
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surface1 : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? _ZincColors.shade800 : _ZincColors.shade200,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildFormLabel('Số bữa ăn trong ngày'),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surface2 : _ZincColors.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Tần suất:',
+                            style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 13),
+                          ),
+                          Text(
+                            '$_mealsPerDay bữa / ngày',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.orange,
+                          inactiveTrackColor: Colors.orange.withValues(alpha: 0.15),
+                          thumbColor: Colors.orange,
+                          overlayColor: Colors.orange.withValues(alpha: 0.2),
+                        ),
+                        child: Slider(
+                          value: _mealsPerDay.toDouble(),
+                          min: 2,
+                          max: 5,
+                          divisions: 3,
+                          onChanged: (val) {
+                            setState(() => _mealsPerDay = val.round());
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.orange.withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: state.isLoading
+                        ? null
+                        : () {
+                            ref.read(aiMealPlannerProvider.notifier).generateMealPlan(
+                                  mealsPerDay: _mealsPerDay,
+                                );
+                          },
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Colors.orange,
+                            Colors.amber,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: state.isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'LÊN THỰC ĐƠN DINH DƯỠNG AI',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.8,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           if (state.error != null) ...[
             const SizedBox(height: 16),
-            Text(
-              state.error!,
-              style: const TextStyle(color: Colors.red, fontSize: 13),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      state.error!,
+                      style: const TextStyle(color: Colors.red, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
           if (state.plan != null) ...[
@@ -647,26 +1426,36 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     final fat = plan['fat_g'] ?? 0;
     final meals = plan['meal_plan'] as Map<String, dynamic>? ?? {};
     final note = plan['note'] ?? '';
+    final isDark = AppColors.isDark(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.teal.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.teal.withValues(alpha: 0.3)),
+            color: isDark ? AppColors.surface1 : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: isDark ? _ZincColors.shade800 : _ZincColors.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             children: [
-              const Text('Khuyến nghị hàng ngày', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(
-                '$dailyCal kcal',
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.teal),
-              ),
+              const Text('Khuyến nghị Dinh dưỡng Hàng ngày', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 12),
+              Text(
+                '$dailyCal Kcal',
+                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.orange),
+              ),
+              const SizedBox(height: 20),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -686,34 +1475,79 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
           if (mealItems.isEmpty) return const SizedBox.shrink();
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: AppCard(
-              padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.surface1 : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: isDark ? _ZincColors.shade800 : _ZincColors.shade200),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    mealName.toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? _ZincColors.shade900.withValues(alpha: 0.5) : _ZincColors.shade50,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: Text(
+                      mealName.toUpperCase(),
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.orange),
+                    ),
                   ),
-                  const Divider(height: 16),
-                  ...mealItems.map((item) => _buildBulletPoint(item)),
+                  const Divider(height: 1, thickness: 0.8),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: mealItems.map((item) => _buildBulletPoint(item)).toList(),
+                    ),
+                  ),
                 ],
               ),
             ),
           );
         }),
         if (note.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(10),
+              color: isDark ? AppColors.surface1 : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? _ZincColors.shade800 : _ZincColors.shade200),
             ),
-            child: Text(
-              'Lời khuyên dinh dưỡng: $note',
-              style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.tips_and_updates_rounded, color: Colors.amber.shade600, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Lời khuyên Dinh dưỡng',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        note,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.5,
+                          color: AppColors.textSecondaryOf(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -901,24 +1735,6 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     );
   }
 
-  Widget _buildChoiceChip({
-    required String label,
-    required bool selected,
-    required ValueChanged<bool> onSelected,
-  }) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: onSelected,
-      selectedColor: AppColors.primaryOf(context).withValues(alpha: 0.2),
-      checkmarkColor: AppColors.primaryOf(context),
-      labelStyle: TextStyle(
-        color: selected ? AppColors.primaryOf(context) : AppColors.textSecondaryOf(context),
-        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-      ),
-    );
-  }
-
   Widget _buildSubSectionTitle(String text) {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
@@ -931,14 +1747,31 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
 
   Widget _buildBulletPoint(String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
+          Icon(Icons.check_circle_outline_rounded, color: AppColors.primaryOf(context), size: 16),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 13.5, height: 1.4),
+            ),
+          ),
         ],
       ),
     );
   }
 }
+
+class _ZincColors {
+  static const Color shade50 = Color(0xFFFAFAFA);
+  static const Color shade100 = Color(0xFFF4F4F5);
+  static const Color shade200 = Color(0xFFE4E4E7);
+  static const Color shade400 = Color(0xFFA1A1AA);
+  static const Color shade800 = Color(0xFF27272A);
+  static const Color shade900 = Color(0xFF18181B);
+}
+
+

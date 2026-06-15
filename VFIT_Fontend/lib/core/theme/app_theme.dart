@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   const AppTheme._();
@@ -80,11 +79,9 @@ class AppTheme {
   }
 
   static TextTheme _textTheme(Color color) {
-    // Use Plus Jakarta Sans as the base font for all Material widgets.
-    // Screens that need Inter or metric styles still use AppTypography helpers.
-    return GoogleFonts.plusJakartaSansTextTheme(
-      Typography.material2021().black,
-    ).apply(
+    // Use the default system/Material 3 typography, preserving sizing, weights, and colors.
+    // This avoids fetching Google Fonts dynamically at runtime on startup.
+    return Typography.material2021().black.apply(
       bodyColor: color,
       displayColor: color,
     );
