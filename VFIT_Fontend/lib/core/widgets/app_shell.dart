@@ -385,48 +385,51 @@ class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAi
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    final label = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          ),
-          if (isVipOption) ...[
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFB03A), Color(0xFFFF7E00)],
-                ),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                'VIP',
-                style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ] else ...[
-            const SizedBox(width: 4),
-            const Text(
-              'FREE',
-              style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold),
+    final label = Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 8,
             ),
           ],
-        ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            if (isVipOption) ...[
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFB03A), Color(0xFFFF7E00)],
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'VIP',
+                  style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(width: 4),
+              const Text(
+                'FREE',
+                style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ],
+        ),
       ),
     );
 

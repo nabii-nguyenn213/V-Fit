@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/responsive.dart';
@@ -278,7 +277,6 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
     final repository = ref.watch(foodRepositoryProvider);
     final isAiAppliedAsync = ref.watch(isAiMealPlanAppliedProvider);
     final aiPlanAsync = ref.watch(aiMealPlanProvider);
-    final user = ref.watch(authControllerProvider).user;
 
     return Scaffold(
       body: BlocProvider(
