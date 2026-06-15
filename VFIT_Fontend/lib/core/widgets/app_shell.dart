@@ -47,7 +47,14 @@ class AppShell extends ConsumerWidget {
     final isDark = AppColors.isDark(context);
     final wide = AppResponsive.isWide(context);
     final size = MediaQuery.of(context).size;
-    const bottomNavOffset = 100.0;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomBarHeight = 64.0;
+    final bottomBarMargin = bottomPadding > 0 ? bottomPadding : 24.0;
+    final bottomBarTop = size.height - bottomBarHeight - bottomBarMargin;
+    final maxButtonY = bottomBarTop - 56.0 - 16.0;
+
+    final coachInitialOffset = Offset(size.width - 72.0, maxButtonY);
+    final mealInitialOffset = Offset(size.width - 72.0, maxButtonY - 72.0);
 
     final auth = ref.watch(authControllerProvider);
     final isVip = auth.user?.isVipActive == true;
@@ -122,10 +129,10 @@ class AppShell extends ConsumerWidget {
     );
 
     if (showButtons) {
-      final coachPos = ref.watch(aiCoachButtonPositionProvider) ?? Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0);
+      final coachPos = ref.watch(aiCoachButtonPositionProvider) ?? coachInitialOffset;
       final coachDragging = ref.watch(aiCoachDraggingProvider);
 
-      final mealPos = ref.watch(aiMealButtonPositionProvider) ?? Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0);
+      final mealPos = ref.watch(aiMealButtonPositionProvider) ?? mealInitialOffset;
       final mealDragging = ref.watch(aiMealDraggingProvider);
 
       return Stack(
@@ -135,7 +142,7 @@ class AppShell extends ConsumerWidget {
             duration: coachDragging ? Duration.zero : const Duration(milliseconds: 300),
             curve: Curves.easeOutBack,
             left: coachPos.dx.clamp(16.0, size.width - 72.0),
-            top: coachPos.dy.clamp(80.0, size.height - bottomNavOffset - 72.0),
+            top: coachPos.dy.clamp(80.0, maxButtonY),
             child: DraggableFloatingButton(
               key: const ValueKey('ai-coach-touch'),
               icon: const Icon(
@@ -145,7 +152,7 @@ class AppShell extends ConsumerWidget {
               ),
               positionProvider: aiCoachButtonPositionProvider,
               draggingProvider: aiCoachDraggingProvider,
-              initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0),
+              initialOffset: coachInitialOffset,
               onTap: () => AiCoachSheet.show(context),
             ),
           ),
@@ -153,7 +160,7 @@ class AppShell extends ConsumerWidget {
             duration: mealDragging ? Duration.zero : const Duration(milliseconds: 300),
             curve: Curves.easeOutBack,
             left: mealPos.dx.clamp(16.0, size.width - 72.0),
-            top: mealPos.dy.clamp(80.0, size.height - bottomNavOffset - 72.0),
+            top: mealPos.dy.clamp(80.0, maxButtonY),
             child: DraggableFloatingButton(
               key: const ValueKey('ai-meal-touch'),
               icon: const Icon(
@@ -163,7 +170,7 @@ class AppShell extends ConsumerWidget {
               ),
               positionProvider: aiMealButtonPositionProvider,
               draggingProvider: aiMealDraggingProvider,
-              initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0),
+              initialOffset: mealInitialOffset,
               onTap: () => AiMealSheet.show(context),
             ),
           ),
@@ -230,7 +237,11 @@ class _DraggableFloatingButtonState extends ConsumerState<DraggableFloatingButto
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    const bottomNavOffset = 100.0;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomBarHeight = 64.0;
+    final bottomBarMargin = bottomPadding > 0 ? bottomPadding : 24.0;
+    final bottomBarTop = size.height - bottomBarHeight - bottomBarMargin;
+    final maxButtonY = bottomBarTop - 56.0 - 16.0;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -242,7 +253,7 @@ class _DraggableFloatingButtonState extends ConsumerState<DraggableFloatingButto
         final current = ref.read(widget.positionProvider) ?? widget.initialOffset;
         ref.read(widget.positionProvider.notifier).state = Offset(
           (current.dx + details.delta.dx).clamp(16.0, size.width - 72.0),
-          (current.dy + details.delta.dy).clamp(80.0, size.height - bottomNavOffset - 72.0),
+          (current.dy + details.delta.dy).clamp(80.0, maxButtonY),
         );
         _resetFadeTimer();
       },
