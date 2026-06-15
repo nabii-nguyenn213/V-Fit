@@ -32,21 +32,20 @@ class SocialLoginClient {
     GoogleSignIn? googleSignIn,
     FacebookAuth? facebookAuth,
   })  : _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              scopes: const ['email', 'profile'],
-              clientId: _googleClientId,
-              serverClientId: _googleServerClientId,
-            ),
+            (kIsWeb
+                ? GoogleSignIn(
+                    scopes: const ['email', 'profile'],
+                    clientId: Environment.googleWebClientId.isNotEmpty
+                        ? Environment.googleWebClientId
+                        : null,
+                  )
+                : GoogleSignIn(
+                    scopes: const ['email', 'profile'],
+                    serverClientId: Environment.googleWebClientId.isNotEmpty
+                        ? Environment.googleWebClientId
+                        : null,
+                  )),
         _facebookAuth = facebookAuth ?? FacebookAuth.instance;
-
-  static String? get _googleClientId =>
-      kIsWeb && Environment.googleWebClientId.isNotEmpty
-          ? Environment.googleWebClientId
-          : null;
-  static String? get _googleServerClientId =>
-      !kIsWeb && Environment.googleWebClientId.isNotEmpty
-          ? Environment.googleWebClientId
-          : null;
 
   final GoogleSignIn _googleSignIn;
   final FacebookAuth _facebookAuth;
