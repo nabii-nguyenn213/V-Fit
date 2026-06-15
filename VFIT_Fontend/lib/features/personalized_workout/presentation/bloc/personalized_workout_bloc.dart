@@ -23,6 +23,7 @@ class PersonalizedWorkoutBloc
     try {
       final plan = await _getPersonalizedWorkout(
         forceRefresh: event.forceRefresh,
+        isVip: event.isVip,
       );
       if (plan.hasGoal) {
         emit(WorkoutLoaded(plan: plan));

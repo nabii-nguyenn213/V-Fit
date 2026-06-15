@@ -37,7 +37,8 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user;
     final hasGoal = user?.goalType != null;
-    final isAiApplied = ref.watch(isAiWorkoutPlanAppliedProvider).value ?? false;
+    final isVip = user?.isVipActive == true;
+    final isAiApplied = isVip && (ref.watch(isAiWorkoutPlanAppliedProvider).value ?? false);
 
     return MultiBlocProvider(
       key: ValueKey('${user?.goalType}_$isAiApplied'),
@@ -51,7 +52,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           BlocProvider<PersonalizedWorkoutBloc>(
             create: (_) => PersonalizedWorkoutBloc(
               ref.read(getPersonalizedWorkoutProvider),
-            )..add(const PersonalizedWorkoutRequested()),
+            )..add(PersonalizedWorkoutRequested(isVip: isVip)),
           ),
       ],
       child: Scaffold(
@@ -673,14 +674,17 @@ class GoalRequiredState extends StatelessWidget {
 class PersonalizedWorkoutView extends ConsumerWidget {
   const PersonalizedWorkoutView({super.key});
 
-  Future<void> _refresh(BuildContext context) async {
+  Future<void> _refresh(BuildContext context, WidgetRef ref) async {
+    final user = ref.read(authControllerProvider).user;
+    final isVip = user?.isVipActive == true;
     final bloc = context.read<PersonalizedWorkoutBloc>();
-    bloc.add(const PersonalizedWorkoutRequested(forceRefresh: true));
+    bloc.add(PersonalizedWorkoutRequested(forceRefresh: true, isVip: isVip));
     await bloc.stream.firstWhere((state) => state is! WorkoutLoading);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authControllerProvider).user;
     final isPendingOnboarding =
         ref.watch(authControllerProvider).isPendingOnboarding;
     if (isPendingOnboarding) {
@@ -690,7 +694,8 @@ class PersonalizedWorkoutView extends ConsumerWidget {
       );
     }
 
-    final isAiApplied = ref.watch(isAiWorkoutPlanAppliedProvider).value ?? false;
+    final isVip = user?.isVipActive == true;
+    final isAiApplied = isVip && (ref.watch(isAiWorkoutPlanAppliedProvider).value ?? false);
 
     return BlocBuilder<PersonalizedWorkoutBloc, PersonalizedWorkoutState>(
       builder: (context, state) {
@@ -710,13 +715,13 @@ class PersonalizedWorkoutView extends ConsumerWidget {
             message: 'Không thể tải lịch tập cá nhân.',
             onRetry: () => context
                 .read<PersonalizedWorkoutBloc>()
-                .add(const PersonalizedWorkoutRequested(forceRefresh: true)),
+                .add(PersonalizedWorkoutRequested(forceRefresh: true, isVip: isVip)),
           );
         }
 
         final plan = state.plan;
         return RefreshIndicator(
-          onRefresh: () => _refresh(context),
+          onRefresh: () => _refresh(context, ref),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 32),

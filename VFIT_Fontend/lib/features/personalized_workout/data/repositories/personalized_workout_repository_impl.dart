@@ -35,19 +35,16 @@ class PersonalizedWorkoutRepositoryImpl implements PersonalizedWorkoutRepository
   final PersonalizedWorkoutLocalDataSource localDataSource;
 
   @override
-  Future<PersonalizedWorkout> getPlan({bool forceRefresh = false}) async {
-    if (forceRefresh) {
-      await localDataSource.setAiApplied(false);
-    }
-    final isAiApplied = await localDataSource.isAiApplied();
+  Future<PersonalizedWorkout> getPlan({bool forceRefresh = false, bool isVip = false}) async {
+    final isAiApplied = isVip && await localDataSource.isAiApplied();
     if (isAiApplied) {
-      final cached = await localDataSource.read();
+      final cached = await localDataSource.read(isVip: true);
       if (cached != null) {
         return cached.workout;
       }
     }
 
-    final cached = await localDataSource.read();
+    final cached = await localDataSource.read(isVip: isVip);
     final hasUsableCache = cached != null;
 
     // Luôn fetch remote trước — cache chỉ là fallback khi mất mạng hoặc kết nối yếu.

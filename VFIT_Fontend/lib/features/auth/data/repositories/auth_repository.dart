@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -149,6 +150,17 @@ class AuthRepository {
     }
   }
 
+  Future<void> clearUserDataCaches() async {
+    try {
+      final workoutBox = await Hive.openBox<String>('personalized_workout_cache');
+      await workoutBox.clear();
+      final mealBox = await Hive.openBox<dynamic>('ai_meal_plan_cache');
+      await mealBox.clear();
+    } catch (_) {
+      // Ignore cache clearing errors to prevent blocking session termination
+    }
+  }
+
   Future<void> logout() async {
     final refreshToken = await _tokenStorage.readRefreshToken();
     try {
@@ -160,6 +172,7 @@ class AuthRepository {
       }
     } finally {
       await _tokenStorage.clear();
+      await clearUserDataCaches();
     }
   }
 
@@ -196,7 +209,10 @@ class AuthRepository {
     return tokens?.isAccessTokenValid == true;
   }
 
-  Future<void> clearLocalSession() => _tokenStorage.clear();
+  Future<void> clearLocalSession() async {
+    await _tokenStorage.clear();
+    await clearUserDataCaches();
+  }
 
   Future<void> _persistTokens(TokenResponse tokens) {
     return _tokenStorage.write(

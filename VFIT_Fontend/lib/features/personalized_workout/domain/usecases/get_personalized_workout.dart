@@ -6,7 +6,7 @@ class GetPersonalizedWorkout {
 
   final PersonalizedWorkoutRepository _repository;
 
-  Future<PersonalizedWorkout> call({bool forceRefresh = false}) {
-    return _repository.getPlan(forceRefresh: forceRefresh);
+  Future<PersonalizedWorkout> call({bool forceRefresh = false, bool isVip = false}) {
+    return _repository.getPlan(forceRefresh: forceRefresh, isVip: isVip);
   }
 }

@@ -23,11 +23,11 @@ class PersonalizedWorkoutLocalDataSource {
   static const _aiPlanJsonKey = 'ai_plan_json';
   static const _isAiAppliedKey = 'is_ai_applied';
 
-  Future<CachedPersonalizedWorkout?> read() async {
+  Future<CachedPersonalizedWorkout?> read({bool isVip = false}) async {
     final box = await Hive.openBox<String>(_boxName);
     
     // Check if AI plan is applied, if so return the AI plan json if available
-    final isAiApplied = box.get(_isAiAppliedKey) == 'true';
+    final isAiApplied = isVip && (box.get(_isAiAppliedKey) == 'true');
     final json = isAiApplied ? box.get(_aiPlanJsonKey) : box.get(_planJsonKey);
     
     final cachedAtRaw = box.get(_cachedAtMsKey);
