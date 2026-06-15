@@ -16,6 +16,8 @@ import '../../features/ai/presentation/widgets/ai_meal_sheet.dart';
 
 final aiCoachButtonPositionProvider = StateProvider<Offset?>((ref) => null);
 final aiMealButtonPositionProvider = StateProvider<Offset?>((ref) => null);
+final aiCoachDraggingProvider = StateProvider<bool>((ref) => false);
+final aiMealDraggingProvider = StateProvider<bool>((ref) => false);
 
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.child});
@@ -120,30 +122,50 @@ class AppShell extends ConsumerWidget {
     );
 
     if (showButtons) {
+      final coachPos = ref.watch(aiCoachButtonPositionProvider) ?? Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0);
+      final coachDragging = ref.watch(aiCoachDraggingProvider);
+
+      final mealPos = ref.watch(aiMealButtonPositionProvider) ?? Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0);
+      final mealDragging = ref.watch(aiMealDraggingProvider);
+
       return Stack(
         children: [
           scaffold,
-          DraggableFloatingButton(
-            key: const ValueKey('ai-coach-touch'),
-            icon: const Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: Colors.white,
-              size: 26,
+          AnimatedPositioned(
+            duration: coachDragging ? Duration.zero : const Duration(milliseconds: 300),
+            curve: Curves.easeOutBack,
+            left: coachPos.dx.clamp(16.0, size.width - 72.0),
+            top: coachPos.dy.clamp(80.0, size.height - bottomNavOffset - 72.0),
+            child: DraggableFloatingButton(
+              key: const ValueKey('ai-coach-touch'),
+              icon: const Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+              positionProvider: aiCoachButtonPositionProvider,
+              draggingProvider: aiCoachDraggingProvider,
+              initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0),
+              onTap: () => AiCoachSheet.show(context),
             ),
-            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0),
-            positionProvider: aiCoachButtonPositionProvider,
-            onTap: () => AiCoachSheet.show(context),
           ),
-          DraggableFloatingButton(
-            key: const ValueKey('ai-meal-touch'),
-            icon: const Icon(
-              Icons.restaurant_menu_rounded,
-              color: Colors.white,
-              size: 26,
+          AnimatedPositioned(
+            duration: mealDragging ? Duration.zero : const Duration(milliseconds: 300),
+            curve: Curves.easeOutBack,
+            left: mealPos.dx.clamp(16.0, size.width - 72.0),
+            top: mealPos.dy.clamp(80.0, size.height - bottomNavOffset - 72.0),
+            child: DraggableFloatingButton(
+              key: const ValueKey('ai-meal-touch'),
+              icon: const Icon(
+                Icons.restaurant_menu_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+              positionProvider: aiMealButtonPositionProvider,
+              draggingProvider: aiMealDraggingProvider,
+              initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0),
+              onTap: () => AiMealSheet.show(context),
             ),
-            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0),
-            positionProvider: aiMealButtonPositionProvider,
-            onTap: () => AiMealSheet.show(context),
           ),
         ],
       );
@@ -158,30 +180,28 @@ class DraggableFloatingButton extends ConsumerStatefulWidget {
     super.key,
     required this.icon,
     required this.onTap,
-    required this.initialOffset,
     required this.positionProvider,
+    required this.draggingProvider,
+    required this.initialOffset,
   });
 
   final Widget icon;
   final VoidCallback onTap;
-  final Offset initialOffset;
   final StateProvider<Offset?> positionProvider;
+  final StateProvider<bool> draggingProvider;
+  final Offset initialOffset;
 
   @override
   ConsumerState<DraggableFloatingButton> createState() => _DraggableFloatingButtonState();
 }
 
 class _DraggableFloatingButtonState extends ConsumerState<DraggableFloatingButton> {
-  late Offset _position;
-  bool _isDragging = false;
   double _opacity = 1.0;
   Timer? _fadeTimer;
 
   @override
   void initState() {
     super.initState();
-    final saved = ref.read(widget.positionProvider);
-    _position = saved ?? widget.initialOffset;
     _resetFadeTimer();
   }
 
@@ -193,9 +213,11 @@ class _DraggableFloatingButtonState extends ConsumerState<DraggableFloatingButto
 
   void _resetFadeTimer() {
     _fadeTimer?.cancel();
-    setState(() {
-      _opacity = 1.0;
-    });
+    if (mounted) {
+      setState(() {
+        _opacity = 1.0;
+      });
+    }
     _fadeTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) {
         setState(() {
@@ -205,87 +227,63 @@ class _DraggableFloatingButtonState extends ConsumerState<DraggableFloatingButto
     });
   }
 
-  void _snapToEdge(Size screenSize, double bottomNavOffset) {
-    final x = _position.dx;
-    final y = _position.dy;
-
-    // Nearest horizontal edge
-    final double targetX = (x + 28) < (screenSize.width / 2)
-        ? 16.0
-        : screenSize.width - 72.0;
-
-    final newPos = Offset(targetX, y);
-    setState(() {
-      _isDragging = false;
-      _position = newPos;
-    });
-    ref.read(widget.positionProvider.notifier).state = newPos;
-    _resetFadeTimer();
-  }
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final bottomNavOffset = 100.0;
+    const bottomNavOffset = 100.0;
 
-    final clampedPos = Offset(
-      _position.dx.clamp(16.0, size.width - 72.0),
-      _position.dy.clamp(80.0, size.height - bottomNavOffset - 72.0),
-    );
-
-    return AnimatedPositioned(
-      duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
-      curve: Curves.easeOutBack,
-      left: clampedPos.dx,
-      top: clampedPos.dy,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onPanStart: (_) {
-          setState(() {
-            _isDragging = true;
-            _opacity = 1.0;
-          });
-          _fadeTimer?.cancel();
-        },
-        onPanUpdate: (details) {
-          setState(() {
-            _position = Offset(
-              (_position.dx + details.delta.dx).clamp(16.0, size.width - 72.0),
-              (_position.dy + details.delta.dy).clamp(80.0, size.height - bottomNavOffset - 72.0),
-            );
-          });
-        },
-        onPanEnd: (_) => _snapToEdge(size, bottomNavOffset),
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 300),
-          opacity: _opacity,
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2C3E50), Color(0xFF3498DB)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blue.withValues(alpha: 0.35),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 4),
-                  )
-                ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onPanStart: (_) {
+        ref.read(widget.draggingProvider.notifier).state = true;
+        _resetFadeTimer();
+      },
+      onPanUpdate: (details) {
+        final current = ref.read(widget.positionProvider) ?? widget.initialOffset;
+        ref.read(widget.positionProvider.notifier).state = Offset(
+          (current.dx + details.delta.dx).clamp(16.0, size.width - 72.0),
+          (current.dy + details.delta.dy).clamp(80.0, size.height - bottomNavOffset - 72.0),
+        );
+        _resetFadeTimer();
+      },
+      onPanEnd: (_) {
+        ref.read(widget.draggingProvider.notifier).state = false;
+        final current = ref.read(widget.positionProvider) ?? widget.initialOffset;
+        final double targetX = (current.dx + 28) < (size.width / 2)
+            ? 16.0
+            : size.width - 72.0;
+        ref.read(widget.positionProvider.notifier).state = Offset(targetX, current.dy);
+        _resetFadeTimer();
+      },
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: _opacity,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2C3E50), Color(0xFF3498DB)],
               ),
-              child: InkWell(
-                onTap: () {
-                  _resetFadeTimer();
-                  widget.onTap();
-                },
-                customBorder: const CircleBorder(),
-                child: Center(child: widget.icon),
-              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withValues(alpha: 0.35),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: InkWell(
+              onTap: () {
+                _resetFadeTimer();
+                widget.onTap();
+              },
+              customBorder: const CircleBorder(),
+              child: Center(child: widget.icon),
             ),
           ),
         ),
