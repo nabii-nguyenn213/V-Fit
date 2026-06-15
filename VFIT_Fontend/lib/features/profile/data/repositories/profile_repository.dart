@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
+import 'package:http_parser/http_parser.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -37,10 +39,32 @@ class ProfileRepository {
     }
   }
 
-  Future<UserModel> uploadAvatar(File file) async {
+  Future<UserModel> uploadAvatar(XFile file) async {
     try {
+      final bytes = await file.readAsBytes();
+      
+      final mimeType = file.mimeType;
+      MediaType mediaType;
+      if (mimeType != null && mimeType.startsWith('image/')) {
+        final parts = mimeType.split('/');
+        mediaType = MediaType(parts.first, parts.length > 1 ? parts.last : 'jpeg');
+      } else {
+        final lowerName = file.name.toLowerCase();
+        if (lowerName.endsWith('.png')) {
+          mediaType = MediaType('image', 'png');
+        } else if (lowerName.endsWith('.webp')) {
+          mediaType = MediaType('image', 'webp');
+        } else {
+          mediaType = MediaType('image', 'jpeg');
+        }
+      }
+
       final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(file.path),
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: file.name,
+          contentType: mediaType,
+        ),
       });
       final response = await _dio.post<dynamic>(
         ApiEndpoints.avatar,

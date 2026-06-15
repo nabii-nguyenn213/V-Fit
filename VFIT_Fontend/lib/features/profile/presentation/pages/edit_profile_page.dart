@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -32,7 +33,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   Gender? _gender;
   GoalType? _goalType;
   String? _avatarUrl;
-  File? _selectedAvatar;
+  XFile? _selectedAvatar;
   bool _loading = false;
   bool _avatarUploading = false;
 
@@ -83,14 +84,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     }
 
     setState(() {
-      _selectedAvatar = File(pickedFile.path);
+      _selectedAvatar = pickedFile;
       _avatarUploading = true;
     });
 
     try {
       final user = await ref
           .read(profileRepositoryProvider)
-          .uploadAvatar(File(pickedFile.path));
+          .uploadAvatar(pickedFile);
       ref.read(authControllerProvider.notifier).setUser(user);
       if (mounted) {
         setState(() => _avatarUrl = user.avatarUrl);
@@ -172,10 +173,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final avatarProvider = _selectedAvatar != null
-        ? FileImage(_selectedAvatar!)
-        : _avatarImageProvider(_avatarUrl);
-
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 76,
@@ -193,12 +190,31 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 52,
-                    backgroundImage: avatarProvider,
-                    child: avatarProvider == null
-                        ? const Icon(Icons.person, size: 44)
-                        : null,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(52),
+                    child: Container(
+                      width: 104,
+                      height: 104,
+                      color: Theme.of(context).colorScheme.surfaceVariant,
+                      child: _selectedAvatar != null
+                          ? (kIsWeb
+                              ? Image.network(
+                                  _selectedAvatar!.path,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  File(_selectedAvatar!.path),
+                                  fit: BoxFit.cover,
+                                ))
+                          : (_avatarUrl != null
+                              ? Image.network(
+                                  MediaUrlResolver.resolve(_avatarUrl!),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.person, size: 44),
+                                )
+                              : const Icon(Icons.person, size: 44)),
+                    ),
                   ),
                   Positioned(
                     right: 0,

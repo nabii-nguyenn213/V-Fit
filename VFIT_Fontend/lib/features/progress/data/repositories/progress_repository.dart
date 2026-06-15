@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
+import 'package:http_parser/http_parser.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -105,10 +106,28 @@ class ProgressRepository {
     }
     try {
       final bytes = await file.readAsBytes();
+      
+      final mimeType = file.mimeType;
+      MediaType mediaType;
+      if (mimeType != null && mimeType.startsWith('image/')) {
+        final parts = mimeType.split('/');
+        mediaType = MediaType(parts.first, parts.length > 1 ? parts.last : 'jpeg');
+      } else {
+        final lowerName = file.name.toLowerCase();
+        if (lowerName.endsWith('.png')) {
+          mediaType = MediaType('image', 'png');
+        } else if (lowerName.endsWith('.webp')) {
+          mediaType = MediaType('image', 'webp');
+        } else {
+          mediaType = MediaType('image', 'jpeg');
+        }
+      }
+
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(
           bytes,
           filename: file.name,
+          contentType: mediaType,
         ),
         if (note != null && note.isNotEmpty) 'note': note,
       });
