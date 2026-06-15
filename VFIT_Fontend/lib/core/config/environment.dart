@@ -51,7 +51,10 @@ class Environment {
       return [_apiBaseUrlOverride];
     }
     if (kIsWeb) {
-      return ['http://localhost:8080', 'http://trungtranvfit.id.vn'];
+      return [Uri.base.origin, 'http://trungtranvfit.id.vn'];
+    }
+    if (kReleaseMode) {
+      return ['http://trungtranvfit.id.vn'];
     }
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => [
@@ -78,7 +81,15 @@ class Environment {
       return [_aiBaseUrlOverride];
     }
     if (kIsWeb) {
-      return ['http://localhost:8000', 'http://trungtranvfit.id.vn:8000'];
+      final host = Uri.base.host;
+      final scheme = Uri.base.scheme;
+      return [
+        '$scheme://$host:8000',
+        'http://trungtranvfit.id.vn:8000',
+      ];
+    }
+    if (kReleaseMode) {
+      return ['http://trungtranvfit.id.vn:8000'];
     }
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => [
