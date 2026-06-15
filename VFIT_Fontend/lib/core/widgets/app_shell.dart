@@ -54,6 +54,9 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   void _updateOverlay() {
     if (!mounted) return;
+    final rootOverlay = Navigator.of(context, rootNavigator: true).overlay;
+    if (rootOverlay == null) return;
+
     final auth = ref.read(authControllerProvider);
     final isVip = auth.user?.isVipActive == true;
     final size = MediaQuery.of(context).size;
@@ -75,7 +78,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             onTap: () => AiCoachSheet.show(context),
           ),
         );
-        Overlay.of(context).insert(_coachEntry!);
+        rootOverlay.insert(_coachEntry!);
       }
       if (_mealEntry == null) {
         _mealEntry = OverlayEntry(
@@ -90,7 +93,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             onTap: () => AiMealSheet.show(context),
           ),
         );
-        Overlay.of(context).insert(_mealEntry!);
+        rootOverlay.insert(_mealEntry!);
       }
     } else {
       _coachEntry?.remove();
