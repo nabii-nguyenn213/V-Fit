@@ -10,6 +10,16 @@
   <meta name="apple-mobile-web-app-title" content="V-FIT">
   <title>V-FIT</title>
   <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+          console.log('Successfully unregistered service worker to clear cache.');
+        }
+      });
+    }
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
