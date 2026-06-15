@@ -61,26 +61,6 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     final user = auth.user;
     final isVip = user?.isVipActive == true;
 
-    if (!isVip) {
-      return Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          title: const Text(
-            'V-FIT AI Workspace',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-        ),
-        body: Stack(
-          children: [
-            _buildBackgroundDecoration(),
-            SafeArea(child: _buildVipGateScreen(context)),
-          ],
-        ),
-      );
-    }
-
     return DefaultTabController(
       length: 4,
       child: Scaffold(
@@ -144,8 +124,20 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
         body: TabBarView(
           children: [
             _buildChatInterface(context),
-            _buildWorkoutPlanner(context),
-            _buildMealPlanner(context),
+            isVip
+                ? _buildWorkoutPlanner(context)
+                : _buildTabVipGate(
+                    context,
+                    'Lập lịch tập luyện cá nhân',
+                    'Hệ thống AI sẽ tự động thiết kế lịch tập dựa trên thể trạng và trình độ của bạn.',
+                  ),
+            isVip
+                ? _buildMealPlanner(context)
+                : _buildTabVipGate(
+                    context,
+                    'Thực đơn ăn uống thông minh',
+                    'AI phân chia calo, carb, protein, fat chuẩn gymer theo mục tiêu của bạn.',
+                  ),
             _buildFoodScanner(context),
           ],
         ),
@@ -153,34 +145,18 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     );
   }
 
-  Widget _buildBackgroundDecoration() {
-    return Positioned.fill(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-              Theme.of(context).scaffoldBackgroundColor,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildVipGateScreen(BuildContext context) {
+  Widget _buildTabVipGate(BuildContext context, String featureName, String featureDesc) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
       child: Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 90,
-                height: 90,
+                width: 70,
+                height: 70,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -191,86 +167,53 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.orange.withValues(alpha: 0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    )
+                      color: Colors.orange.withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
                   ],
                 ),
                 child: const Icon(
                   Icons.workspace_premium_rounded,
                   color: Colors.white,
-                  size: 48,
+                  size: 36,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               Text(
-                'Khu vực V-FIT VIP AI',
-                style: AppTypography.headerLargeFor(context).copyWith(
+                featureName,
+                style: AppTypography.headerMediumFor(context).copyWith(
                   fontWeight: FontWeight.w800,
-                  fontSize: 26,
+                  fontSize: 20,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Tính năng dành riêng cho thành viên VIP',
+                style: TextStyle(
+                  color: Colors.amber.shade800,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
-                'Mở khóa toàn bộ bộ công cụ AI: Nhận giáo án tập luyện cá nhân hóa, lên thực đơn dinh dưỡng chi tiết và trao đổi 24/7 với AI Coach.',
+                featureDesc,
                 style: AppTypography.bodyFor(context).copyWith(
                   color: AppColors.textSecondaryOf(context),
                   height: 1.5,
+                  fontSize: 13,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  color: Theme.of(context).cardColor.withValues(alpha: 0.5),
-                  child: Column(
-                    children: [
-                      _buildBenefitRow(
-                        context,
-                        Icons.chat_bubble_outline_rounded,
-                        'Hỏi đáp 24/7 với AI Coach',
-                        'Giải đáp thắc mắc về kỹ thuật tập và dinh dưỡng.',
-                      ),
-                      const Divider(height: 24),
-                      _buildBenefitRow(
-                        context,
-                        Icons.fitness_center_rounded,
-                        'Lập lịch tập luyện cá nhân',
-                        'Tự động thiết kế lịch tập dựa trên thể trạng của bạn.',
-                      ),
-                      const Divider(height: 24),
-                      _buildBenefitRow(
-                        context,
-                        Icons.restaurant_rounded,
-                        'Thực đơn ăn uống thông minh',
-                        'AI phân chia calo, carb, protein, fat chuẩn gymer.',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
               AppButton.add(
                 label: 'Nâng cấp lên VIP ngay',
                 fullWidth: true,
                 onPressed: () {
                   context.go('/profile');
-                },
-              ),
-              const SizedBox(height: 16),
-              AppButton.ghost(
-                label: 'Quay lại',
-                fullWidth: true,
-                onPressed: () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go('/home');
-                  }
                 },
               ),
             ],
@@ -280,45 +223,6 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     );
   }
 
-  Widget _buildBenefitRow(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String desc,
-  ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          color: Theme.of(context).colorScheme.primary,
-          size: 26,
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AppTypography.bodyFor(context).copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                desc,
-                style: AppTypography.bodyFor(context).copyWith(
-                  color: AppColors.textSecondaryOf(context),
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   // --- TAB 1: AI Coach ---
   Widget _buildChatInterface(BuildContext context) {
@@ -476,7 +380,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               color: isLoading ? Colors.grey : Theme.of(context).colorScheme.primary,
             ),
             onPressed: isLoading ? null : () => _handleSend(_messageController.text),
-          )
+          ),
         ],
       ),
     );
