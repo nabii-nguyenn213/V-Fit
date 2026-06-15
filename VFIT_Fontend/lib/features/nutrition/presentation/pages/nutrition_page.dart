@@ -73,7 +73,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
   }
 
   /// ✨ NEW: Show food scan modal
-  Future<void> _scanFood() async {
+  Future<void> _scanFood(BuildContext context) async {
     try {
       setState(() => _scanLoading = true);
 
@@ -310,7 +310,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
                 const SizedBox(height: AppSpacing.x4),
                 _FoodScanCard(
                   loading: _scanLoading,
-                  onTap: _scanFood,
+                  onTap: () => _scanFood(context),
                 ),
                 const SizedBox(height: AppSpacing.x4),
                 _NutritionSearchBar(
