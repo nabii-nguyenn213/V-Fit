@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:vfit_frontend/features/ai/data/repositories/ai_planners_repository.dart';
 
 import '../../../../core/utils/permission_helper.dart';
 import '../../../../core/utils/rate_limiter.dart';
@@ -13,7 +15,7 @@ import '../../data/models/food_calorie_estimate_model.dart';
 /// - Hoặc chọn từ gallery
 /// - Hiển thị loading khi phân tích
 /// - Hiển thị kết quả calo
-class FoodScanModal extends StatefulWidget {
+class FoodScanModal extends ConsumerStatefulWidget {
   final Function(FoodCalorieEstimateModel) onFoodScanned;
   final VoidCallback onCancel;
 
@@ -24,10 +26,10 @@ class FoodScanModal extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<FoodScanModal> createState() => _FoodScanModalState();
+  ConsumerState<FoodScanModal> createState() => _FoodScanModalState();
 }
 
-class _FoodScanModalState extends State<FoodScanModal> {
+class _FoodScanModalState extends ConsumerState<FoodScanModal> {
   CameraController? _cameraController;
   bool _isCameraReady = false;
   bool _isAnalyzing = false;
@@ -160,23 +162,42 @@ class _FoodScanModalState extends State<FoodScanModal> {
       }
 
       // Call API to analyze with file
-      // Try to use the food API endpoint directly
       AppFeedback.info('Đang phân tích ảnh...');
       
+      final repo = ref.read(aiPlannersRepositoryProvider);
+      final response = await repo.scanFoodImage(
+        bytes: imageBytes,
+        filename: imagePath.split('/').last,
+      );
+
       if (mounted) {
         setState(() => _isAnalyzing = false);
         
-        // For now, create a mock result
-        // In production, this would call the actual API
+        final foodName = response['food_name']?.toString() ?? 'Thức ăn quét được';
+        final servingSize = response['portion_estimate']?.toString() ?? '1 phần';
+        final calories = (response['total_calories'] as num?)?.toInt() ?? 0;
+        final proteinGrams = (response['protein_g'] as num?)?.toDouble() ?? 0.0;
+        final carbGrams = (response['carbs_g'] as num?)?.toDouble() ?? 0.0;
+        final fatGrams = (response['fat_g'] as num?)?.toDouble() ?? 0.0;
+        final confidence = (response['confidence'] as num?)?.toDouble() ?? 0.75;
+        
+        final List<String> notes = [];
+        if (response['note'] != null) {
+          notes.add(response['note'].toString());
+        }
+        if (response['items'] is List) {
+          notes.addAll((response['items'] as List).map((e) => e.toString()));
+        }
+
         final result = FoodCalorieEstimateModel(
-          foodName: 'Thức ăn quét được',
-          servingSize: '100g',
-          calories: 250,
-          proteinGrams: 20,
-          carbGrams: 30,
-          fatGrams: 8,
-          confidence: 0.75,
-          notes: const ['Kết quả quét từ ảnh'],
+          foodName: foodName,
+          servingSize: servingSize,
+          calories: calories,
+          proteinGrams: proteinGrams,
+          carbGrams: carbGrams,
+          fatGrams: fatGrams,
+          confidence: confidence,
+          notes: notes,
           estimatedAt: DateTime.now(),
         );
         

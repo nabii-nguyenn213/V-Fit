@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http_parser/http_parser.dart';
 import '../../../../core/network/network_providers.dart';
 
 final aiPlannersRepositoryProvider = Provider<AiPlannersRepository>((ref) {
@@ -89,5 +90,29 @@ class AiPlannersRepository {
       return response.data!;
     }
     throw Exception('Không thể phân tích dinh dưỡng món ăn.');
+  }
+
+  /// POST /api/v1/food-scanner/
+  Future<Map<String, dynamic>> scanFoodImage({
+    required List<int> bytes,
+    required String filename,
+  }) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: filename,
+        contentType: MediaType('image', 'jpeg'),
+      ),
+    });
+
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/food-scanner/',
+      data: formData,
+    );
+
+    if (response.statusCode == 200 && response.data != null) {
+      return response.data!;
+    }
+    throw Exception('Không thể phân tích ảnh món ăn.');
   }
 }
