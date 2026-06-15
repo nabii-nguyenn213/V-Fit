@@ -14,7 +14,7 @@ import '../../features/auth/application/auth_controller.dart';
 import '../../features/ai/presentation/widgets/ai_coach_sheet.dart';
 import '../../features/ai/presentation/widgets/ai_meal_sheet.dart';
 
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child});
 
   final Widget child;
@@ -28,9 +28,86 @@ class AppShell extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  OverlayEntry? _coachEntry;
+  OverlayEntry? _mealEntry;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _updateOverlay();
+    });
+  }
+
+  @override
+  void dispose() {
+    _coachEntry?.remove();
+    _coachEntry = null;
+    _mealEntry?.remove();
+    _mealEntry = null;
+    super.dispose();
+  }
+
+  void _updateOverlay() {
+    if (!mounted) return;
+    final auth = ref.read(authControllerProvider);
+    final isVip = auth.user?.isVipActive == true;
+    final size = MediaQuery.of(context).size;
+    final wide = AppResponsive.isWide(context);
+    final showButtons = isVip && !wide;
+    const bottomNavOffset = 100.0;
+
+    if (showButtons) {
+      if (_coachEntry == null) {
+        _coachEntry = OverlayEntry(
+          builder: (context) => DraggableFloatingButton(
+            key: const ValueKey('ai-coach-touch'),
+            icon: const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0),
+            onTap: () => AiCoachSheet.show(context),
+          ),
+        );
+        Overlay.of(context).insert(_coachEntry!);
+      }
+      if (_mealEntry == null) {
+        _mealEntry = OverlayEntry(
+          builder: (context) => DraggableFloatingButton(
+            key: const ValueKey('ai-meal-touch'),
+            icon: const Icon(
+              Icons.restaurant_menu_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0),
+            onTap: () => AiMealSheet.show(context),
+          ),
+        );
+        Overlay.of(context).insert(_mealEntry!);
+      }
+    } else {
+      _coachEntry?.remove();
+      _coachEntry = null;
+      _mealEntry?.remove();
+      _mealEntry = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _updateOverlay();
+    });
+
     final path = GoRouterState.of(context).uri.path;
-    final selectedIndex = _routes.indexWhere((route) => path.startsWith(route));
+    final selectedIndex = AppShell._routes.indexWhere((route) => path.startsWith(route));
     final safeIndex = selectedIndex < 0 ? 0 : selectedIndex;
     final title = switch (safeIndex) {
       0 => 'Trang chủ',
@@ -41,11 +118,6 @@ class AppShell extends ConsumerWidget {
     };
     final isDark = AppColors.isDark(context);
     final wide = AppResponsive.isWide(context);
-    final size = MediaQuery.of(context).size;
-    const bottomNavOffset = 100.0;
-
-    final auth = ref.watch(authControllerProvider);
-    final isVip = auth.user?.isVipActive == true;
 
     final body = Stack(
       children: [
@@ -82,7 +154,7 @@ class AppShell extends ConsumerWidget {
                     child: AppResponsive.centeredContent(
                       context: context,
                       maxWidth: wide ? 1080 : AppResponsive.maxContentWidth,
-                      child: child,
+                      child: widget.child,
                     ),
                   ),
                 ],
@@ -90,28 +162,6 @@ class AppShell extends ConsumerWidget {
             ),
           ),
         ),
-        if (isVip && !wide) ...[
-          DraggableFloatingButton(
-            key: const ValueKey('ai-coach-touch'),
-            icon: const Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: Colors.white,
-              size: 26,
-            ),
-            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 72.0),
-            onTap: () => AiCoachSheet.show(context),
-          ),
-          DraggableFloatingButton(
-            key: const ValueKey('ai-meal-touch'),
-            icon: const Icon(
-              Icons.restaurant_menu_rounded,
-              color: Colors.white,
-              size: 26,
-            ),
-            initialOffset: Offset(size.width - 72.0, size.height - bottomNavOffset - 144.0),
-            onTap: () => AiMealSheet.show(context),
-          ),
-        ],
       ],
     );
 
@@ -123,7 +173,7 @@ class AppShell extends ConsumerWidget {
               children: [
                 _ShellNavigationRail(
                   selectedIndex: safeIndex,
-                  onDestinationSelected: (value) => context.go(_routes[value]),
+                  onDestinationSelected: (value) => context.go(AppShell._routes[value]),
                 ),
                 Expanded(child: body),
               ],
@@ -133,7 +183,7 @@ class AppShell extends ConsumerWidget {
           ? null
           : _ShellNavigationBar(
               selectedIndex: safeIndex,
-              onDestinationSelected: (value) => context.go(_routes[value]),
+              onDestinationSelected: (value) => context.go(AppShell._routes[value]),
             ),
     );
   }
@@ -215,6 +265,7 @@ class _DraggableFloatingButtonState extends State<DraggableFloatingButton> {
       left: _position.dx,
       top: _position.dy,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onPanStart: (_) {
           setState(() {
             _isDragging = true;
