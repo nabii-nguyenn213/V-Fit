@@ -76,6 +76,7 @@ public class SecurityConfig {
                                 "/ws/payments",
                                 "/",
                                 "/index.html",
+                                "/favicon.ico",
                                 "/favicon.png",
                                 "/manifest.json",
                                 "/flutter_bootstrap.js",
