@@ -13,6 +13,7 @@ import '../utils/responsive.dart';
 import '../../features/auth/application/auth_controller.dart';
 import '../../features/ai/presentation/widgets/ai_coach_sheet.dart';
 import '../../features/ai/presentation/widgets/ai_meal_sheet.dart';
+import 'flashy_vip_required_modal.dart';
 
 final aiCoachButtonPositionProvider = StateProvider<Offset?>((ref) => null);
 final aiCoachDraggingProvider = StateProvider<bool>((ref) => false);
@@ -54,8 +55,8 @@ class AppShell extends ConsumerWidget {
     final coachInitialOffset = Offset(size.width - 76.0, maxButtonY);
 
     final auth = ref.watch(authControllerProvider);
-    final isVip = auth.user?.isVipActive == true;
-    final showButtons = isVip && !wide;
+    final isWorkoutOrNutrition = path == '/workouts' || path == '/nutrition';
+    final showButtons = isWorkoutOrNutrition && !wide;
 
     final body = Stack(
       children: [
@@ -126,6 +127,7 @@ class AppShell extends ConsumerWidget {
     );
 
     if (showButtons) {
+      final isWorkout = path == '/workouts';
       return Stack(
         children: [
           scaffold,
@@ -133,6 +135,8 @@ class AppShell extends ConsumerWidget {
             positionProvider: aiCoachButtonPositionProvider,
             draggingProvider: aiCoachDraggingProvider,
             initialOffset: coachInitialOffset,
+            isWorkout: isWorkout,
+            isVip: auth.user?.isVipActive == true,
           ),
         ],
       );
@@ -148,11 +152,15 @@ class DraggablePremiumAiSpeedDial extends ConsumerStatefulWidget {
     required this.positionProvider,
     required this.draggingProvider,
     required this.initialOffset,
+    required this.isWorkout,
+    required this.isVip,
   });
 
   final StateProvider<Offset?> positionProvider;
   final StateProvider<bool> draggingProvider;
   final Offset initialOffset;
+  final bool isWorkout;
+  final bool isVip;
 
   @override
   ConsumerState<DraggablePremiumAiSpeedDial> createState() => _DraggablePremiumAiSpeedDialState();
@@ -259,25 +267,22 @@ class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAi
                     children: [
                       _buildMenuOption(
                         context,
-                        title: 'Thực đơn AI',
-                        icon: Icons.restaurant_menu_rounded,
-                        color: const Color(0xFFFF7E00),
-                        isLeft: isLeft,
-                        onTap: () {
-                          _toggleMenu();
-                          context.push('/ai/coach?tab=2');
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _buildMenuOption(
-                        context,
-                        title: 'Lập lịch AI',
-                        icon: Icons.fitness_center_rounded,
+                        title: widget.isWorkout ? 'Lập lịch AI' : 'Lên thực đơn AI',
+                        icon: widget.isWorkout ? Icons.fitness_center_rounded : Icons.restaurant_menu_rounded,
                         color: const Color(0xFFE81CFF),
                         isLeft: isLeft,
+                        isVipOption: true,
+                        isVipActive: widget.isVip,
                         onTap: () {
                           _toggleMenu();
-                          context.push('/ai/coach?tab=1');
+                          if (widget.isVip) {
+                            context.push(widget.isWorkout ? '/ai/coach?tab=1' : '/ai/coach?tab=2');
+                          } else {
+                            showDialog<void>(
+                              context: context,
+                              builder: (context) => const FlashyVipRequiredModal(),
+                            );
+                          }
                         },
                       ),
                       const SizedBox(height: 10),
@@ -287,6 +292,8 @@ class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAi
                         icon: Icons.chat_bubble_outline_rounded,
                         color: const Color(0xFF06B6D4),
                         isLeft: isLeft,
+                        isVipOption: false,
+                        isVipActive: widget.isVip,
                         onTap: () {
                           _toggleMenu();
                           context.push('/ai/coach?tab=0');
@@ -372,6 +379,8 @@ class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAi
     required IconData icon,
     required Color color,
     required bool isLeft,
+    required bool isVipOption,
+    required bool isVipActive,
     required VoidCallback onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -388,9 +397,36 @@ class _DraggablePremiumAiSpeedDialState extends ConsumerState<DraggablePremiumAi
           ),
         ],
       ),
-      child: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+          if (isVipOption) ...[
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFB03A), Color(0xFFFF7E00)],
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'VIP',
+                style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(width: 4),
+            const Text(
+              'FREE',
+              style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ],
       ),
     );
 
