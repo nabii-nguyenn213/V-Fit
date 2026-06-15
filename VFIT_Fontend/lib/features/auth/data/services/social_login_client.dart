@@ -34,13 +34,13 @@ class SocialLoginClient {
   })  : _googleSignIn = googleSignIn ??
             (kIsWeb
                 ? GoogleSignIn(
-                    scopes: const ['email', 'profile'],
+                    scopes: const ['email', 'profile', 'openid'],
                     clientId: Environment.googleWebClientId.isNotEmpty
                         ? Environment.googleWebClientId
                         : null,
                   )
                 : GoogleSignIn(
-                    scopes: const ['email', 'profile'],
+                    scopes: const ['email', 'profile', 'openid'],
                     serverClientId: Environment.googleWebClientId.isNotEmpty
                         ? Environment.googleWebClientId
                         : null,
