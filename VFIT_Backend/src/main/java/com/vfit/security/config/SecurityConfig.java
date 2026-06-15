@@ -73,7 +73,16 @@ public class SecurityConfig {
                                 "/uploads/**",
                                 "/ws/ai/form-check",
                                 "/ws/ai/body-analysis",
-                                "/ws/payments")
+                                "/ws/payments",
+                                "/",
+                                "/index.html",
+                                "/favicon.png",
+                                "/manifest.json",
+                                "/flutter_bootstrap.js",
+                                "/flutter.js",
+                                "/main.dart.js",
+                                "/assets/**",
+                                "/canvaskit/**")
                         .permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,

@@ -29,5 +29,13 @@ public class WebConfig implements WebMvcConfigurer {
         }
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + uploadPath);
+        registry.addResourceHandler("/**")
+                .addResourceLocations("file:C:/V-Fit/VFIT_Backend/web/")
+                .resourceChain(true);
+    }
+
+    @Override
+    public void addViewControllers(org.springframework.web.servlet.config.annotation.ViewControllerRegistry registry) {
+        registry.addViewController("/").setViewName("forward:/index.html");
     }
 }
