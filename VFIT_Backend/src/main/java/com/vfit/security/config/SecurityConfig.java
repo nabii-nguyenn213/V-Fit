@@ -82,6 +82,7 @@ public class SecurityConfig {
                                 "/flutter_bootstrap.js",
                                 "/flutter.js",
                                 "/main.dart.js",
+                                "/version.json",
                                 "/assets/**",
                                 "/canvaskit/**")
                         .permitAll()
