@@ -7,7 +7,7 @@ import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/state_views.dart';
-import '../../auth/application/auth_controller.dart';
+import 'package:vfit_frontend/features/auth/application/auth_controller.dart';
 import '../../data/repositories/admin_repository.dart';
 import 'package:go_router/go_router.dart';
 

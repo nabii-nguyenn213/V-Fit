@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/state_views.dart';
-import '../../auth/application/auth_controller.dart';
+import 'package:vfit_frontend/features/auth/application/auth_controller.dart';
 import '../../data/repositories/admin_dashboard_repository.dart';
 import '../bloc/admin_dashboard_bloc.dart';
 import '../bloc/admin_dashboard_event.dart';
