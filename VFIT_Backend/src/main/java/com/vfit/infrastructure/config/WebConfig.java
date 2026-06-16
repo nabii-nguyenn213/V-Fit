@@ -48,5 +48,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(org.springframework.web.servlet.config.annotation.ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("forward:/index.html");
+        registry.addViewController("/favicon.ico").setViewName("forward:/favicon.png");
     }
 }

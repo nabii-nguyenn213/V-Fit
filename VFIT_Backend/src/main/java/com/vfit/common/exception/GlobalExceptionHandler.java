@@ -48,6 +48,11 @@ public class GlobalExceptionHandler {
         return build(ErrorCode.FORBIDDEN, ErrorCode.FORBIDDEN.getDefaultMessage(), request.getRequestURI(), List.of());
     }
 
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException ex, HttpServletRequest request) {
+        return build(ErrorCode.RESOURCE_NOT_FOUND, ex.getMessage(), request.getRequestURI(), List.of());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnhandled(Exception ex, HttpServletRequest request) {
         log.error("Unhandled exception at {}", request.getRequestURI(), ex);
