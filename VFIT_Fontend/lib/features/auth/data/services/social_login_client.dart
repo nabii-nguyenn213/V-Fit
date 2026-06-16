@@ -51,15 +51,21 @@ class SocialLoginClient {
   final FacebookAuth _facebookAuth;
 
   Future<SocialLoginCredential?> signInWithGoogle() async {
-    final GoogleSignInAccount? account;
+    GoogleSignInAccount? account;
     try {
       _debugLogGoogleSignInStart();
-      try {
-        await _googleSignIn.signOut();
-      } catch (e) {
-        debugPrint('[GoogleSignIn] Pre-signin signOut error: $e');
+      if (kIsWeb) {
+        // On web, attempt silent sign-in first, which is more reliable for retrieving the idToken
+        account = await _googleSignIn.signInSilently();
       }
-      account = await _googleSignIn.signIn();
+      if (account == null) {
+        try {
+          await _googleSignIn.signOut();
+        } catch (e) {
+          debugPrint('[GoogleSignIn] Pre-signin signOut error: $e');
+        }
+        account = await _googleSignIn.signIn();
+      }
     } on PlatformException catch (error) {
       if (error.code == 'sign_in_failed' &&
           error.message?.contains('ApiException: 10') == true) {
@@ -73,8 +79,18 @@ class SocialLoginClient {
     if (account == null) {
       return null;
     }
-    final auth = await account.authentication;
-    final idToken = auth.idToken;
+    var auth = await account.authentication;
+    var idToken = auth.idToken;
+
+    if (kIsWeb && (idToken == null || idToken.isEmpty)) {
+      debugPrint('[GoogleSignIn] Web idToken is null, attempting silent re-authentication...');
+      account = await _googleSignIn.signInSilently(reAuthenticate: true);
+      if (account != null) {
+        auth = await account.authentication;
+        idToken = auth.idToken;
+      }
+    }
+
     if (idToken == null || idToken.isEmpty) {
       throw Exception('Google login did not return an identity token.');
     }
