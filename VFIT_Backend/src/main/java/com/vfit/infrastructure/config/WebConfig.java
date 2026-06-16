@@ -29,8 +29,19 @@ public class WebConfig implements WebMvcConfigurer {
         }
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + uploadPath);
+
+        // Resolve web path dynamically to support both local machine and VPS
+        String webDir = System.getenv("WEB_DIR");
+        if (webDir == null || webDir.isBlank()) {
+            webDir = System.getProperty("app.web-dir", "web");
+        }
+        String webPath = java.nio.file.Path.of(webDir).toAbsolutePath().normalize().toString();
+        if (!webPath.endsWith("/") && !webPath.endsWith("\\")) {
+            webPath += "/";
+        }
+
         registry.addResourceHandler("/**")
-                .addResourceLocations("file:C:/V-Fit/VFIT_Backend/web/")
+                .addResourceLocations("file:" + webPath)
                 .resourceChain(true);
     }
 
