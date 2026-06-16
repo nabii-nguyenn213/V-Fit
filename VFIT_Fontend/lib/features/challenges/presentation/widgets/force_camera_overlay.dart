@@ -24,7 +24,7 @@ class _ForceCameraOverlayState extends ConsumerState<ForceCameraOverlay> {
     final picker = ImagePicker();
     try {
       final pickedFile = await picker.pickImage(
-        source: ImageSource.camera,
+        source: kIsWeb ? ImageSource.gallery : ImageSource.camera,
         imageQuality: 85,
         maxWidth: 1280,
       );
@@ -172,8 +172,8 @@ class _ForceCameraOverlayState extends ConsumerState<ForceCameraOverlay> {
                           )
                         : ElevatedButton.icon(
                             onPressed: () => _takeMilestonePhoto(state.activeChallengeTitle),
-                            icon: const Icon(Icons.camera_alt),
-                            label: const Text('Chụp ảnh & Nộp bài ngay'),
+                            icon: Icon(kIsWeb ? Icons.photo_library : Icons.camera_alt),
+                            label: Text(kIsWeb ? 'Chọn ảnh & Nộp bài ngay' : 'Chụp ảnh & Nộp bài ngay'),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 32,

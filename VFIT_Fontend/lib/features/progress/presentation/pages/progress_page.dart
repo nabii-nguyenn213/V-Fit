@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:camera/camera.dart' show XFile;
+import 'package:image_picker/image_picker.dart' show ImagePicker, ImageSource, XFile;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,20 +91,64 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
     if (!mounted) {
       return;
     }
-    final capturedFile = await Navigator.of(context).push<XFile>(
-      MaterialPageRoute(
-        builder: (context) => const ProgressCameraCapturePage(),
-        fullscreenDialog: true,
-      ),
-    );
+    XFile? capturedFile;
+    if (kIsWeb) {
+      capturedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1280,
+      );
+    } else {
+      final source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        backgroundColor: const Color(0xff1C1D24),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.white),
+                title: const Text('Chụp ảnh mới', style: TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.white),
+                title: const Text('Chọn từ thư viện', style: TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (source == null) return;
+      if (source == ImageSource.camera) {
+        if (!mounted) return;
+        capturedFile = await Navigator.of(context).push<XFile>(
+          MaterialPageRoute(
+            builder: (context) => const ProgressCameraCapturePage(),
+            fullscreenDialog: true,
+          ),
+        );
+      } else {
+        capturedFile = await ImagePicker().pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 85,
+          maxWidth: 1280,
+        );
+      }
+    }
 
     if (capturedFile == null || !mounted) {
       return;
     }
+    final file = capturedFile;
 
     final action = await showDialog<_JourneySnapAction>(
       context: context,
-      builder: (context) => _JourneySnapDialog(imageFile: capturedFile),
+      builder: (context) => _JourneySnapDialog(imageFile: file),
     );
 
     if (action == null || !mounted) {
@@ -112,12 +156,12 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
     }
 
     if (action.type == _JourneySnapActionType.saveToDevice) {
-      await _saveSnapToDevice(capturedFile);
+      await _saveSnapToDevice(file);
       return;
     }
 
     final localSnap = _LocalJourneySnap(
-      file: capturedFile,
+      file: file,
       note: action.note.isEmpty ? null : action.note,
       createdAt: DateTime.now(),
     );
