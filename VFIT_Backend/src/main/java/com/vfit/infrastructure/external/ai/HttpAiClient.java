@@ -6,6 +6,7 @@ import com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult;
 import com.vfit.infrastructure.external.ai.dto.AiFoodCalorieEstimate;
 import com.vfit.infrastructure.external.ai.dto.AiFormCheckFeedback;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -139,6 +140,24 @@ public class HttpAiClient implements AiClient {
         }
     }
 
+    @Override
+    @CircuitBreaker(name = "aiCore", fallbackMethod = "askCoachFallback")
+    public Map<String, Object> askCoach(Map<String, Object> request) {
+        return postJson(aiProperties.getCoachPath(), request);
+    }
+
+    @Override
+    @CircuitBreaker(name = "aiCore", fallbackMethod = "createWorkoutPlanFallback")
+    public Map<String, Object> createWorkoutPlan(Map<String, Object> request) {
+        return postJson(aiProperties.getWorkoutPlannerPath(), request);
+    }
+
+    @Override
+    @CircuitBreaker(name = "aiCore", fallbackMethod = "createMealPlanFallback")
+    public Map<String, Object> createMealPlan(Map<String, Object> request) {
+        return postJson(aiProperties.getMealPlannerPath(), request);
+    }
+
     public AiFormCheckFeedback analyzeFormFallback(
             String userId,
             String videoUrl,
@@ -161,6 +180,60 @@ public class HttpAiClient implements AiClient {
             Map<String, Object> metadata,
             Throwable throwable) {
         return AiFoodCalorieEstimate.safeFallback();
+    }
+
+    public Map<String, Object> askCoachFallback(Map<String, Object> request, Throwable throwable) {
+        return Map.of(
+                "answer",
+                "AI Coach is temporarily unavailable. Please try again shortly.",
+                "fallback",
+                true);
+    }
+
+    public Map<String, Object> createWorkoutPlanFallback(Map<String, Object> request, Throwable throwable) {
+        return Map.of(
+                "plan_name",
+                "AI workout planner unavailable",
+                "goal",
+                String.valueOf(request.getOrDefault("goal", "general fitness")),
+                "days_per_week",
+                request.getOrDefault("days_per_week", 4),
+                "weekly_schedule",
+                Map.of(),
+                "note",
+                "AI workout planner is temporarily unavailable.",
+                "fallback",
+                true);
+    }
+
+    public Map<String, Object> createMealPlanFallback(Map<String, Object> request, Throwable throwable) {
+        return Map.of(
+                "daily_calories",
+                0,
+                "protein_g",
+                0,
+                "carbs_g",
+                0,
+                "fat_g",
+                0,
+                "meal_plan",
+                Map.of(),
+                "note",
+                "AI meal planner is temporarily unavailable.",
+                "fallback",
+                true);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> postJson(String path, Map<String, Object> request) {
+        log.info("Forwarding AI recommendation request to {}", path);
+        Map<String, Object> response = recommendationRestClient.post()
+                .uri(path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .retrieve()
+                .body(Map.class);
+        return response == null ? new LinkedHashMap<>() : new LinkedHashMap<>(response);
     }
 
     private record FoodScannerResponse(

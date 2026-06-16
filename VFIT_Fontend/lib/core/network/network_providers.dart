@@ -56,6 +56,31 @@ final dioProvider = Provider<Dio>((ref) {
   }
   return dio;
 });
+final aiDioProvider = Provider<Dio>((ref) {
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: Environment.aiBaseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 60),
+      sendTimeout: const Duration(seconds: 30),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    ),
+  );
+
+  if (kDebugMode && Environment.debugNetwork) {
+    dio.interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+      ),
+    );
+  }
+
+  return dio;
+});
 
 final aiDioProvider = Provider<Dio>((ref) {
   final connectTimeout = _localAiFallbackEnabled

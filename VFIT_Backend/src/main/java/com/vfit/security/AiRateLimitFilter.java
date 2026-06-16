@@ -11,6 +11,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @RequiredArgsConstructor
 public class AiRateLimitFilter extends OncePerRequestFilter {
+    private static final String FOOD_SCAN_PATH = "/api/ai/food-calorie-estimate";
+    private static final DateTimeFormatter DAILY_KEY_FORMATTER = DateTimeFormatter.BASIC_ISO_DATE;
+
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -38,6 +44,9 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
 
     @Value("${app.rate-limit.ai.fail-open:true}")
     private boolean failOpenWhenRedisUnavailable;
+
+    @Value("${app.rate-limit.ai.food-scan.max-daily-requests:10}")
+    private long foodScanMaxDailyRequests;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -71,6 +80,10 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
     }
 
     private RateLimitDecision checkLimit(HttpServletRequest request) {
+        if (isFoodScanEndpoint(request)) {
+            return checkFoodScanDailyLimit(request);
+        }
+
         String key = "rate-limit:ai:" + clientKey(request);
         try {
             Long count = redisTemplate.opsForValue().increment(key);
@@ -94,6 +107,47 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
                     ErrorCode.SERVICE_UNAVAILABLE,
                     "AI protection service is temporarily unavailable. Please try again later.");
         }
+    }
+
+    private RateLimitDecision checkFoodScanDailyLimit(HttpServletRequest request) {
+        String key = "rate-limit:ai-food-scan:" + LocalDate.now(ZoneOffset.UTC).format(DAILY_KEY_FORMATTER)
+                + ":" + clientKey(request);
+        try {
+            Long count = redisTemplate.opsForValue().increment(key);
+            if (count != null && count == 1L) {
+                redisTemplate.expire(key, secondsUntilNextUtcDay());
+            }
+            boolean allowed = count == null || count <= foodScanMaxDailyRequests;
+            if (allowed) {
+                return RateLimitDecision.allow();
+            }
+            return RateLimitDecision.deny(
+                    ErrorCode.RATE_LIMITED,
+                    "Bạn đã dùng hết 10 lượt scan món ăn hôm nay. Vui lòng thử lại vào ngày mai.");
+        } catch (RedisConnectionFailureException ex) {
+            if (failOpenWhenRedisUnavailable) {
+                log.warn("Redis unavailable for AI food scan daily quota, allowing request: {}", ex.getMessage());
+                return RateLimitDecision.allow();
+            }
+            log.error("Redis unavailable for AI food scan daily quota, blocking request: {}", ex.getMessage());
+            return RateLimitDecision.deny(
+                    ErrorCode.SERVICE_UNAVAILABLE,
+                    "AI protection service is temporarily unavailable. Please try again later.");
+        }
+    }
+
+    private boolean isFoodScanEndpoint(HttpServletRequest request) {
+        return FOOD_SCAN_PATH.equals(request.getRequestURI())
+                && "POST".equalsIgnoreCase(request.getMethod());
+    }
+
+    private Duration secondsUntilNextUtcDay() {
+        Instant now = Instant.now();
+        Instant nextDay = LocalDate.now(ZoneOffset.UTC)
+                .plusDays(1)
+                .atStartOfDay()
+                .toInstant(ZoneOffset.UTC);
+        return Duration.between(now, nextDay);
     }
 
     private String clientKey(HttpServletRequest request) {

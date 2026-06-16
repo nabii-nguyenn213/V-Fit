@@ -12,6 +12,7 @@ import '../../../../presentation/theme/app_colors.dart';
 import '../../../../presentation/theme/app_radius.dart';
 import '../../../../presentation/theme/app_spacing.dart';
 import '../../../../presentation/theme/app_typography.dart';
+// import '../../../ai/data/repositories/ai_recommendation_repository.dart'; // AI repository removed
 import '../../../auth/application/auth_controller.dart';
 import '../../../exercise_library/data/repositories/exercise_library_repository_impl.dart';
 import '../../../exercise_library/presentation/bloc/exercise_library_bloc.dart';
@@ -392,7 +393,8 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
       await showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
-        builder: (context) => const _AiRealtimeActionSheet(),
+        isScrollControlled: true,
+        builder: (ctx) => _AiToolsSheet(user: user),
       );
     } finally {
       if (mounted) {
@@ -402,101 +404,106 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
   }
 }
 
-class _AiRealtimeActionSheet extends StatelessWidget {
-  const _AiRealtimeActionSheet();
+
+class _AiToolsSheet extends StatelessWidget {
+  const _AiToolsSheet({required this.user});
+
+  final dynamic user;
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.x4,
-          0,
-          AppSpacing.x4,
-          AppSpacing.x4,
+        padding: AppResponsive.pagePadding(context).copyWith(
+          top: 0,
+          bottom: AppSpacing.x4 + MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Text(
-              'AI realtime',
+              'Công cụ AI',
               style: AppTypography.headerMediumFor(context),
             ),
-            const SizedBox(height: AppSpacing.x2),
+            const SizedBox(height: AppSpacing.x1),
             Text(
-              'Mở camera trực tiếp để AI phản hồi liên tục trong lúc tập.',
+              'Chọn tính năng AI bạn muốn sử dụng.',
               style: AppTypography.bodySmallFor(context),
             ),
             const SizedBox(height: AppSpacing.x4),
-            _AiRealtimeActionTile(
-              icon: Icons.directions_run_rounded,
-              title: 'Kiểm tra form tập',
-              subtitle:
-                  'Nhận điểm đúng sai và cue sửa động tác theo thời gian thực.',
+            _AiToolTile(
+              icon: Icons.accessibility_new_rounded,
+              title: 'Quét cơ thể AI',
+              subtitle: 'Phân tích hình thể, tư thế và cân bằng cơ thể realtime.',
+              accentColor: AppColors.success,
               onTap: () {
-                final router = GoRouter.of(context);
                 Navigator.of(context).pop();
-                router.push(
+                context.push(AppRoutes.aiBodyAnalysis);
+              },
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            _AiToolTile(
+              icon: Icons.sports_gymnastics_rounded,
+              title: 'Kiểm tra form tập',
+              subtitle: 'AI phân tích tư thế bài tập theo thời gian thực.',
+              accentColor: AppColors.primaryOf(context),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push(
                   AppRoutes.aiFormCheckLocation(exerciseId: 'squat'),
                 );
               },
             ),
-            const SizedBox(height: AppSpacing.x2),
-            _AiRealtimeActionTile(
-              icon: Icons.accessibility_new_rounded,
-              title: 'Phân tích dáng người',
-              subtitle:
-                  'Cập nhật posture, imbalance và gợi ý cá nhân liên tục.',
-              onTap: () {
-                final router = GoRouter.of(context);
-                Navigator.of(context).pop();
-                router.push(AppRoutes.aiBodyAnalysis);
-              },
-            ),
+            const SizedBox(height: AppSpacing.x4),
           ],
+        ),
         ),
       ),
     );
   }
 }
 
-class _AiRealtimeActionTile extends StatelessWidget {
-  const _AiRealtimeActionTile({
+class _AiToolTile extends StatelessWidget {
+  const _AiToolTile({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.accentColor,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final Color accentColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.primaryOf(context);
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.input),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.x3),
+        padding: const EdgeInsets.all(AppSpacing.x4),
         decoration: BoxDecoration(
           color: AppColors.surface1Of(context),
           borderRadius: BorderRadius.circular(AppRadius.input),
-          border: Border.all(color: AppColors.borderSubtleOf(context)),
+          border: Border.all(
+            color: accentColor.withValues(alpha: 0.36),
+          ),
         ),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
+                color: accentColor.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(AppRadius.small),
               ),
-              child: Icon(icon, color: color),
+              child: Icon(icon, color: accentColor),
             ),
             const SizedBox(width: AppSpacing.x3),
             Expanded(
@@ -505,12 +512,15 @@ class _AiRealtimeActionTile extends StatelessWidget {
                 children: [
                   Text(title, style: AppTypography.label()),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: AppTypography.bodySmallFor(context)),
+                  Text(
+                    subtitle,
+                    style: AppTypography.bodySmallFor(context),
+                  ),
                 ],
               ),
             ),
             const SizedBox(width: AppSpacing.x2),
-            Icon(Icons.chevron_right_rounded, color: color),
+            Icon(Icons.chevron_right_rounded, color: accentColor),
           ],
         ),
       ),

@@ -866,6 +866,8 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
       ),
     );
   }
+
+
 }
 
 class _FoodScanSheet extends ConsumerStatefulWidget {
@@ -1196,6 +1198,8 @@ class _FoodScanSheetState extends ConsumerState<_FoodScanSheet> {
     );
   }
 }
+
+
 
 class _TransientFoodImage {
   const _TransientFoodImage({
