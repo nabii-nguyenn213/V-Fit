@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../../core/network/network_providers.dart';
 import '../../../../core/network/web_socket_url_builder.dart';
@@ -60,7 +61,7 @@ class AiRealtimeCameraView extends StatefulWidget {
 class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     with WidgetsBindingObserver {
   CameraController? _cameraController;
-  WebSocket? _socket;
+  WebSocketChannel? _socketChannel;
   Timer? _captureTimer;
   List<CameraDescription> _cameras = const [];
   int _selectedCameraIndex = 0;
@@ -210,8 +211,21 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     if (_cameras.length < 2 || _capturing || _initializing) {
       return;
     }
-    final nextIndex = (_selectedCameraIndex + 1) % _cameras.length;
-    await _openCamera(nextIndex);
+    final currentLensDirection = _cameras[_selectedCameraIndex].lensDirection;
+    final targetLensDirection = currentLensDirection == CameraLensDirection.back
+        ? CameraLensDirection.front
+        : CameraLensDirection.back;
+
+    int targetIndex = _cameras.indexWhere(
+      (camera) => camera.lensDirection == targetLensDirection,
+    );
+
+    // Fallback: If no camera in the target direction is found, cycle to next camera index
+    if (targetIndex < 0) {
+      targetIndex = (_selectedCameraIndex + 1) % _cameras.length;
+    }
+
+    await _openCamera(targetIndex);
   }
 
   Future<void> _startStreaming() async {
@@ -227,14 +241,14 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
         return;
       }
 
-      final socket = await WebSocket.connect(_webSocketUrl(token));
-      _socket = socket;
+      final channel = WebSocketChannel.connect(Uri.parse(_webSocketUrl(token)));
+      _socketChannel = channel;
       _streaming = true;
       _waitingForFeedback = false;
       setState(() => _statusText = widget.streamingText);
       widget.onStreamingStarted?.call();
 
-      unawaited(_listenForFeedback(socket));
+      unawaited(_listenForFeedback(channel));
       _captureTimer = Timer.periodic(
         widget.captureInterval,
         (_) => _sendSnapshot(),
@@ -254,10 +268,10 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     _captureTimer = null;
     _streaming = false;
     _waitingForFeedback = false;
-    final socket = _socket;
-    _socket = null;
-    if (socket != null) {
-      await socket.close();
+    final channel = _socketChannel;
+    _socketChannel = null;
+    if (channel != null) {
+      await channel.sink.close();
     }
     if (mounted && !fromDispose) {
       setState(() => _statusText = widget.stoppedText);
@@ -267,11 +281,11 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
 
   Future<void> _sendSnapshot() async {
     final controller = _cameraController;
-    final socket = _socket;
+    final channel = _socketChannel;
     if (!_streaming ||
         _capturing ||
         controller == null ||
-        socket == null ||
+        channel == null ||
         !controller.value.isInitialized) {
       return;
     }
@@ -288,7 +302,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
       final bytes = await image.readAsBytes();
       print(
           '[AI CAMERA] Successfully captured frame, size: ${bytes.length} bytes');
-      socket.add(bytes);
+      channel.sink.add(bytes);
       unawaited(_deleteTemporaryCapture(image.path));
     } catch (error) {
       _waitingForFeedback = false;
@@ -317,9 +331,9 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     return sentAt != null && DateTime.now().difference(sentAt).inSeconds >= 3;
   }
 
-  Future<void> _listenForFeedback(WebSocket socket) async {
+  Future<void> _listenForFeedback(WebSocketChannel channel) async {
     try {
-      await for (final message in socket) {
+      await for (final message in channel.stream) {
         if (!mounted || message is! String) {
           continue;
         }

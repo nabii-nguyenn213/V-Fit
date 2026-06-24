@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
@@ -80,9 +81,9 @@ class PaymentRepository {
       return;
     }
 
-    final socket = await WebSocket.connect(_paymentWebSocketUrl(token));
+    final channel = WebSocketChannel.connect(Uri.parse(_paymentWebSocketUrl(token)));
     try {
-      await for (final message in socket) {
+      await for (final message in channel.stream) {
         if (message is! String) {
           continue;
         }
@@ -94,7 +95,7 @@ class PaymentRepository {
         }
       }
     } finally {
-      await socket.close();
+      await channel.sink.close();
     }
   }
 
