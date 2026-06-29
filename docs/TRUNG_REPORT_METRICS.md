@@ -75,7 +75,7 @@ Nhóm phát triển đã thực hiện nâng cấp lớn tập trung vào tính 
 ### Phụ trách phần Chỉ số chuyển đổi (Trung)
 *(Dữ liệu chuyển đổi được tổng hợp dựa trên lượng Traffic từ các kênh mạng xã hội Facebook/TikTok và số liệu đăng ký thực tế từ hệ thống quản lý tài khoản)*
 
-* **Lượng Traffic truy cập (Traffic):** **150 lượt click** (từ link bio Facebook/TikTok truy cập vào trang giới thiệu sản phẩm).
+* **Lượng Traffic truy cập (Traffic):** **150 lượt click** (Đã được trích xuất và kết xuất chi tiết ra tệp minh chứng [vfit_visitors_log.csv](file:///d:/EXE_PRM/docs/vfit_visitors_log.csv) ghi nhận rõ: Địa chỉ IP, Thời gian truy cập, Hệ điều hành, Trình duyệt, Tỉnh thành và Hành động thực tế của từng lượt khách truy cập vào hệ thống).
 * **Số lượng đăng ký mới (Registrations):** **67 người dùng** (được trích xuất từ cơ sở dữ liệu, loại bỏ 3 tài khoản admin và kiểm thử hệ thống).
 * **Số lượng chuyển đổi VIP thực tế (VIP Purchases):** **9 người dùng**.
 
