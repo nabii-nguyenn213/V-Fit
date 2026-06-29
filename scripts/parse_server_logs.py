@@ -75,22 +75,6 @@ def parse_logs(raw_log_path, output_csv_path):
                 elif "Edge" in ua:
                     browser_name = "Edge"
                     
-                # Determine location based on simulated database/rules or IP block
-                # Since geoip requires external library, we map IP prefixes to cities
-                city = "Hà Nội"
-                if ip.startswith("14.232") or ip.startswith("118.69"):
-                    city = "TP. Hồ Chí Minh"
-                elif ip.startswith("113.161"):
-                    city = "Đà Nẵng"
-                elif ip.startswith("27.72"):
-                    city = "Cần Thơ"
-                elif ip.startswith("115.78"):
-                    city = "Bình Dương"
-                elif ip.startswith("1.53"):
-                    city = "Đồng Nai"
-                elif ip.startswith("123.24"):
-                    city = "Hải Phòng"
-                    
                 # Determine action based on URI
                 action = "Xem giới thiệu"
                 if uri == "/#/login":
@@ -105,7 +89,6 @@ def parse_logs(raw_log_path, output_csv_path):
                     "time": time_str,
                     "os": os_name,
                     "browser": browser_name,
-                    "city": city,
                     "path": uri,
                     "action": action,
                     "dt_obj": local_dt # For sorting
@@ -121,7 +104,7 @@ def parse_logs(raw_log_path, output_csv_path):
     os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
     with open(output_csv_path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f)
-        writer.writerow(["STT", "Địa chỉ IP", "Thời gian truy cập", "Hệ điều hành", "Trình duyệt", "Tỉnh thành", "Đường dẫn", "Hành động"])
+        writer.writerow(["STT", "Địa chỉ IP", "Thời gian truy cập", "Hệ điều hành", "Trình duyệt", "Đường dẫn", "Hành động"])
         for idx, l in enumerate(logs, 1):
             writer.writerow([
                 idx,
@@ -129,7 +112,6 @@ def parse_logs(raw_log_path, output_csv_path):
                 l["time"],
                 l["os"],
                 l["browser"],
-                l["city"],
                 l["path"],
                 l["action"]
             ])
