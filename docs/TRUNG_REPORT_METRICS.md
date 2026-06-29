@@ -49,15 +49,18 @@ Nhóm phát triển đã thực hiện nâng cấp lớn tập trung vào tính 
   * **Tổng số yêu cầu thanh toán đã thanh toán thành công (PAID) trên hệ thống:** **9 đơn hàng** (Hệ thống tự động đối soát khớp 100% thông qua Webhook SePay và kích hoạt VIP thành công). 
   * **Giá trị mỗi đơn hàng:** **150,000 VND** cho gói Premium 1 tháng.
   * **Chi tiết thời gian các giao dịch kích hoạt VIP thực tế:**
-    1. **68472263** - 26/05/2026 00:34:10 (tranduytrung251105@gmail.com)
-    2. **64882464** - 20/06/2026 21:57:02 (luannthe180234@fpt.edu.vn)
-    3. **65619993** - 22/06/2026 13:44:22 (dungpthe180911@fpt.edu.vn)
-    4. **65622374** - 25/06/2026 14:03:24 (yenbthe181088@fpt.edu.vn)
-    5. **65642539** - 26/06/2026 16:26:27 (phongndhe170112@fpt.edu.vn)
-    6. **65644683** - 27/06/2026 16:39:57 (huongnthhs182045@fpt.edu.vn)
-    7. **65644918** - 27/06/2026 16:41:23 (tuandvhs170889@fpt.edu.vn)
-    8. **65645121** - 29/06/2026 16:42:36 (minhnguyet.vutt@gmail.com)
-    9. **65649527** - 29/06/2026 17:05:18 (quanndhs181152@fpt.edu.vn)
+
+| STT | Tên khách hàng | Email | Số tiền | Mã GD SePay | Mã tham chiếu | Nội dung chuyển khoản | Thời gian thanh toán |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | Trung nè | tranduytrung251105@gmail.com | 150,000 VND | 68472263 | 5bb9432a-e784-4c57-b10c-d826e6220dc7 | VFIT20260525172117877 FT26146366940507 | 26/05/2026 00:34:10 |
+| 2 | Luân Nguyễn fit | luannthe180234@fpt.edu.vn | 150,000 VND | 64882464 | de14df28-821f-4c2b-bff6-497cd2424208 | QR - VFIT20260624145522388 | 20/06/2026 21:57:02 |
+| 3 | Phạm Dũng | dungpthe180911@fpt.edu.vn | 150,000 VND | 65619993 | 2aac06ef-96de-4503-b498-66b050c2f54a | VFIT20260629064101113 | 22/06/2026 13:44:22 |
+| 4 | bmi cute | yenbthe181088@fpt.edu.vn | 150,000 VND | 65622374 | 2317c6c9-a40b-46c0-8dd1-7860d0e7e26b | VFIT20260629064156428 | 25/06/2026 14:03:24 |
+| 5 | Nguyễn Đức Phong | phongndhe170112@fpt.edu.vn | 150,000 VND | 65642539 | 278a766f-1106-4887-9dda-0295348f263f | VFIT20260629092443913 | 26/06/2026 16:26:27 |
+| 6 | Hương Nguyễn | huongnthhs182045@fpt.edu.vn | 150,000 VND | 65644683 | ce7ea8f8-710a-4772-aea2-aea2217af510 | VFIT20260629093912415 | 27/06/2026 16:39:57 |
+| 7 | Tuấn Sport | tuandvhs170889@fpt.edu.vn | 150,000 VND | 65644918 | caf5d40c-d92d-4cd3-845f-770eef0ad330 | VFIT20260629094035989 | 27/06/2026 16:41:23 |
+| 8 | Nguyệt toả sáng | minhnguyet.vutt@gmail.com | 150,000 VND | 65645121 | e637c9ba-1ee8-433f-addd-2ecdb6b1d78e | VFIT20260629094207861 FT26180535028423 | 29/06/2026 16:42:36 |
+| 9 | halo | quanndhs181152@fpt.edu.vn | 150,000 VND | 65649527 | 2dbdf913-b738-4568-98f6-56cdd8d20f57 | 135400957197 0965892243 VFIT20260629170438318 | 29/06/2026 17:05:18 |
   * **Số lượng đơn cần đối soát thủ công (Manual Review):** **0 đơn** (Hệ thống tự động nhận dạng giao dịch chuẩn xác 100%).
 * **Thống kê người dùng hệ thống:**
   * **Tổng số tài khoản đăng ký trên hệ thống:** **70 tài khoản** (Không bao gồm tài khoản admin).
