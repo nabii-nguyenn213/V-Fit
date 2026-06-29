@@ -75,21 +75,21 @@ def parse_logs(raw_log_path, output_csv_path):
                 elif "Edge" in ua:
                     browser_name = "Edge"
                     
-                # Determine action based on URI
+                # Determine action based on URI and date/IP
                 action = "Xem giới thiệu"
-                if uri == "/#/login":
-                    action = "Xem trang đăng nhập"
-                elif uri == "/":
-                    action = "Landed / Tải trang chủ"
-                elif "register" in uri:
+                if uri == "/#/register":
                     action = "Đăng ký tài khoản"
+                elif uri == "/#/login":
+                    if ip == "113.161.163.92" and local_dt.date() == datetime.date(2026, 5, 26):
+                        action = "Xem trang đăng nhập (Test IP)"
+                    else:
+                        action = "Xem trang đăng nhập"
                     
                 logs.append({
                     "ip": ip,
                     "time": time_str,
                     "os": os_name,
                     "browser": browser_name,
-                    "path": uri,
                     "action": action,
                     "dt_obj": local_dt # For sorting
                 })
@@ -104,7 +104,7 @@ def parse_logs(raw_log_path, output_csv_path):
     os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
     with open(output_csv_path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f)
-        writer.writerow(["STT", "Địa chỉ IP", "Thời gian truy cập", "Hệ điều hành", "Trình duyệt", "Đường dẫn", "Hành động"])
+        writer.writerow(["STT", "Địa chỉ IP", "Thời gian truy cập", "Hệ điều hành", "Trình duyệt", "Hành động"])
         for idx, l in enumerate(logs, 1):
             writer.writerow([
                 idx,
@@ -112,7 +112,6 @@ def parse_logs(raw_log_path, output_csv_path):
                 l["time"],
                 l["os"],
                 l["browser"],
-                l["path"],
                 l["action"]
             ])
             
