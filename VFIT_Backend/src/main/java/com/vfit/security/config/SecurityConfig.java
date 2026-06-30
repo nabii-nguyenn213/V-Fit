@@ -84,6 +84,9 @@ public class SecurityConfig {
                                 "/main.dart.js",
                                 "/version.json",
                                 "/google*.html",
+                                "/sitemap.xml",
+                                "/privacy.html",
+                                "/privacy-policy.html",
                                 "/assets/**",
                                 "/canvaskit/**")
                         .permitAll()

@@ -7,13 +7,23 @@ def main():
     username = "Administrator"
     password = "VFITAa123@"
     
-    local_file = r"d:\EXE_PRM\googlec5a363f8efe4656c.html"
-    remote_backend_path = r"C:\V-Fit\VFIT_Backend\web\googlec5a363f8efe4656c.html"
-    remote_frontend_path = r"C:\V-Fit\VFIT_Fontend\web\googlec5a363f8efe4656c.html"
+    files_to_upload = [
+        {
+            "local": r"d:\EXE_PRM\googlec5a363f8efe4656c.html",
+            "remote_backend": r"C:\V-Fit\VFIT_Backend\web\googlec5a363f8efe4656c.html",
+            "remote_frontend": r"C:\V-Fit\VFIT_Fontend\web\googlec5a363f8efe4656c.html"
+        },
+        {
+            "local": r"d:\EXE_PRM\sitemap.xml",
+            "remote_backend": r"C:\V-Fit\VFIT_Backend\web\sitemap.xml",
+            "remote_frontend": r"C:\V-Fit\VFIT_Fontend\web\sitemap.xml"
+        }
+    ]
     
-    if not os.path.exists(local_file):
-        print(f"[ERROR] Local file not found: {local_file}")
-        sys.exit(1)
+    for f in files_to_upload:
+        if not os.path.exists(f["local"]):
+            print(f"[ERROR] Local file not found: {f['local']}")
+            sys.exit(1)
         
     print(f"[*] Connecting to {hostname} via SSH...")
     ssh = paramiko.SSHClient()
@@ -27,32 +37,34 @@ def main():
         print(f"[*] Opening SFTP connection...")
         sftp = ssh.open_sftp()
         
-        # Upload to backend web directory
-        print(f"[*] Uploading to backend web directory: {remote_backend_path}")
-        sftp.put(local_file, remote_backend_path)
-        print("[+] Uploaded successfully!")
-        
-        # Upload to frontend web directory
-        print(f"[*] Uploading to frontend web directory: {remote_frontend_path}")
-        sftp.put(local_file, remote_frontend_path)
-        print("[+] Uploaded successfully!")
-        
+        for f in files_to_upload:
+            # Upload to backend web directory
+            print(f"[*] Uploading to backend: {f['remote_backend']}")
+            sftp.put(f["local"], f["remote_backend"])
+            print("[+] Uploaded successfully!")
+            
+            # Upload to frontend web directory
+            print(f"[*] Uploading to frontend: {f['remote_frontend']}")
+            sftp.put(f["local"], f["remote_frontend"])
+            print("[+] Uploaded successfully!")
+            
         sftp.close()
         
         # Verify remote files exist and check content
         print("[*] Verifying remote files...")
-        cmd_backend = f"powershell Get-Content {remote_backend_path}"
-        stdin, stdout, stderr = ssh.exec_command(cmd_backend)
-        backend_content = stdout.read().decode('utf-8').strip()
-        print(f"[+] Backend remote file content: '{backend_content}'")
-        
-        cmd_frontend = f"powershell Get-Content {remote_frontend_path}"
-        stdin, stdout, stderr = ssh.exec_command(cmd_frontend)
-        frontend_content = stdout.read().decode('utf-8').strip()
-        print(f"[+] Frontend remote file content: '{frontend_content}'")
-        
+        for f in files_to_upload:
+            cmd_backend = f"powershell Get-Content {f['remote_backend']}"
+            stdin, stdout, stderr = ssh.exec_command(cmd_backend)
+            backend_content = stdout.read().decode('utf-8').strip()
+            print(f"[+] Backend remote file content ({os.path.basename(f['local'])}): '{backend_content[:50]}...'")
+            
+            cmd_frontend = f"powershell Get-Content {f['remote_frontend']}"
+            stdin, stdout, stderr = ssh.exec_command(cmd_frontend)
+            frontend_content = stdout.read().decode('utf-8').strip()
+            print(f"[+] Frontend remote file content ({os.path.basename(f['local'])}): '{frontend_content[:50]}...'")
+            
         ssh.close()
-        print("[+] Verification file uploaded and verified successfully on VPS!")
+        print("[+] Verification and sitemap files uploaded and verified successfully on VPS!")
         
     except Exception as e:
         print(f"[ERROR] Failed to upload or verify: {e}")
