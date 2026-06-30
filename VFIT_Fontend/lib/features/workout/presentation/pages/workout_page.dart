@@ -389,10 +389,9 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
 
     setState(() => _openingAiTools = true);
     try {
-      await showModalBottomSheet<void>(
+      await showDialog<void>(
         context: context,
-        showDragHandle: true,
-        builder: (context) => const _AiRealtimeActionSheet(),
+        builder: (context) => const _AiRealtimeActionDialog(),
       );
     } finally {
       if (mounted) {
@@ -402,26 +401,67 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
   }
 }
 
-class _AiRealtimeActionSheet extends StatelessWidget {
-  const _AiRealtimeActionSheet();
+class _AiRealtimeActionDialog extends StatelessWidget {
+  const _AiRealtimeActionDialog();
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.x4,
-          0,
-          AppSpacing.x4,
-          AppSpacing.x4,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColors.primaryOf(context);
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.x4),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark
+                ? [const Color(0xFF131130), const Color(0xFF1C0D26)]
+                : [Colors.white, const Color(0xFFFAFAFE)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            width: 1.5,
+            color: accent.withValues(alpha: 0.3),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.15),
+              blurRadius: 20,
+              spreadRadius: 1,
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'AI realtime',
-              style: AppTypography.headerMediumFor(context),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, color: accent, size: 24),
+                    const SizedBox(width: AppSpacing.x2),
+                    Text(
+                      'AI realtime',
+                      style: AppTypography.headerMediumFor(context).copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.x2),
             Text(
