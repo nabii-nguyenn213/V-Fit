@@ -293,11 +293,42 @@ class ScanBodyButton extends StatefulWidget {
 
 class _ScanBodyButtonState extends State<ScanBodyButton> {
   bool _openingAiTools = false;
+  bool _isCollapsed = false;
 
   @override
   Widget build(BuildContext context) {
     final isVip = widget.user?.isVipActive == true;
     final accent = isVip ? AppColors.success : AppColors.energyMagenta;
+
+    if (_isCollapsed) {
+      return Material(
+        color: AppColors.surface1Of(context),
+        borderRadius: BorderRadius.circular(AppRadius.large),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          onTap: () => setState(() => _isCollapsed = false),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.large),
+              border: Border.all(color: accent.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.document_scanner_rounded, color: accent, size: 20),
+                const SizedBox(width: AppSpacing.x2),
+                Text(
+                  'Quét cơ thể AI',
+                  style: AppTypography.bodyFor(context).copyWith(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Icon(Icons.keyboard_arrow_down_rounded, color: accent),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.large),
@@ -362,7 +393,14 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
               ),
             ),
             const SizedBox(width: AppSpacing.x2),
-            Icon(Icons.chevron_right_rounded, color: accent),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              icon: Icon(Icons.keyboard_arrow_up_rounded, color: accent),
+              onPressed: () {
+                setState(() => _isCollapsed = true);
+              },
+            ),
           ],
         ),
       ),

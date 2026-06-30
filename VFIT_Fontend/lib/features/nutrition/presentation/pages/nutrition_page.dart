@@ -1200,7 +1200,7 @@ class _TransientFoodImage {
   final String? mimeType;
 }
 
-class _FoodScanCard extends StatelessWidget {
+class _FoodScanCard extends StatefulWidget {
   const _FoodScanCard({
     required this.loading,
     required this.onTap,
@@ -1210,13 +1210,50 @@ class _FoodScanCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_FoodScanCard> createState() => _FoodScanCardState();
+}
+
+class _FoodScanCardState extends State<_FoodScanCard> {
+  bool _isCollapsed = false;
+
+  @override
   Widget build(BuildContext context) {
+    if (_isCollapsed) {
+      return Material(
+        color: AppColors.surface1Of(context),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          onTap: () => setState(() => _isCollapsed = false),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4, vertical: AppSpacing.x3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(color: AppColors.borderSubtleOf(context)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.document_scanner_rounded, color: AppColors.primaryOf(context), size: 20),
+                const SizedBox(width: AppSpacing.x2),
+                Text(
+                  'Quét calo thức ăn',
+                  style: AppTypography.bodyFor(context).copyWith(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryOf(context)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Material(
       color: AppColors.surface1Of(context),
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.card),
-        onTap: loading ? null : onTap,
+        onTap: widget.loading ? null : widget.onTap,
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.x4),
           decoration: BoxDecoration(
@@ -1235,7 +1272,7 @@ class _FoodScanCard extends StatelessWidget {
                     color: AppColors.primaryOf(context).withValues(alpha: 0.28),
                   ),
                 ),
-                child: loading
+                child: widget.loading
                     ? Padding(
                         padding: const EdgeInsets.all(16),
                         child: CircularProgressIndicator(
@@ -1268,9 +1305,21 @@ class _FoodScanCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.x2),
               FilledButton.icon(
-                onPressed: loading ? null : onTap,
+                onPressed: widget.loading ? null : widget.onTap,
                 icon: const Icon(Icons.qr_code_scanner_rounded),
                 label: const Text('Quét'),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: Icon(
+                  Icons.keyboard_arrow_up_rounded,
+                  color: AppColors.primaryOf(context),
+                ),
+                onPressed: () {
+                  setState(() => _isCollapsed = true);
+                },
               ),
             ],
           ),
