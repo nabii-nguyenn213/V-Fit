@@ -81,3 +81,4 @@
 {"id":"int-b17bdb73","kind":"field_change","created_at":"2026-06-30T17:37:50.1382794Z","actor":"Tran Duy Trung","issue_id":"EXE_PRM-vds","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
 {"id":"int-b0c4dce3","kind":"field_change","created_at":"2026-06-30T17:46:40.1110886Z","actor":"Tran Duy Trung","issue_id":"EXE_PRM-4ub","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
 {"id":"int-a4d54852","kind":"field_change","created_at":"2026-06-30T17:55:45.312475Z","actor":"Tran Duy Trung","issue_id":"EXE_PRM-7lz","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
+{"id":"int-45c1f0b7","kind":"field_change","created_at":"2026-06-30T19:00:07.176237Z","actor":"Tran Duy Trung","issue_id":"EXE_PRM-x4c","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
