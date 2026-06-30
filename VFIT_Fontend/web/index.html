@@ -5,25 +5,41 @@
   <meta name="google-site-verification" content="4QXGs4i9fUEKyBMqWEVe4J77qCrSafKk0x0Nyhq2UR4" />
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="V-FIT fitness app">
+  <meta name="description" content="V-FIT - Ứng dụng tập luyện thể hình, fitness và chăm sóc sức khỏe chuyên nghiệp tại Việt Nam giúp bạn cải thiện vóc dáng hiệu quả.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="V-FIT">
   <meta name="google-signin-client_id" content="82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com">
-  <title>V-FIT</title>
+  <title>V-FIT - Tập luyện thể hình & Fitness chuyên nghiệp</title>
   <link rel="manifest" href="manifest.json">
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-          registration.unregister();
-          console.log('Successfully unregistered service worker to clear cache.');
-        }
-      });
-    }
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "V-FIT",
+    "url": "https://trungtranvfit.id.vn/",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "All",
+    "description": "V-FIT - Ứng dụng tập luyện thể hình, fitness và chăm sóc sức khỏe chuyên nghiệp tại Việt Nam.",
+    "keywords": "vfit, fitness, app tập luyện, tập gym, thể hình, theo dõi sức khỏe, calo, dinh dưỡng AI, trung tran vfit, v-fit, v-fit tap luyen, vfit fitness"
+  }
   </script>
 </head>
 <body>
+  <!-- Hidden static HTML fallback for search engine crawlers (SEO) -->
+  <div id="seo-fallback" style="display:none;">
+    <h1>V-FIT - Ứng dụng tập luyện thể hình & Fitness chuyên nghiệp</h1>
+    <p>Chào mừng bạn đến với V-FIT (trungtranvfit.id.vn), nền tảng hỗ trợ tập luyện, theo dõi sức khỏe và tối ưu hóa chế độ dinh dưỡng hàng đầu Việt Nam.</p>
+    <h2>Các tính năng chính của app tập luyện V-FIT:</h2>
+    <ul>
+      <li>Quét đồ ăn bằng AI và phân tích dinh dưỡng chuẩn xác</li>
+      <li>Thư viện bài tập gym, fitness phong phú với video hướng dẫn</li>
+      <li>Lên kế hoạch tập luyện cá nhân hóa theo mục tiêu thể hình</li>
+      <li>Theo dõi chỉ số calo tiêu thụ và Calo In/Out hàng ngày</li>
+    </ul>
+    <p>Từ khóa liên quan: vfit, fitness, app tập luyện, tập gym, thể hình, theo dõi sức khỏe, thực đơn giảm cân, dinh dưỡng AI, trung tran vfit, v-fit tap luyen.</p>
+  </div>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

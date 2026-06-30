@@ -85,6 +85,7 @@ public class SecurityConfig {
                                 "/version.json",
                                 "/google*.html",
                                 "/sitemap.xml",
+                                "/robots.txt",
                                 "/privacy.html",
                                 "/privacy-policy.html",
                                 "/assets/**",
