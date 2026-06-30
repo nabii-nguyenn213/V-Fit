@@ -372,10 +372,7 @@ class _ScanBodyButtonState extends State<ScanBodyButton> {
   Future<void> _handlePressed() async {
     final user = widget.user;
     if (user == null) {
-      await showDialog<void>(
-        context: context,
-        builder: (context) => const LoginRequiredModal(),
-      );
+      context.go('/login');
       return;
     }
 
@@ -554,34 +551,6 @@ class _AiRealtimeActionTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class LoginRequiredModal extends StatelessWidget {
-  const LoginRequiredModal({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      icon: const Icon(Icons.login_rounded),
-      title: const Text('Đăng nhập để sử dụng AI Scan'),
-      content: const Text(
-        'Đăng nhập tài khoản để mở khóa tính năng AI Scan Body của V-FIT.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Để sau'),
-        ),
-        FilledButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            context.go('/login');
-          },
-          child: const Text('Đăng nhập ngay'),
-        ),
-      ],
     );
   }
 }

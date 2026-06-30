@@ -29,7 +29,7 @@ import '../../../ai/presentation/widgets/ai_meal_sheet.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../auth/application/auth_controller.dart';
-import '../../../workout/presentation/pages/workout_page.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/food_scan_modal.dart';  // ✨ NEW: Import food scan modal
 
 class NutritionPage extends ConsumerStatefulWidget {
@@ -422,10 +422,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
             onPressed: () async {
               final user = ref.read(authControllerProvider).user;
               if (user == null) {
-                await showDialog<void>(
-                  context: context,
-                  builder: (context) => const LoginRequiredModal(),
-                );
+                context.go('/login');
                 return;
               }
               if (!user.isVipActive) {
@@ -457,10 +454,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
           onPressed: () async {
             final user = ref.read(authControllerProvider).user;
             if (user == null) {
-              await showDialog<void>(
-                context: context,
-                builder: (context) => const LoginRequiredModal(),
-              );
+              context.go('/login');
               return;
             }
             if (!user.isVipActive) {
@@ -841,10 +835,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
             onPressed: () async {
               final user = ref.read(authControllerProvider).user;
               if (user == null) {
-                await showDialog<void>(
-                  context: context,
-                  builder: (context) => const LoginRequiredModal(),
-                );
+                context.go('/login');
                 return;
               }
               if (!user.isVipActive) {
