@@ -19,12 +19,16 @@ def main():
     username = "Administrator"
     password = "VFITAa123@"
     
-    local_file = r"d:\EXE_PRM\AI-VFIT\V-Fit\RecommendationSystem\gemini_client.py"
-    remote_file = r"C:\V-Fit\AI-VFIT\V-Fit\RecommendationSystem\gemini_client.py"
+    files_to_upload = [
+        (r"d:\EXE_PRM\AI-VFIT\V-Fit\RecommendationSystem\gemini_client.py", r"C:\V-Fit\AI-VFIT\V-Fit\RecommendationSystem\gemini_client.py"),
+        (r"d:\EXE_PRM\AI-VFIT\V-Fit\RecommendationSystem\.env", r"C:\V-Fit\AI-VFIT\V-Fit\RecommendationSystem\.env"),
+        (r"d:\EXE_PRM\AI-VFIT\V-Fit\RecommendationSystem\.env.production", r"C:\V-Fit\AI-VFIT\V-Fit\RecommendationSystem\.env.production"),
+    ]
     
-    if not os.path.exists(local_file):
-        print(f"[ERROR] Local file not found: {local_file}")
-        sys.exit(1)
+    for local_file, remote_file in files_to_upload:
+        if not os.path.exists(local_file):
+            print(f"[ERROR] Local file not found: {local_file}")
+            sys.exit(1)
         
     print(f"[*] Connecting to {hostname} via SSH...")
     ssh = paramiko.SSHClient()
@@ -34,12 +38,13 @@ def main():
         ssh.connect(hostname, username=username, password=password, timeout=20)
         print("[+] SSH connection successful!")
         
-        # 1. Upload updated gemini_client.py
-        print(f"[*] Opening SFTP connection to upload gemini_client.py...")
+        # 1. Upload updated files
+        print(f"[*] Opening SFTP connection to upload files...")
         sftp = ssh.open_sftp()
-        sftp.put(local_file, remote_file)
+        for local_file, remote_file in files_to_upload:
+            sftp.put(local_file, remote_file)
+            print(f"[+] Uploaded {os.path.basename(local_file)} successfully!")
         sftp.close()
-        print("[+] Uploaded gemini_client.py successfully!")
         
         # 2. Stop recommendation service
         print("[*] Stopping vfit-recommendation service...")
