@@ -16,6 +16,10 @@ def main():
     remote_frontend_robots_path = r"C:\V-Fit\VFIT_Fontend\web\robots.txt"
     remote_backend_robots_path = r"C:\V-Fit\VFIT_Backend\web\robots.txt"
     
+    local_favicon_path = r"d:\EXE_PRM\VFIT_Fontend\web\favicon.png"
+    remote_frontend_favicon_path = r"C:\V-Fit\VFIT_Fontend\web\favicon.png"
+    remote_backend_favicon_path = r"C:\V-Fit\VFIT_Backend\web\favicon.png"
+    
     # Check local files exist
     if not os.path.exists(local_index_path):
         print(f"[ERROR] Local file not found: {local_index_path}")
@@ -23,6 +27,10 @@ def main():
         
     if not os.path.exists(local_robots_path):
         print(f"[ERROR] Local file not found: {local_robots_path}")
+        sys.exit(1)
+        
+    if not os.path.exists(local_favicon_path):
+        print(f"[ERROR] Local file not found: {local_favicon_path}")
         sys.exit(1)
         
     print(f"[*] Reading local index.html...")
@@ -62,6 +70,15 @@ def main():
         print(f"[*] Uploading robots.txt to backend: {remote_backend_robots_path}")
         sftp.put(local_robots_path, remote_backend_robots_path)
         print("[+] Uploaded backend served robots.txt successfully!")
+        
+        # 3. Upload favicon.png
+        print(f"[*] Uploading favicon.png to frontend: {remote_frontend_favicon_path}")
+        sftp.put(local_favicon_path, remote_frontend_favicon_path)
+        print("[+] Uploaded frontend source favicon.png successfully!")
+        
+        print(f"[*] Uploading favicon.png to backend: {remote_backend_favicon_path}")
+        sftp.put(local_favicon_path, remote_backend_favicon_path)
+        print("[+] Uploaded backend served favicon.png successfully!")
         
         sftp.close()
         
