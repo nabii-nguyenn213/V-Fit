@@ -50,6 +50,13 @@ def main():
         else:
             print("[+] Stopped vfit-backend service.")
             
+        # 2.5 Pull latest code from Git on VPS
+        print("[*] Pulling latest code on VPS...")
+        status_git, out_git, err_git = execute_remote_cmd(ssh, "cmd /c \"cd C:\\V-Fit\\VFIT_Backend && git pull\"")
+        print(out_git)
+        if err_git:
+            print(f"[WARNING] Git pull warning/error: {err_git}")
+            
         # 3. Build backend on VPS
         print("[*] Compiling and packaging backend on VPS (this may take a minute)...")
         # Compile command
