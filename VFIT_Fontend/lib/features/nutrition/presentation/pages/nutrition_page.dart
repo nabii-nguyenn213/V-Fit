@@ -300,16 +300,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
                   bottom: AppResponsive.pagePadding(context).bottom + 96,
                 ),
                 children: [
-                  Text(
-                    'Trung tâm dinh dưỡng',
-                    style: AppTypography.headerLargeFor(context),
-                  ),
-                  const SizedBox(height: AppSpacing.x2),
-                  Text(
-                    'Quét món ăn, tra cứu calo và tính macro trong một workspace gọn.',
-                    style: AppTypography.bodySmallFor(context),
-                  ),
-                  const SizedBox(height: AppSpacing.x4),
+                  const SizedBox(height: AppSpacing.x3),
                   _FoodScanCard(
                     loading: _scanLoading,
                     onTap: () => _scanFood(context),
@@ -1214,7 +1205,7 @@ class _FoodScanCard extends StatefulWidget {
 }
 
 class _FoodScanCardState extends State<_FoodScanCard> {
-  bool _isCollapsed = false;
+  bool _isCollapsed = true;
 
   @override
   Widget build(BuildContext context) {

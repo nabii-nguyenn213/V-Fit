@@ -60,7 +60,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _WorkoutHeader(user: user),
+              const SizedBox(height: AppSpacing.x3),
               Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: AppResponsive.horizontalPadding(context),
@@ -100,45 +100,7 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   }
 }
 
-class _WorkoutHeader extends StatelessWidget {
-  const _WorkoutHeader({required this.user});
 
-  final UserModel? user;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: AppResponsive.pagePadding(context).copyWith(bottom: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Không gian tập luyện',
-                  style: AppTypography.headerLargeFor(context),
-                ),
-                const SizedBox(height: AppSpacing.x1),
-                Text(
-                  user == null
-                      ? 'Bài tập cơ bản luôn miễn phí.'
-                      : 'Luyện tập theo nhịp độ của bạn.',
-                  style: AppTypography.bodySmallFor(context),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.fitness_center_rounded,
-            size: 28,
-            color: AppColors.primaryOf(context),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _WorkoutTabs extends StatelessWidget {
   const _WorkoutTabs({
@@ -293,7 +255,7 @@ class ScanBodyButton extends StatefulWidget {
 
 class _ScanBodyButtonState extends State<ScanBodyButton> {
   bool _openingAiTools = false;
-  bool _isCollapsed = false;
+  bool _isCollapsed = true;
 
   @override
   Widget build(BuildContext context) {
