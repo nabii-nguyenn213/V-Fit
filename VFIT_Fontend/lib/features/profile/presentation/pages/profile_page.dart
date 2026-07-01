@@ -445,16 +445,10 @@ class VipActiveStatusCard extends StatelessWidget {
     final accent = isExpiringSoon ? AppColors.warning : AppColors.success;
     final plan =
         _formatPremiumPlan(user.premiumPlan ?? user.subscriptionPlanCode);
-    final isMonthlyPlan =
-        _isMonthlyPlan(user.premiumPlan ?? user.subscriptionPlanCode);
+    final isYearlyPlan =
+        _isYearlyPlan(user.premiumPlan ?? user.subscriptionPlanCode);
     final dateFormat = DateFormat('dd/MM/yyyy');
-    final expiredAtText = expiredAt == null
-        ? 'Ngày hết hạn đang được đồng bộ'
-        : 'Hết hạn: ${dateFormat.format(expiredAt.toLocal())}';
-    final headline =
-        isMonthlyPlan ? 'Còn $remainingDays ngày VIP' : expiredAtText;
-    final supportingText =
-        isMonthlyPlan ? expiredAtText : 'Gói VIP năm đang hoạt động';
+    final headline = 'Còn $remainingDays ngày VIP';
 
     return Container(
       padding: AppResponsive.cardPadding(context),
@@ -533,10 +527,10 @@ class VipActiveStatusCard extends StatelessWidget {
             headline,
             style: AppTypography.metric(color: Colors.white),
           ),
-          if (!isMonthlyPlan) ...[
+          if (isYearlyPlan) ...[
             const SizedBox(height: AppSpacing.x2),
             Text(
-              supportingText,
+              'Gói VIP năm đang hoạt động',
               style: AppTypography.body(color: Colors.white.withValues(alpha: 0.9)),
             ),
           ],
@@ -618,9 +612,11 @@ class VipActiveStatusCard extends StatelessWidget {
     };
   }
 
-  static bool _isMonthlyPlan(String? value) {
+
+
+  static bool _isYearlyPlan(String? value) {
     return switch (value) {
-      'VIP_MONTHLY' || 'MONTHLY' => true,
+      'VIP_YEARLY' || 'YEARLY' => true,
       _ => false,
     };
   }

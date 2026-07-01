@@ -57,6 +57,7 @@ public class UserMapper {
                 .subscriptionPlanCode(planCode)
                 .premiumActive(premiumActive)
                 .premiumPlan(normalizePremiumPlan(planCode))
+                .premiumStartedAt(resolvePremiumStartedAt(user, persistedSubscription))
                 .premiumExpiredAt(premiumUntil)
                 .premiumRemainingDays(remaining.toDays())
                 .canRenewPremium(!premiumActive || (premiumUntil != null && remaining.compareTo(Duration.ofDays(3)) < 0))
@@ -88,6 +89,13 @@ public class UserMapper {
             return snapshot.getPremiumUntil();
         }
         return persistedSubscription == null ? null : persistedSubscription.getExpiresAt();
+    }
+
+    private Instant resolvePremiumStartedAt(User user, Subscription persistedSubscription) {
+        if (persistedSubscription != null && persistedSubscription.getStartedAt() != null) {
+            return persistedSubscription.getStartedAt();
+        }
+        return user.getCreatedAt();
     }
 
     private String resolvePlanCode(User.SubscriptionSnapshot snapshot, Subscription persistedSubscription) {
