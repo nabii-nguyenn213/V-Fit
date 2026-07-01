@@ -64,19 +64,20 @@ for folder in folders:
         stdin.close()
         print(stdout.read().decode('utf-8', errors='ignore'))
         
-        # 2. Run git pull with prior clean/reset
+        # 2. Run git fetch and reset to origin/010-deploy-play-store
         print("[*] Resetting and cleaning working tree on VPS...")
         execute_remote_cmd(ssh, "git -C C:\\V-Fit reset --hard HEAD")
         execute_remote_cmd(ssh, "git -C C:\\V-Fit clean -xffd")
-        print("[*] Performing git pull on VPS...")
-        status, out, err = execute_remote_cmd(ssh, "git -C C:\\V-Fit pull")
-        print(f"Git pull status: {status}")
+        print("[*] Performing git fetch and reset to origin branch on VPS...")
+        execute_remote_cmd(ssh, "git -C C:\\V-Fit fetch origin")
+        status, out, err = execute_remote_cmd(ssh, "git -C C:\\V-Fit reset --hard origin/010-deploy-play-store")
+        print(f"Git fetch/reset status: {status}")
         print(f"Output:\n{out}")
         if err:
             print(f"Error output:\n{err}")
             
         if status != 0:
-            print("[ERROR] Git pull failed!")
+            print("[ERROR] Git fetch and reset failed!")
             sys.exit(1)
             
         # 3. Stop backend service
