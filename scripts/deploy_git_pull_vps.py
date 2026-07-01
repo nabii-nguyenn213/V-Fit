@@ -97,6 +97,54 @@ for folder in folders:
                 print(f"[WARNING] Local {env_file} not found, skipping.")
         sftp.close()
         print("[+] Environment files uploaded successfully.")
+
+        # 4. Re-create and reload Caddyfile, and upload parse_server_logs.py (since git clean deleted them)
+        print("[*] Re-creating Caddyfile on VPS...")
+        caddyfile_content = """trungtranvfit.id.vn {
+    header {
+        Cross-Origin-Opener-Policy "unsafe-none"
+    }
+    log {
+        output file C:\\V-Fit\\caddy_access_real.log {
+            roll_size 10mb
+            roll_keep 3
+        }
+    }
+    reverse_proxy localhost:8080
+}
+
+trungtranvfit.id.vn:8000 {
+    reverse_proxy localhost:8002
+}
+"""
+        sftp = ssh.open_sftp()
+        with sftp.file(r"C:\V-Fit\Caddyfile", "w") as f:
+            f.write(caddyfile_content)
+            
+        print("[*] Re-deploying log parser script to VPS...")
+        local_parser_path = r"d:\EXE_PRM\scripts\parse_server_logs.py"
+        if os.path.exists(local_parser_path):
+            with open(local_parser_path, "r", encoding="utf-8") as f:
+                script_code = f.read()
+            script_code = script_code.replace(
+                'raw_log = os.path.join("scripts", "caddy_access.log")',
+                'raw_log = "C:\\\\V-Fit\\\\caddy_access_real.log"'
+            )
+            script_code = script_code.replace(
+                'output_csv = os.path.join("docs", "vfit_visitors_log.csv")',
+                'output_csv = "C:\\\\V-Fit\\\\docs\\\\vfit_visitors_log_real.csv"'
+            )
+            with sftp.file(r"C:\V-Fit\parse_server_logs.py", "w") as f:
+                f.write(script_code)
+        sftp.close()
+        print("[+] Successfully re-created Caddyfile and parse_server_logs.py.")
+        
+        print("[*] Reloading Caddy configuration...")
+        status, out, err = execute_remote_cmd(ssh, "C:\\V-Fit\\caddy.exe reload --config C:\\V-Fit\\Caddyfile")
+        if status != 0:
+            print(f"[ERROR] Failed to reload Caddy: {err}")
+        else:
+            print("[+] Caddy reloaded successfully.")
             
         # 3. Stop backend service
         print("[*] Stopping vfit-backend service...")
