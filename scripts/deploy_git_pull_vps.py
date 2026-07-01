@@ -79,6 +79,24 @@ for folder in folders:
         if status != 0:
             print("[ERROR] Git fetch and reset failed!")
             sys.exit(1)
+
+        # 3. Upload environment files (since git clean deleted them)
+        print("[*] Uploading .env and .env.production configuration files to VPS...")
+        sftp = ssh.open_sftp()
+        local_backend = r"d:\EXE_PRM\VFIT_Backend"
+        remote_backend = r"C:\V-Fit\VFIT_Backend"
+        
+        import os
+        for env_file in [".env", ".env.production"]:
+            local_file = os.path.join(local_backend, env_file)
+            remote_file = remote_backend + "\\" + env_file
+            if os.path.exists(local_file):
+                print(f"[*] Uploading {env_file} -> {remote_file}")
+                sftp.put(local_file, remote_file)
+            else:
+                print(f"[WARNING] Local {env_file} not found, skipping.")
+        sftp.close()
+        print("[+] Environment files uploaded successfully.")
             
         # 3. Stop backend service
         print("[*] Stopping vfit-backend service...")
