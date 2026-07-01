@@ -46,6 +46,7 @@ dependencies:
   
   # ✨ NEW: Better error handling
   dartz: ^0.10.1
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   flutter_test:

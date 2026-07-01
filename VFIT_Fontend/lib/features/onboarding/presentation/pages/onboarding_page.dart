@@ -7,6 +7,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../profile/data/repositories/profile_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
@@ -23,6 +24,26 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final _bodyFatController = TextEditingController();
   int _step = 0;
   bool _savingProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(profileRepositoryProvider).bodyMetrics().then((metrics) {
+      if (mounted) {
+        setState(() {
+          _heightController.text = metrics.heightCm != null
+              ? metrics.heightCm!.toStringAsFixed(0)
+              : '';
+          _weightController.text = metrics.weightKg != null
+              ? metrics.weightKg!.toStringAsFixed(1)
+              : '';
+          _bodyFatController.text = metrics.bodyFatPercent != null
+              ? metrics.bodyFatPercent!.toStringAsFixed(1)
+              : '';
+        });
+      }
+    }).catchError((_) {});
+  }
 
   @override
   void dispose() {

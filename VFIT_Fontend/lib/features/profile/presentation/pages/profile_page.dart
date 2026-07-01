@@ -174,47 +174,50 @@ class ProfilePage extends ConsumerWidget {
           VipPromotionCard(user: user),
         ],
         const SizedBox(height: 16),
-        bodyMetrics.when(
-          data: (metric) => AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Chỉ số cơ thể',
-                  style: AppTypography.labelFor(context),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
-                  children: [
-                    _Value(
-                      label: 'Chiều cao',
-                      value: '${metric.heightCm ?? '-'} cm',
-                    ),
-                    _Value(
-                      label: 'Cân nặng',
-                      value: '${metric.weightKg ?? '-'} kg',
-                    ),
-                    _Value(
-                      label: 'Chỉ số BMI',
-                      value: metric.bmi?.toStringAsFixed(1) ?? '-',
-                    ),
-                    _Value(
-                      label: 'Tỷ lệ mỡ',
-                      value: '${metric.bodyFatPercent ?? '-'}%',
-                    ),
-                  ],
-                ),
-              ],
+        if (user.onboardingStatus == OnboardingStatus.pending)
+          const PendingOnboardingPlaceholder()
+        else
+          bodyMetrics.when(
+            data: (metric) => AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Chỉ số cơ thể',
+                    style: AppTypography.labelFor(context),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 12,
+                    children: [
+                      _Value(
+                        label: 'Chiều cao',
+                        value: '${metric.heightCm ?? '-'} cm',
+                      ),
+                      _Value(
+                        label: 'Cân nặng',
+                        value: '${metric.weightKg ?? '-'} kg',
+                      ),
+                      _Value(
+                        label: 'Chỉ số BMI',
+                        value: metric.bmi?.toStringAsFixed(1) ?? '-',
+                      ),
+                      _Value(
+                        label: 'Tỷ lệ mỡ',
+                        value: '${metric.bodyFatPercent ?? '-'}%',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            loading: () => const AppCard(child: LinearProgressIndicator()),
+            error: (error, _) => ErrorView(
+              message: error.toString(),
+              onRetry: () => ref.invalidate(bodyMetricsProvider),
             ),
           ),
-          loading: () => const AppCard(child: LinearProgressIndicator()),
-          error: (error, _) => ErrorView(
-            message: error.toString(),
-            onRetry: () => ref.invalidate(bodyMetricsProvider),
-          ),
-        ),
         const SizedBox(height: 16),
         _ProfileAction(
           icon: Icons.edit,
@@ -361,7 +364,7 @@ class _VipPromotionCardState extends ConsumerState<VipPromotionCard> {
   Future<void> _startVipPayment() async {
     final user = ref.read(authControllerProvider).user;
     if (user == null) {
-      AppFeedback.info('Vui long dang nhap de nap VIP.');
+      AppFeedback.info('Vui lòng đăng nhập để nạp VIP.');
       if (mounted) {
         context.go('/login');
       }
@@ -442,16 +445,10 @@ class VipActiveStatusCard extends StatelessWidget {
     final accent = isExpiringSoon ? AppColors.warning : AppColors.success;
     final plan =
         _formatPremiumPlan(user.premiumPlan ?? user.subscriptionPlanCode);
-    final isMonthlyPlan =
-        _isMonthlyPlan(user.premiumPlan ?? user.subscriptionPlanCode);
+    final isYearlyPlan =
+        _isYearlyPlan(user.premiumPlan ?? user.subscriptionPlanCode);
     final dateFormat = DateFormat('dd/MM/yyyy');
-    final expiredAtText = expiredAt == null
-        ? 'Ngày hết hạn đang được đồng bộ'
-        : 'Hết hạn: ${dateFormat.format(expiredAt.toLocal())}';
-    final headline =
-        isMonthlyPlan ? 'Còn $remainingDays ngày VIP' : expiredAtText;
-    final supportingText =
-        isMonthlyPlan ? expiredAtText : 'Gói VIP năm đang hoạt động';
+    final headline = 'Còn $remainingDays ngày VIP';
 
     return Container(
       padding: AppResponsive.cardPadding(context),
@@ -530,10 +527,10 @@ class VipActiveStatusCard extends StatelessWidget {
             headline,
             style: AppTypography.metric(color: Colors.white),
           ),
-          if (!isMonthlyPlan) ...[
+          if (isYearlyPlan) ...[
             const SizedBox(height: AppSpacing.x2),
             Text(
-              supportingText,
+              'Gói VIP năm đang hoạt động',
               style: AppTypography.body(color: Colors.white.withValues(alpha: 0.9)),
             ),
           ],
@@ -609,14 +606,17 @@ class VipActiveStatusCard extends StatelessWidget {
     return switch (value) {
       'VIP_MONTHLY' || 'MONTHLY' => 'MONTHLY',
       'VIP_YEARLY' || 'YEARLY' => 'YEARLY',
+      'VIP_TRIAL' => 'Vip Trial',
       final plan? when plan.isNotEmpty => plan,
       _ => 'VIP',
     };
   }
 
-  static bool _isMonthlyPlan(String? value) {
+
+
+  static bool _isYearlyPlan(String? value) {
     return switch (value) {
-      'VIP_MONTHLY' || 'MONTHLY' => true,
+      'VIP_YEARLY' || 'YEARLY' => true,
       _ => false,
     };
   }
@@ -1121,7 +1121,7 @@ class _PremiumPaymentDialogState extends ConsumerState<_PremiumPaymentDialog> {
           return;
         }
         unawaited(
-          _completePayment('Da nhan thanh toan. VIP da duoc kich hoat.'),
+          _completePayment('Đã nhận thanh toán. VIP đã được kích hoạt.'),
         );
       },
       onError: (_) {
@@ -1143,7 +1143,7 @@ class _PremiumPaymentDialogState extends ConsumerState<_PremiumPaymentDialog> {
       setState(() => _status = result.status);
       if (result.premiumUnlocked ||
           result.status == PremiumPaymentStatus.paid) {
-        await _completePayment('VIP da duoc kich hoat.');
+        await _completePayment('VIP đã được kích hoạt.');
       }
     } catch (_) {
       // Polling is best-effort; users can still press the manual check button.

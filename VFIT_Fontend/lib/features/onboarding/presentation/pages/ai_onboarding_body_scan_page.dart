@@ -101,12 +101,12 @@ class _AiOnboardingBodyScanPageState
       ref.read(authControllerProvider.notifier).setUser(user);
 
       if (!mounted) return;
-      AppFeedback.success('Da quet co the thanh cong.');
+      AppFeedback.success('Đã quét cơ thể thành công.');
       context.go('/home');
     } catch (e) {
       if (!mounted) return;
       setState(() => _scanState = ScanState.reviewing);
-      AppFeedback.error('Luu ket qua that bai: $e. Vui long thu lai.');
+      AppFeedback.error('Lưu kết quả thất bại: $e. Vui lòng thử lại.');
     }
   }
 
@@ -252,8 +252,8 @@ class _ReviewPanel extends StatelessWidget {
                       const SizedBox(height: AppSpacing.x4),
                       Text(
                         result == null
-                            ? 'Chua nhan duoc du lieu'
-                            : 'Da quet thanh cong',
+                            ? 'Chưa nhận được dữ liệu'
+                            : 'Đã quét thành công',
                         textAlign: TextAlign.center,
                         style: AppTypography.headerLargeFor(context).copyWith(
                           color: result == null
@@ -265,8 +265,8 @@ class _ReviewPanel extends StatelessWidget {
                       const SizedBox(height: AppSpacing.x2),
                       Text(
                         result == null
-                            ? 'Hay scan lai voi toan than nam trong khung hinh.'
-                            : 'AI da ghi nhan thong tin hinh the. Hay kiem tra truoc khi tiep tuc.',
+                            ? 'Hãy quét lại với toàn thân nằm trong khung hình.'
+                            : 'AI đã ghi nhận thông tin hình thể. Hãy kiểm tra trước khi tiếp tục.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppColors.textSecondaryOf(context),
@@ -285,7 +285,7 @@ class _ReviewPanel extends StatelessWidget {
                         ),
                         child: result == null
                             ? Text(
-                                'Khong co body data de hien thi.',
+                                'Không có dữ liệu cơ thể để hiển thị.',
                                 style: AppTypography.bodyFor(context),
                               )
                             : _BodyAnalysisDetails(result: result),
@@ -299,7 +299,7 @@ class _ReviewPanel extends StatelessWidget {
                 children: [
                   Expanded(
                     child: AppButton.secondary(
-                      label: 'Scan lai',
+                      label: 'Quét lại',
                       icon: Icons.refresh_rounded,
                       onPressed: onRescan,
                     ),
@@ -307,7 +307,7 @@ class _ReviewPanel extends StatelessWidget {
                   const SizedBox(width: AppSpacing.x3),
                   Expanded(
                     child: AppButton.primary(
-                      label: 'Chap nhan',
+                      label: 'Chấp nhận',
                       icon: Icons.check_rounded,
                       onPressed: result == null ? null : onAccept,
                     ),

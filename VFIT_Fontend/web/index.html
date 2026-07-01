@@ -2,27 +2,191 @@
 <html>
 <head>
   <base href="$FLUTTER_BASE_HREF">
+  <style>
+    #ios-webview-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #0f172a;
+      color: #ffffff;
+      z-index: 999999;
+      padding: 32px 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      text-align: center;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      animation: bounce 2s infinite;
+    }
+    .overlay-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .overlay-desc {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .overlay-steps {
+      text-align: left;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 320px;
+      box-sizing: border-box;
+      border: 1px solid #334155;
+    }
+    .overlay-step-item {
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      color: #cbd5e1;
+    }
+    .overlay-step-number {
+      background: #3b82f6;
+      color: #fff;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 11px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
+  <script>
+    function handleGoogleLoginWebView() {
+      var ua = navigator.userAgent || navigator.vendor || window.opera;
+      var isInApp = /FBAN|FBAV|Instagram|Zalo|MicroMessenger|Line/i.test(ua);
+      
+      if (isInApp) {
+        var currentUrl = window.location.href;
+        var rawUrl = currentUrl.replace(/^https?:\/\//, '');
+        
+        if (/Android/i.test(ua)) {
+          window.location.href = "intent://" + rawUrl + "#Intent;scheme=https;package=com.android.chrome;end";
+        } else if (/iPhone|iPad|iPod/i.test(ua)) {
+          var overlay = document.getElementById("ios-webview-overlay");
+          if (overlay) {
+            overlay.style.display = "flex";
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+  </script>
+  <meta name="google-site-verification" content="4QXGs4i9fUEKyBMqWEVe4J77qCrSafKk0x0Nyhq2UR4" />
+  <meta property="og:site_name" content="V-FIT">
+  <meta property="og:title" content="V-FIT Fitness - Tập luyện thể hình & Fitness chuyên nghiệp">
+  <meta property="og:description" content="V-FIT Fitness - Ứng dụng AI sửa tư thế tập gym & phân tích form fitness thời gian thực hàng đầu Việt Nam.">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="V-FIT fitness app">
+  <meta name="description" content="V-FIT Fitness - Ứng dụng AI sửa tư thế tập gym & phân tích form fitness thời gian thực hàng đầu Việt Nam. Cách chấm điểm Squat bằng AI chính xác giúp bạn cải thiện vóc dáng hiệu quả. Ngoài ra, V-FIT còn tích hợp tính năng quét đồ ăn AI thông minh, tự động phân tích hàm lượng dinh dưỡng và tính calo bữa ăn tiện lợi. Hệ thống tự động đề xuất thực đơn giảm cân AI cá nhân hóa dựa trên chỉ số BMI và TDEE, cung cấp nhật ký Calo In - Calo Out toàn diện cùng thư viện bài tập thể hình chuyên nghiệp tại nhà.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="V-FIT">
   <meta name="google-signin-client_id" content="82528745694-hsj5ae4dhgkfisdc184lvt79rpgv83ng.apps.googleusercontent.com">
-  <title>V-FIT</title>
+  <title>V-FIT Fitness - Tập luyện thể hình & Fitness chuyên nghiệp</title>
   <link rel="manifest" href="manifest.json">
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-          registration.unregister();
-          console.log('Successfully unregistered service worker to clear cache.');
-        }
-      });
-    }
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "V-FIT",
+    "alternateName": ["V-FIT Fitness", "VFIT", "vfit-fitness"],
+    "url": "https://trungtranvfit.id.vn/"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "V-FIT Fitness",
+    "url": "https://trungtranvfit.id.vn/",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "All",
+    "description": "V-FIT Fitness - Ứng dụng AI sửa tư thế tập gym, chấm điểm Squat bằng AI và phân tích form tập fitness thời gian thực hàng đầu Việt Nam.",
+    "keywords": "vfit, fitness, v-fit fitness, V-FIT Fitness, vfit-fitness, vfitfitness, v-fit-fitness, app tập luyện, tập gym, thể hình, theo dõi sức khỏe, calo, dinh dưỡng AI, trung tran vfit, v-fit, v-fit tap luyen, vfit fitness, ứng dụng AI sửa tư thế tập gym, cách chấm điểm squat bằng AI, app phân tích form tập fitness thời gian thực"
+  }
   </script>
 </head>
 <body>
+  <div id="ios-webview-overlay">
+    <button onclick="document.getElementById('ios-webview-overlay').style.display='none'" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: #94a3b8; font-size: 24px; cursor: pointer; padding: 12px;">✕</button>
+    <div class="overlay-icon">🧭</div>
+    <div class="overlay-title">Mở bằng Safari hoặc Chrome</div>
+    <div class="overlay-desc">Trình duyệt nhúng không hỗ trợ đăng nhập Google. Vui lòng mở trang bằng trình duyệt Safari hoặc Chrome để tiếp tục.</div>
+    <div class="overlay-steps">
+      <div class="overlay-step-item">
+        <span class="overlay-step-number">1</span>
+        <span>Nhấn vào biểu tượng <b>dấu 3 chấm (...)</b> hoặc <b>chia sẻ</b> ở góc màn hình.</span>
+      </div>
+      <div class="overlay-step-item" style="margin-bottom: 0;">
+        <span class="overlay-step-number">2</span>
+        <span>Chọn <b>"Mở bằng trình duyệt ngoài"</b> hoặc <b>"Mở bằng Safari / Chrome"</b>.</span>
+      </div>
+    </div>
+  </div>
+  <!-- Hidden static HTML fallback for search engine crawlers (SEO) -->
+  <div id="seo-fallback" style="display:none;">
+    <h1>V-FIT Fitness - Ứng dụng tập luyện thể hình & Fitness chuyên nghiệp tích hợp AI</h1>
+    <p>Chào mừng bạn đến với V-FIT Fitness (trungtranvfit.id.vn), nền tảng hỗ trợ tập luyện, theo dõi sức khỏe và tối ưu hóa chế độ dinh dưỡng hàng đầu Việt Nam.</p>
+    
+    <h2>Đặc điểm nổi bật của ứng dụng V-FIT Fitness:</h2>
+    
+    <h3>1. Phân tích dinh dưỡng và quét đồ ăn bằng trí tuệ nhân tạo (AI)</h3>
+    <p>V-FIT Fitness tích hợp tính năng quét đồ ăn bằng AI giúp bạn dễ dàng chụp ảnh thực đơn hàng ngày để phân tích hàm lượng dinh dưỡng, tính toán lượng Calo, protein, carb, fat chính xác. Đây là <strong>ứng dụng tính calo đồ ăn</strong> thông minh giúp bạn kiểm soát chế độ ăn uống khoa học nhất.</p>
+    
+    <h3>2. Công nghệ AI sửa tư thế tập gym và phân tích form fitness thời gian thực</h3>
+    <p>V-FIT Fitness tích hợp công nghệ camera AI thông minh giúp <strong>app phân tích form tập fitness thời gian thực</strong> phát hiện chuyển động của cơ thể. Hệ thống hướng dẫn chi tiết <strong>cách chấm điểm Squat bằng AI</strong>, nhận diện lỗi sai tư thế khi thực hiện bài tập để cảnh báo chấn thương kịp thời. Đây chính là <strong>ứng dụng AI sửa tư thế tập gym</strong> cá nhân đắc lực nhất của bạn.</p>
+
+    <h3>3. App hướng dẫn tập gym và fitness cá nhân hóa</h3>
+    <p>Chúng tôi cung cấp thư viện bài tập gym, fitness phong phú với video hướng dẫn chi tiết từ các huấn luyện viên chuyên nghiệp. Đây là <strong>app hướng dẫn tập gym</strong> hoàn hảo hỗ trợ bạn thiết kế lịch tập luyện riêng biệt phù hợp cho cả nam và nữ từ cơ bản đến nâng cao.</p>
+    
+    <h3>4. Lên thực đơn giảm cân AI và tăng cơ hiệu quả</h3>
+    <p>Hệ thống tự động đề xuất thực đơn ăn kiêng và <strong>thực đơn giảm cân AI</strong> khoa học dựa trên chỉ số cơ thể BMI và TDEE của bạn, giúp bạn đạt được vóc dáng mơ ước nhanh chóng và an toàn.</p>
+    
+    <h3>5. Theo dõi chỉ số sức khỏe và Calo In - Calo Out</h3>
+    <p>Nhật ký tập luyện thông minh giúp ghi chép lượng calo tiêu thụ từ việc vận động và lượng calo nạp vào từ ăn uống hàng ngày, hỗ trợ quá trình tăng cơ, giảm mỡ hoặc duy trì cân nặng cực kỳ hiệu quả.</p>
+
+    <h2>Câu hỏi thường gặp về V-FIT Fitness (FAQs):</h2>
+    
+    <strong>1. Làm thế nào để tập gym đúng tư thế tại nhà mà không cần PT?</strong>
+    <p>Ứng dụng V-FIT Fitness tích hợp công nghệ AI qua camera giúp bạn kiểm tra lỗi sai và sửa tư thế tập gym theo thời gian thực, hoạt động như một PT ảo chuyên nghiệp hướng dẫn cách tập đúng form bài tập.</p>
+    
+    <strong>2. Có ứng dụng nào quét ảnh món ăn Việt Nam để tính calo tự động không?</strong>
+    <p>V-FIT Fitness hỗ trợ quét hình ảnh đồ ăn bằng trí tuệ nhân tạo (AI), tự động phân tích lượng Calo và các chỉ số Macro (Carb, Protein, Fat) của món ăn Việt Nam vô cùng nhanh chóng và tiện lợi.</p>
+    
+    <strong>3. Làm sao để tính lượng calo in calo out chuẩn xác để giảm cân?</strong>
+    <p>Hệ thống nhật ký dinh dưỡng và nhật ký tập luyện của V-FIT Fitness sẽ tự động tính toán chỉ số calo in calo out dựa trên chỉ số BMI và TDEE cá nhân, giúp việc thiết lập thực đơn giảm cân AI hay tăng cơ đạt hiệu quả tối đa.</p>
+
+    <strong>4. Cách kiểm tra lỗi sai và chấm điểm Squat bằng AI như thế nào?</strong>
+    <p>Tính năng chấm điểm Squat bằng AI của V-FIT Fitness phân tích hình ảnh chuyển động khớp xương thời gian thực, đưa ra phản hồi ngay lập tức để bạn cải thiện tư thế tập luyện đúng cách.</p>
+
+    <strong>5. App theo dõi chỉ số sức khỏe và lịch tập gym nào tốt nhất hiện nay?</strong>
+    <p>V-FIT Fitness là app theo dõi sức khỏe toàn diện hàng đầu, hỗ trợ đo lường chỉ số cơ thể, lên lịch tập gym cá nhân hóa và cung cấp giải pháp tăng cơ giảm mỡ hiệu quả cho cả nam và nữ.</p>
+
+    <p>Từ khóa tìm kiếm hàng đầu: vfit, fitness, v-fit fitness, V-FIT Fitness, vfit-fitness, vfitfitness, v-fit-fitness, app tập luyện, tập gym, thể hình, theo dõi sức khỏe, ứng dụng tính calo đồ ăn, app hướng dẫn tập gym, thực đơn giảm cân AI, thực đơn ăn kiêng, macro dinh dưỡng, calo in calo out, trung tran vfit, vfit tap luyen, ứng dụng AI sửa tư thế tập gym, cách chấm điểm squat bằng ai, app phân tích form tập fitness thời gian thực, app tập gym tại nhà, pt ảo hướng dẫn tập gym, quét ảnh đồ ăn tính calo, cách tính bmi tdee.</p>
+  </div>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

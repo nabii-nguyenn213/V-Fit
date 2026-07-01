@@ -180,7 +180,7 @@ class _BodyAnalysisReviewScaffold extends StatelessWidget {
                     ),
                     child: result == null
                         ? Text(
-                            'Chua nhan duoc du lieu dang nguoi. Hay scan lai voi toan than nam trong khung hinh.',
+                            'Chưa nhận được dữ liệu dáng người. Hãy quét lại với toàn thân nằm trong khung hình.',
                             style: AppTypography.bodyFor(context),
                           )
                         : _BodyAnalysisDetails(result: result),
@@ -194,7 +194,7 @@ class _BodyAnalysisReviewScaffold extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: onRescan,
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Scan lai'),
+                      label: const Text('Quét lại'),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.x3),
@@ -202,7 +202,7 @@ class _BodyAnalysisReviewScaffold extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: result == null ? null : onAccept,
                       icon: const Icon(Icons.check_rounded),
-                      label: const Text('Chap nhan'),
+                      label: const Text('Chấp nhận'),
                     ),
                   ),
                 ],

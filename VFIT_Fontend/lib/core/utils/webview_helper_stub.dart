@@ -1,0 +1,3 @@
+bool handleGoogleLoginWebView() {
+  return false;
+}

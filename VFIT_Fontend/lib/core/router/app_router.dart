@@ -102,7 +102,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (auth.isActive) {
           return '/home';
         }
-        return '/login';
+        return '/home';
       }
 
       if (path.startsWith('/admin') && auth.user?.role != RoleName.admin) {

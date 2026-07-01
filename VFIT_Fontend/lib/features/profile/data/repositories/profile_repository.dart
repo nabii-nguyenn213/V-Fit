@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
@@ -9,6 +7,8 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/api_response.dart';
 import '../../../../core/network/network_providers.dart';
+import '../../../../core/utils/enum_parsers.dart';
+import '../../../auth/application/auth_controller.dart';
 import '../models/user_model.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
@@ -16,6 +16,11 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 });
 
 final bodyMetricsProvider = FutureProvider.autoDispose<BodyMetricModel>((ref) {
+  final authState = ref.watch(authControllerProvider);
+  final user = authState.user;
+  if (user == null || user.onboardingStatus != OnboardingStatus.completed) {
+    return const BodyMetricModel();
+  }
   return ref.watch(profileRepositoryProvider).bodyMetrics();
 });
 

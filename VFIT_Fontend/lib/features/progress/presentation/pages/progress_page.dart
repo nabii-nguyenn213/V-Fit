@@ -11,7 +11,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_response.dart';
-import '../../../../core/router/app_routes.dart';
 import '../../../../core/utils/media_url_resolver.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -23,7 +22,6 @@ import '../../../../presentation/theme/app_spacing.dart';
 import '../../../../presentation/theme/app_typography.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../../profile/data/models/user_model.dart';
-import '../../../profile/data/repositories/profile_repository.dart';
 import '../../data/models/gamification_models.dart';
 import '../../data/models/journey_snap_model.dart';
 import '../../data/repositories/progress_repository.dart';
@@ -234,7 +232,6 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final user = authState.user;
-    final metrics = ref.watch(bodyMetricsProvider);
     final badges = ref.watch(badgesProvider);
     final challenges = ref.watch(challengesProvider);
     final snaps = ref.watch(journeySnapsProvider);
@@ -248,7 +245,6 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
         children: [
           RefreshIndicator(
             onRefresh: () async {
-              ref.invalidate(bodyMetricsProvider);
               ref.invalidate(badgesProvider);
               ref.invalidate(challengesProvider);
               ref.invalidate(journeySnapsProvider);
@@ -269,14 +265,6 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
                   challenges: challenges.valueOrNull,
                 ),
                 const SizedBox(height: 16),
-                metrics.when(
-                  data: (metric) => _BodyMetricsSection(
-                    metric: metric,
-                    onBodyCheck: () => _handleBodyCheck(user),
-                  ),
-                  loading: () => const LinearProgressIndicator(),
-                  error: (error, _) => ErrorView(message: error.toString()),
-                ),
                 _JourneySection(
                   snaps: snaps,
                   localSnaps: _localSnaps,
@@ -344,18 +332,6 @@ class _ProgressPageState extends ConsumerState<ProgressPage> {
         AppFeedback.error(error.toString(), title: 'Xóa ảnh thất bại');
       }
     }
-  }
-
-  void _handleBodyCheck(UserModel user) {
-    if (!user.isVipActive) {
-      AppFeedback.warning(
-        'AI Body Check yêu cầu gói VIP đang hoạt động.',
-        title: 'Cần nâng cấp VIP',
-      );
-      context.go('/premium');
-      return;
-    }
-    context.push(AppRoutes.aiBodyAnalysis);
   }
 }
 
@@ -507,66 +483,6 @@ class _WeeklyFocusCard extends StatelessWidget {
   }
 }
 
-class _BodyMetricsSection extends StatelessWidget {
-  const _BodyMetricsSection({
-    required this.metric,
-    required this.onBodyCheck,
-  });
-
-  final BodyMetricModel metric;
-  final VoidCallback onBodyCheck;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.x4),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(
-                  icon: Icons.monitor_weight_outlined,
-                  label: 'Cân nặng',
-                  value: metric.weightKg == null
-                      ? '-'
-                      : '${metric.weightKg!.toStringAsFixed(1)} kg',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _MetricTile(
-                  icon: Icons.speed,
-                  label: 'BMI',
-                  value: metric.bmi?.toStringAsFixed(1) ?? '-',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _MetricTile(
-                  icon: Icons.percent,
-                  label: 'Body fat',
-                  value: metric.bodyFatPercent == null
-                      ? '-'
-                      : '${metric.bodyFatPercent!.toStringAsFixed(1)}%',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.x3),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onBodyCheck,
-              icon: const Icon(Icons.accessibility_new_rounded),
-              label: const Text('AI Body Check realtime'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _LocalJourneySnap {
   const _LocalJourneySnap({

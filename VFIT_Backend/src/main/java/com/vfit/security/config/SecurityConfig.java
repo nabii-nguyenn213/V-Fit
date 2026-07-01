@@ -83,6 +83,11 @@ public class SecurityConfig {
                                 "/flutter.js",
                                 "/main.dart.js",
                                 "/version.json",
+                                "/google*.html",
+                                "/sitemap.xml",
+                                "/robots.txt",
+                                "/privacy.html",
+                                "/privacy-policy.html",
                                 "/assets/**",
                                 "/canvaskit/**")
                         .permitAll()

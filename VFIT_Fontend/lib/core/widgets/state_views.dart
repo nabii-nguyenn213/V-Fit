@@ -107,7 +107,7 @@ class PendingOnboardingPlaceholder extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'Vui lòng nhập thông tin để hiển thị',
+            'Cập nhật thể trạng cơ thể',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 17,
@@ -130,7 +130,7 @@ class PendingOnboardingPlaceholder extends StatelessWidget {
           FilledButton.icon(
             onPressed: () => context.push('/onboarding'),
             icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-            label: const Text('Cập nhật hồ sơ ngay', style: TextStyle(fontWeight: FontWeight.bold)),
+            label: const Text('Tiếp tục thiết lập', style: TextStyle(fontWeight: FontWeight.bold)),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(

@@ -85,4 +85,18 @@ class OnboardingRepository {
       throw ApiException.fromDio(error);
     }
   }
+
+  Future<UserModel> resetOnboarding() async {
+    try {
+      final response = await _dio.put<dynamic>(
+        ApiEndpoints.onboardingReset,
+      );
+      return ApiResponseParser.unwrap(
+        response,
+        (json) => UserModel.fromJson(Map<String, dynamic>.from(json as Map)),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
 }

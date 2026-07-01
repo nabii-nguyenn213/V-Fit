@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart';
+import '../../../../core/utils/webview_helper.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/vfit_logo_avatar.dart';
@@ -36,7 +39,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
   }
 
-  Future<void> _loginWithGoogle() {
+  Future<void> _loginWithGoogle() async {
+    if (kIsWeb) {
+      if (checkAndHandleWebViewGoogleLogin()) {
+        return;
+      }
+    }
     return ref.read(authControllerProvider.notifier).loginWithGoogle();
   }
 
@@ -101,7 +109,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               controller: _passwordController,
                               label: 'Mật khẩu',
                               icon: Icons.lock_outline_rounded,
-                              validator: Validators.required,
+                              validator: (value) => Validators.required(value, label: 'Mật khẩu'),
                               obscureText: true,
                               textInputAction: TextInputAction.done,
                               palette: palette,
@@ -256,6 +264,9 @@ class _LoginShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (AppResponsive.isPhone(context)) {
+      return child;
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         color: palette.scaffold,

@@ -317,6 +317,11 @@ public class AuthServiceImpl implements AuthService {
                 .role(RoleName.USER)
                 .active(true)
                 .onboardingStatus(OnboardingStatus.PENDING)
+                .subscription(User.SubscriptionSnapshot.builder()
+                        .status(com.vfit.common.enums.SubscriptionStatus.ACTIVE)
+                        .planCode("VIP_TRIAL")
+                        .premiumUntil(Instant.now().plus(java.time.Duration.ofDays(3)))
+                        .build())
                 .build();
     }
 

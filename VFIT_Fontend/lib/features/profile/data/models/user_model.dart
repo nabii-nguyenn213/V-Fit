@@ -55,7 +55,8 @@ class UserModel {
     return plan == 'VIP_MONTHLY' ||
         plan == 'VIP_YEARLY' ||
         plan == 'MONTHLY' ||
-        plan == 'YEARLY';
+        plan == 'YEARLY' ||
+        plan == 'VIP_TRIAL';
   }
 
   bool get isVipActive {
