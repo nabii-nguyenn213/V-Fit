@@ -127,8 +127,8 @@
 
 **Purpose**: Code cleanup and validation
 
-- [/] T025 Run backend integration tests to check user creation and onboarding reset flow
-- [/] T026 Perform manual verification on emulator/simulator for onboarding, profile editing, and theme adaptation
+- [x] T025 Run backend integration tests to check user creation and onboarding reset flow
+- [x] T026 Perform manual verification on emulator/simulator for onboarding, profile editing, and theme adaptation
 
 ---
 
