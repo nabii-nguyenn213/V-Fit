@@ -13,7 +13,9 @@ import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/state_views.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../onboarding/data/repositories/onboarding_repository.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/profile_repository.dart';
 
@@ -46,22 +48,24 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     _gender = user?.gender;
     _goalType = user?.goalType;
 
-    // Asynchronously fetch current body metrics to populate fields
-    ref.read(profileRepositoryProvider).bodyMetrics().then((metrics) {
-      if (mounted) {
-        setState(() {
-          _heightController.text = metrics.heightCm != null
-              ? metrics.heightCm!.toStringAsFixed(0)
-              : '';
-          _weightController.text = metrics.weightKg != null
-              ? metrics.weightKg!.toStringAsFixed(1)
-              : '';
-          _bodyFatController.text = metrics.bodyFatPercent != null
-              ? metrics.bodyFatPercent!.toStringAsFixed(1)
-              : '';
-        });
-      }
-    }).catchError((_) {});
+    // Asynchronously fetch current body metrics to populate fields if onboarding is completed
+    if (user?.onboardingStatus == OnboardingStatus.completed) {
+      ref.read(profileRepositoryProvider).bodyMetrics().then((metrics) {
+        if (mounted) {
+          setState(() {
+            _heightController.text = metrics.heightCm != null
+                ? metrics.heightCm!.toStringAsFixed(0)
+                : '';
+            _weightController.text = metrics.weightKg != null
+                ? metrics.weightKg!.toStringAsFixed(1)
+                : '';
+            _bodyFatController.text = metrics.bodyFatPercent != null
+                ? metrics.bodyFatPercent!.toStringAsFixed(1)
+                : '';
+          });
+        }
+      }).catchError((_) {});
+    }
   }
 
   @override
@@ -119,7 +123,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Chup anh'),
+              title: const Text('Chụp ảnh'),
               onTap: () {
                 Navigator.of(context).pop();
                 _pickAvatar(ImageSource.camera);
@@ -127,7 +131,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Chon tu thu vien'),
+              title: const Text('Chọn từ thư viện'),
               onTap: () {
                 Navigator.of(context).pop();
                 _pickAvatar(ImageSource.gallery);
@@ -173,6 +177,23 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authControllerProvider).user;
+    if (user != null && user.onboardingStatus != OnboardingStatus.completed) {
+      return Scaffold(
+        appBar: AppBar(
+          leadingWidth: 76,
+          leading: const Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: AppBackButton(),
+          ),
+          title: const Text('Chỉnh sửa hồ sơ'),
+        ),
+        body: const Center(
+          child: PendingOnboardingPlaceholder(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 76,
@@ -180,7 +201,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           padding: EdgeInsets.only(left: 8),
           child: AppBackButton(),
         ),
-        title: const Text('Chinh sua ho so'),
+        title: const Text('Chỉnh sửa hồ sơ'),
       ),
       body: Form(
         key: _formKey,
@@ -236,14 +257,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 20),
             AppTextField(
               controller: _nameController,
-              label: 'Ho va ten',
+              label: 'Họ và tên',
               validator: (value) =>
-                  Validators.required(value, label: 'Ho va ten'),
+                  Validators.required(value, label: 'Họ và tên'),
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<Gender>(
               value: _gender,
-              decoration: const InputDecoration(labelText: 'Gioi tinh'),
+              decoration: const InputDecoration(labelText: 'Giới tính'),
               items: Gender.values
                   .map(
                     (gender) => DropdownMenuItem(
@@ -265,11 +286,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     DropdownButtonFormField<GoalType>(
                       value: _goalType,
                       decoration: InputDecoration(
-                        labelText: 'Muc tieu',
+                        labelText: 'Mục tiêu',
                         suffixIcon: alreadySet
                             ? const Tooltip(
                                 message:
-                                    'Mục tiêu đã được chọn và không thể thay đổi',
+                                    'Mục tiêu đã được chọn và không thể thay đổi trực tiếp',
                                 child: Icon(Icons.lock_outline, size: 18),
                               )
                             : null,
@@ -286,11 +307,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                           ? null // Disable dropdown if already set
                           : (value) => setState(() => _goalType = value),
                     ),
-                    if (alreadySet)
+                    if (alreadySet) ...[
                       Padding(
                         padding: const EdgeInsets.only(top: 4, left: 12),
                         child: Text(
-                          'Mục tiêu đã được chọn và không thể thay đổi.',
+                          'Mục tiêu đã được chọn và không thể thay đổi trực tiếp.',
                           style: TextStyle(
                             fontSize: 11,
                             color:
@@ -298,6 +319,59 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: _loading ? null : () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Thiết lập lại từ đầu'),
+                                content: const Text(
+                                  'Bạn có chắc chắn muốn thay đổi phương hướng? Hệ thống sẽ thiết lập lại trạng thái để bạn thực hiện thiết lập lại từ đầu.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Hủy'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text('Đồng ý'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true && mounted) {
+                              setState(() => _loading = true);
+                              try {
+                                final updatedUser = await ref
+                                    .read(onboardingRepositoryProvider)
+                                    .resetOnboarding();
+                                ref.read(authControllerProvider.notifier).setUser(updatedUser);
+                                if (mounted) {
+                                  AppFeedback.success('Trạng thái thiết lập đã được đặt lại.');
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  AppFeedback.error(e.toString());
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _loading = false);
+                                }
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text('Thiết lập lại từ đầu'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 );
               },
@@ -305,42 +379,42 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 14),
             AppTextField(
               controller: _heightController,
-              label: 'Chieu cao (cm)',
+              label: 'Chiều cao (cm)',
               keyboardType: TextInputType.number,
               validator: (value) => Validators.optionalNumber(
                 value,
                 min: 80,
                 max: 250,
-                label: 'Chieu cao',
+                label: 'Chiều cao',
               ),
             ),
             const SizedBox(height: 14),
             AppTextField(
               controller: _weightController,
-              label: 'Can nang (kg)',
+              label: 'Cân nặng (kg)',
               keyboardType: TextInputType.number,
               validator: (value) => Validators.optionalNumber(
                 value,
                 min: 20,
                 max: 300,
-                label: 'Can nang',
+                label: 'Cân nặng',
               ),
             ),
             const SizedBox(height: 14),
             AppTextField(
               controller: _bodyFatController,
-              label: 'Ty le mo (%)',
+              label: 'Tỷ lệ mỡ (%)',
               keyboardType: TextInputType.number,
               validator: (value) => Validators.optionalNumber(
                 value,
                 min: 1,
                 max: 70,
-                label: 'Ty le mo',
+                label: 'Tỷ lệ mỡ',
               ),
             ),
             const SizedBox(height: 24),
             AppButton(
-              label: 'Luu ho so',
+              label: 'Lưu hồ sơ',
               loading: _loading,
               onPressed: _avatarUploading ? null : _submit,
             ),
@@ -349,12 +423,4 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       ),
     );
   }
-}
-
-ImageProvider? _avatarImageProvider(String? avatarUrl) {
-  final resolvedUrl = MediaUrlResolver.resolveNullable(avatarUrl);
-  if (resolvedUrl == null) {
-    return null;
-  }
-  return NetworkImage(resolvedUrl);
 }

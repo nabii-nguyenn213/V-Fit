@@ -74,9 +74,10 @@ class HomePage extends ConsumerWidget {
                   subscription: subscription,
                 ),
                 const SizedBox(height: AppSpacing.x4),
-                const _CheckinVoucherCard(),
-                const SizedBox(height: AppSpacing.x4),
-                if (!auth.isAuthenticated) ...[
+                if (auth.isAuthenticated) ...[
+                  const _CheckinVoucherCard(),
+                  const SizedBox(height: AppSpacing.x4),
+                ] else ...[
                   _GuestUnlockCard(
                     onRegister: () => context.go('/register'),
                     onLogin: () => context.go('/login'),
@@ -311,17 +312,17 @@ class _GuestUnlockCard extends StatelessWidget {
         children: [
           _StatusPill(
             icon: Icons.lock_open_rounded,
-            label: 'VIP ACCESS',
+            label: 'ĐĂNG NHẬP / ĐĂNG KÝ',
             color: AppColors.energyMagenta,
           ),
           const SizedBox(height: AppSpacing.x4),
           Text(
-            'Mở khóa tập luyện cá nhân hóa',
+            'V-FIT - Huấn luyện hình thể & Tính calo AI',
             style: AppTypography.headerMediumFor(context),
           ),
           const SizedBox(height: AppSpacing.x2),
           Text(
-            'Đăng ký tài khoản để lưu tiến độ, dùng giáo án VIP và công cụ huấn luyện cá nhân.',
+            'V-FIT là nền tảng cá nhân hóa hỗ trợ tập luyện fitness, theo dõi chỉ số sức khỏe và dinh dưỡng thông minh sử dụng AI. Đăng ký tài khoản để quét ảnh phân tích calo món ăn, thiết kế lịch tập luyện và mở khóa toàn bộ giáo án VIP.',
             style: AppTypography.bodyFor(context),
           ),
           const SizedBox(height: AppSpacing.x4),

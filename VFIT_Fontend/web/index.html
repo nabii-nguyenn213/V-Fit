@@ -2,6 +2,96 @@
 <html>
 <head>
   <base href="$FLUTTER_BASE_HREF">
+  <style>
+    #ios-webview-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #0f172a;
+      color: #ffffff;
+      z-index: 999999;
+      padding: 32px 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      text-align: center;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      animation: bounce 2s infinite;
+    }
+    .overlay-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .overlay-desc {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .overlay-steps {
+      text-align: left;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 320px;
+      box-sizing: border-box;
+      border: 1px solid #334155;
+    }
+    .overlay-step-item {
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      color: #cbd5e1;
+    }
+    .overlay-step-number {
+      background: #3b82f6;
+      color: #fff;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 11px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
+  <script>
+    function handleGoogleLoginWebView() {
+      var ua = navigator.userAgent || navigator.vendor || window.opera;
+      var isInApp = /FBAN|FBAV|Instagram|Zalo|MicroMessenger|Line/i.test(ua);
+      
+      if (isInApp) {
+        var currentUrl = window.location.href;
+        var rawUrl = currentUrl.replace(/^https?:\/\//, '');
+        
+        if (/Android/i.test(ua)) {
+          window.location.href = "intent://" + rawUrl + "#Intent;scheme=https;package=com.android.chrome;end";
+        } else if (/iPhone|iPad|iPod/i.test(ua)) {
+          var overlay = document.getElementById("ios-webview-overlay");
+          if (overlay) {
+            overlay.style.display = "flex";
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+  </script>
   <meta name="google-site-verification" content="4QXGs4i9fUEKyBMqWEVe4J77qCrSafKk0x0Nyhq2UR4" />
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -27,6 +117,22 @@
   </script>
 </head>
 <body>
+  <div id="ios-webview-overlay">
+    <button onclick="document.getElementById('ios-webview-overlay').style.display='none'" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: #94a3b8; font-size: 24px; cursor: pointer; padding: 12px;">✕</button>
+    <div class="overlay-icon">🧭</div>
+    <div class="overlay-title">Mở bằng Safari hoặc Chrome</div>
+    <div class="overlay-desc">Trình duyệt nhúng không hỗ trợ đăng nhập Google. Vui lòng mở trang bằng trình duyệt Safari hoặc Chrome để tiếp tục.</div>
+    <div class="overlay-steps">
+      <div class="overlay-step-item">
+        <span class="overlay-step-number">1</span>
+        <span>Nhấn vào biểu tượng <b>dấu 3 chấm (...)</b> hoặc <b>chia sẻ</b> ở góc màn hình.</span>
+      </div>
+      <div class="overlay-step-item" style="margin-bottom: 0;">
+        <span class="overlay-step-number">2</span>
+        <span>Chọn <b>"Mở bằng trình duyệt ngoài"</b> hoặc <b>"Mở bằng Safari / Chrome"</b>.</span>
+      </div>
+    </div>
+  </div>
   <!-- Hidden static HTML fallback for search engine crawlers (SEO) -->
   <div id="seo-fallback" style="display:none;">
     <h1>V-FIT - Ứng dụng tập luyện thể hình & Fitness chuyên nghiệp tích hợp AI</h1>

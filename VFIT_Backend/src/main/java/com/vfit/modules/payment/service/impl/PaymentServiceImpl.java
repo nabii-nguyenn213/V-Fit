@@ -338,6 +338,7 @@ public class PaymentServiceImpl implements PaymentService {
         return switch (planCode.toUpperCase(Locale.ROOT)) {
             case "VIP_MONTHLY", "MONTHLY" -> "MONTHLY";
             case "VIP_YEARLY", "YEARLY" -> "YEARLY";
+            case "VIP_TRIAL" -> "VIP_TRIAL";
             default -> planCode;
         };
     }
@@ -347,7 +348,7 @@ public class PaymentServiceImpl implements PaymentService {
             return false;
         }
         return switch (planCode.toUpperCase(Locale.ROOT)) {
-            case "VIP_MONTHLY", "VIP_YEARLY", "MONTHLY", "YEARLY" -> true;
+            case "VIP_MONTHLY", "VIP_YEARLY", "MONTHLY", "YEARLY", "VIP_TRIAL" -> true;
             default -> false;
         };
     }

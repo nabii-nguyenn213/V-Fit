@@ -1,47 +1,20 @@
-# Technical Research: Google Play Store Deployment Configuration
+# Research: Registration 7-Day VIP Trial and Profile Redesign
 
-This document covers research and design decisions for signing the Android app, mapping OAuth client credentials, and policy compliance.
+## VIP Trial Plan Registration Logic
+- **Decision**: Newly registered users will be given a subscription snapshot with planCode `"VIP_TRIAL"`, status `ACTIVE`, and `premiumUntil` set to `now + 7 days`.
+- **Rationale**: This seamlessly integrates with the existing premium gate and subscription mechanics without requiring complex DB migration or external billing triggers.
+- **Alternatives considered**:
+  1. Integrating an actual billing trial via payment gateway (rejected: requires payment credential upfront, which adds high friction).
+  2. Creating a separate role for trial users (rejected: violates modularity, isPremium check is already based on subscription status).
 
-## 1. Keystore Management and Signing Configuration
+## UI Accent Fixes
+- **Decision**: Update all label string literals in `edit_profile_page.dart` to use UTF-8 accented Vietnamese.
+- **Rationale**: Accented letters in Dart/Flutter source files are stored as UTF-8, which resolves font issues when compiled/bundled correctly on Android/iOS.
+- **Alternatives considered**:
+  1. Setting up dynamic localized JSON files (rejected: overkill for a single page edit and adds unnecessary dependency).
 
-### Decision
-Use an external `key.properties` file located in `VFIT_Fontend/android/` to store the keystore path, alias, and passwords. This file is read dynamically by `VFIT_Fontend/android/app/build.gradle`.
-
-### Rationale
-- Security: Keeps credentials out of version control.
-- Git Safety: Both `key.properties` and the `.jks` keystore file are added to `.gitignore`.
-- Portability: Different developers can maintain their own signing setups by changing their local `key.properties`.
-
-### Alternatives Considered
-- **Hardcoding signing credentials in build.gradle**: Rejected as highly insecure. Credentials would be pushed to the public/shared repository.
-- **Passing signing parameters via CLI parameters during build**: Rejected due to inconvenience and risk of exposing credentials in shell history logs.
-
----
-
-## 2. Google Sign-In and Google Play App Signing Integration
-
-### Decision
-Register **two** separate Android OAuth client credentials in Google Cloud Console:
-1. One with the local upload key SHA-1/SHA-256 fingerprint (used for local testing and debugging).
-2. One with the **Google Play App Signing certificate** SHA-1/SHA-256 fingerprint (downloaded from Google Play Console under **Setup > App Integrity**).
-
-### Rationale
-- When releasing an AAB to the Play Store, Google removes the local upload key signature and re-signs the app with a secure production key managed by Google.
-- If only the local upload key signature is registered in Google Cloud Console, Google Sign-In will fail with API Error Code 10/12500 when users download the app from Google Play.
-
-### Alternatives Considered
-- **Opting out of Google Play App Signing**: Google Play Console no longer allows opting out of Play App Signing for new apps. Therefore, this alternative is not feasible.
-
----
-
-## 3. Privacy Policy Page Hosting
-
-### Decision
-Serve the Privacy Policy as a static HTML page `privacy-policy.html` from the Spring Boot backend static assets. It will be served at `https://trungtranvfit.id.vn/privacy.html` or `/privacy-policy.html`.
-
-### Rationale
-- Simple setup: Reuses the existing backend Caddy / Spring Boot static asset serving pipelines.
-- Zero extra costs or dependencies.
-
-### Alternatives Considered
-- **Third-party privacy policy generators / hosting services**: Rejected as it adds external dependencies and could lead to links expiring or changing.
+## Onboarding Metrics Redirection
+- **Decision**: The backend will return a custom `ONBOARDING_REQUIRED` error code when pending onboarding users query gated APIs. The frontend will catch this and display a redirect button.
+- **Rationale**: Correctly distinguishes between a user who is not VIP and a user who just hasn't completed onboarding, avoiding false VIP upgrade prompts.
+- **Alternatives considered**:
+  1. Silently returning empty metrics (rejected: user gets no feedback on why metrics are blank).

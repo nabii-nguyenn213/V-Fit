@@ -41,4 +41,9 @@ public class OnboardingController {
             @Valid @RequestBody com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult request) {
         return ApiResponse.ok(onboardingService.completeRealtimeBodyScan(request));
     }
+
+    @PutMapping("/reset")
+    public ApiResponse<UserResponse> resetOnboarding() {
+        return ApiResponse.ok(onboardingService.resetOnboarding());
+    }
 }

@@ -71,7 +71,7 @@ public class FeatureGate {
             return false;
         }
         return switch (planCode.toUpperCase(Locale.ROOT)) {
-            case "VIP_MONTHLY", "VIP_YEARLY", "MONTHLY", "YEARLY" -> true;
+            case "VIP_MONTHLY", "VIP_YEARLY", "MONTHLY", "YEARLY", "VIP_TRIAL" -> true;
             default -> false;
         };
     }

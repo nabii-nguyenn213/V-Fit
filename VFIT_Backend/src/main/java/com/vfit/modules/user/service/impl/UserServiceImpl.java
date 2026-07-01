@@ -55,6 +55,11 @@ public class UserServiceImpl implements UserService {
                 .role(normalizeRole(role))
                 .onboardingStatus(role == RoleName.ADMIN ? OnboardingStatus.COMPLETED : OnboardingStatus.PENDING)
                 .active(role == RoleName.ADMIN)
+                .subscription(role == RoleName.ADMIN ? User.SubscriptionSnapshot.free() : User.SubscriptionSnapshot.builder()
+                        .status(com.vfit.common.enums.SubscriptionStatus.ACTIVE)
+                        .planCode("VIP_TRIAL")
+                        .premiumUntil(Instant.now().plus(java.time.Duration.ofDays(3)))
+                        .build())
                 .build();
         return userRepository.save(user);
     }

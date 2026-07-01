@@ -30,6 +30,7 @@ def main():
         print("[*] Removing blocking untracked files on the VPS...")
         cleanup_script = """
 import os
+import shutil
 files = [
     r'C:\\V-Fit\\VFIT_Backend\\web\\googlec5a363f8efe4656c.html',
     r'C:\\V-Fit\\VFIT_Backend\\web\\sitemap.xml',
@@ -42,16 +43,31 @@ for f in files:
     if os.path.exists(f):
         try:
             os.remove(f)
-            print(f'Removed: {f}')
+            print(f'Removed file: {f}')
         except Exception as e:
-            print(f'Error removing {f}: {e}')
+            print(f'Error removing file {f}: {e}')
+
+folders = [
+    r'C:\\V-Fit\\AI-VFIT',
+    r'C:\\V-Fit\\gemini-web2api'
+]
+for folder in folders:
+    if os.path.exists(folder):
+        try:
+            shutil.rmtree(folder, ignore_errors=True)
+            print(f'Removed folder: {folder}')
+        except Exception as e:
+            print(f'Error removing folder {folder}: {e}')
 """
         stdin, stdout, stderr = ssh.exec_command("python")
         stdin.write(cleanup_script)
         stdin.close()
         print(stdout.read().decode('utf-8', errors='ignore'))
         
-        # 2. Run git pull
+        # 2. Run git pull with prior clean/reset
+        print("[*] Resetting and cleaning working tree on VPS...")
+        execute_remote_cmd(ssh, "git -C C:\\V-Fit reset --hard HEAD")
+        execute_remote_cmd(ssh, "git -C C:\\V-Fit clean -xffd")
         print("[*] Performing git pull on VPS...")
         status, out, err = execute_remote_cmd(ssh, "git -C C:\\V-Fit pull")
         print(f"Git pull status: {status}")
