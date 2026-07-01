@@ -106,7 +106,34 @@ for folder in folders:
             
         print("[+] Maven build succeeded!")
         
-        # 5. Start backend service
+        # 5. Write run_backend.ps1 (since git clean deleted it)
+        print("[*] Re-creating run_backend.ps1 on VPS...")
+        ps_content = """$ErrorActionPreference = 'Stop'
+$projectPath = "C:\\V-Fit\\VFIT_Backend"
+cd $projectPath
+
+# Load environment variables from .env.production
+if (Test-Path .env.production) {
+    Get-Content .env.production | Foreach-Object {
+        if ($_ -match '^\\s*([^#=\\s]+)\\s*=\\s*(.*)$') {
+            $name = $Matches[1].Trim()
+            $value = $Matches[2].Trim()
+            # Set for the current process
+            [System.Environment]::SetEnvironmentVariable($name, $value, "Process")
+        }
+    }
+}
+
+# Run the jar in the foreground (so nssm can monitor it)
+java -jar target\\vfit-backend-0.1.0.jar
+"""
+        sftp = ssh.open_sftp()
+        with sftp.file(r"C:\V-Fit\VFIT_Backend\run_backend.ps1", "w") as f:
+            f.write(ps_content)
+        sftp.close()
+        print("[+] Successfully recreated C:\\V-Fit\\VFIT_Backend\\run_backend.ps1")
+        
+        # 6. Start backend service
         print("[*] Starting vfit-backend service...")
         status, out, err = execute_remote_cmd(ssh, "powershell Start-Service vfit-backend")
         if status != 0:
