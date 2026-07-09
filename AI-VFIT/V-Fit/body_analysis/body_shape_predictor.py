@@ -32,26 +32,31 @@ class BodyShapePredictor:
                 "description": "Không tìm thấy mặt nạ cơ thể"
             }
 
-        # Lấy mask (mặt nạ trắng đen) của người đầu tiên
+        # Lấy mask (mặt nạ trắng đen) của YOLO
         mask = results[0].masks.data[0].cpu().numpy()
-        h, w = mask.shape
         
-        # 1. Đo độ dày vùng bụng: Lấy lát cắt ngang ở vị trí 60% chiều cao cơ thể (vùng eo)
-        waist_y = int(h * 0.60)
+        # Lấy kích thước của mask (bị thu nhỏ) và kích thước ảnh gốc
+        mask_h, mask_w = mask.shape
+        frame_h, frame_w = frame.shape[:2]
+        
+        # 1. Đo độ dày vùng bụng trên Mask
+        waist_y = int(mask_h * 0.60)
         waist_slice = mask[waist_y, :]
-        
-        # Đếm số pixel màu trắng (tức là độ dày da thịt ở bụng)
         waist_thickness_px = np.sum(waist_slice > 0.1)
         
-        # Nếu không bắt được vai từ MediaPipe, tránh lỗi chia cho 0
+        # 2. XỬ LÝ NGẦM: Đồng bộ hệ quy chiếu mà không đổi tham số
         if not shoulder_width_px or shoulder_width_px <= 0:
-            shoulder_width_px = w * 0.25 # Ước lượng tạm
+            adjusted_shoulder = mask_w * 0.25 # Ước lượng tạm
+        else:
+            # Tự động tính tỷ lệ thu nhỏ giữa YOLO mask và ảnh gốc điện thoại
+            scale_factor = mask_w / frame_w 
+            # Bóp nhỏ số đo vai lại cho cùng hệ quy chiếu với bụng
+            adjusted_shoulder = shoulder_width_px * scale_factor
 
-        # 2. Tính tỷ lệ Vàng (Độ dày bụng / Bề ngang vai)
-        # Tỷ lệ này không bị ảnh hưởng bởi việc bạn đứng xa hay gần camera
-        fat_ratio = waist_thickness_px / shoulder_width_px
+        # 3. Tính tỷ lệ Vàng (Đã được đồng bộ hoàn hảo)
+        fat_ratio = waist_thickness_px / adjusted_shoulder
         
-        # 3. Phân loại Béo/Gầy thuần túy bằng Computer Vision (Bỏ BMI)
+        # 4. Phân loại Béo/Gầy
         if fat_ratio < 0.75:
             shape = "GAY (Thieu co/mo)"
             desc = f"Eo/Vai: {fat_ratio:.2f}. Can tang can, tap Hypertrophy."
@@ -65,5 +70,5 @@ class BodyShapePredictor:
         return {
             "body_shape": shape,
             "description": desc,
-            "fat_ratio": fat_ratio
+            "fat_ratio": float(fat_ratio) # Ép kiểu float cho an toàn khi trả về JSON
         }
