@@ -7,78 +7,53 @@ import '../../../../presentation/theme/app_colors.dart';
 import '../../../nutrition/data/repositories/nutrition_repository.dart';
 import '../providers/ai_meal_planner_provider.dart';
 
-class AiMealSheet extends ConsumerStatefulWidget {
-  const AiMealSheet({super.key});
+class AiMealPage extends ConsumerStatefulWidget {
+  const AiMealPage({super.key});
 
   static Future<bool?> show(BuildContext context) {
-    return showModalBottomSheet<bool?>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const AiMealSheet(),
+    return Navigator.of(context).push<bool?>(
+      MaterialPageRoute(
+        builder: (_) => const AiMealPage(),
+      ),
     );
   }
 
   @override
-  ConsumerState<AiMealSheet> createState() => _AiMealSheetState();
+  ConsumerState<AiMealPage> createState() => _AiMealPageState();
 }
 
-class _AiMealSheetState extends ConsumerState<AiMealSheet> {
+class _AiMealPageState extends ConsumerState<AiMealPage> {
   int _mealsPerDay = 3;
   String _selectedDayKey = 'monday';
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final state = ref.watch(aiMealPlannerProvider);
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.76,
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(28),
-            topRight: Radius.circular(28),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 15,
-              spreadRadius: 2,
-            )
-          ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Thực đơn Dinh dưỡng AI',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 12),
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.dividerColor.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Text(
+                'AI tự động phân chia Calorie & Macro cho gymer.',
+                style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 13),
+                textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 14),
-            const Text(
-              'Thực đơn Dinh dưỡng AI',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'AI tự động phân chia Calorie & Macro cho gymer.',
-              style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 12),
-            ),
-            const Divider(height: 20),
+            const Divider(height: 1),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

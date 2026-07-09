@@ -424,7 +424,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
                 return;
               }
 
-              final result = await AiMealSheet.show(context);
+              final result = await AiMealPage.show(context);
               if (result == true) {
                 ref.invalidate(isAiMealPlanAppliedProvider);
                 ref.invalidate(aiMealPlanProvider);
@@ -456,7 +456,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
               return;
             }
 
-            final result = await AiMealSheet.show(context);
+            final result = await AiMealPage.show(context);
             if (result == true) {
               ref.invalidate(isAiMealPlanAppliedProvider);
               ref.invalidate(aiMealPlanProvider);
@@ -709,7 +709,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
           label: 'Thiết lập lại thực đơn AI',
           icon: Icons.auto_awesome_rounded,
           onPressed: () async {
-            final result = await AiMealSheet.show(context);
+            final result = await AiMealPage.show(context);
             if (result == true) {
               ref.invalidate(isAiMealPlanAppliedProvider);
               ref.invalidate(aiMealPlanProvider);
@@ -837,7 +837,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
                 return;
               }
 
-              final result = await AiMealSheet.show(context);
+              final result = await AiMealPage.show(context);
               if (result == true) {
                 ref.invalidate(isAiMealPlanAppliedProvider);
                 ref.invalidate(aiMealPlanProvider);
