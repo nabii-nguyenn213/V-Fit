@@ -57,10 +57,10 @@ class BodyAnalyzer:
             return {"status": "error"}
 
     def _recommendations(self, body_shape):
-        if "GAY" in body_shape:
-            return ["Tap trung hypertrophy, tang calories va protein."]
-        if "BEO" in body_shape:
-            return ["Tap trung giam mo, cardio vua phai va tap suc manh."]
-        if "CAN DOI" in body_shape:
-            return ["Duy tri lich tap hien tai va tang dan do kho."]
-        return ["Tiep tuc duy tri van dong deu va quet lai khi anh ro hon."]
+        if "Gầy" in body_shape:
+            return ["Tập trung hypertrophy, tăng calories và protein."]
+        if "Béo" in body_shape:
+            return ["Tập trung giảm mỡ, cardio vừa phải và tập sức mạnh."]
+        if "Cân đối" in body_shape:
+            return ["Duy trì lịch tập hiện tại và tăng dần độ khó."]
+        return ["Tiếp tục duy trì vận động đều và quét lại khi ảnh rõ hơn."]

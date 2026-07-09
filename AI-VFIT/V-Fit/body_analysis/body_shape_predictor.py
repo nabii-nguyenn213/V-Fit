@@ -58,17 +58,17 @@ class BodyShapePredictor:
         
         # 4. Phân loại Béo/Gầy
         if fat_ratio < 0.75:
-            shape = "GAY (Thieu co/mo)"
-            desc = f"Eo/Vai: {fat_ratio:.2f}. Can tang can, tap Hypertrophy."
+            shape = "Gầy (Thiếu cơ/mỡ)"
+            desc = f"Eo/Vai: {fat_ratio:.2f}. Cần tăng cân, tập Hypertrophy."
         elif 0.75 <= fat_ratio <= 0.85:
-            shape = "CAN DOI (Dang chu V)"
-            desc = f"Eo/Vai: {fat_ratio:.2f}. The hinh dep, ty le chuan."
+            shape = "Cân đối (Dáng chữ V)"
+            desc = f"Eo/Vai: {fat_ratio:.2f}. Thể hình đẹp, tỷ lệ chuẩn."
         else:
-            shape = "BEO (Thua mo)"
-            desc = f"Eo/Vai: {fat_ratio:.2f}. Bung to hon vai, can giam mo."
+            shape = "Béo (Thừa mỡ)"
+            desc = f"Eo/Vai: {fat_ratio:.2f}. Bụng to hơn vai, cần giảm mỡ."
             
         return {
             "body_shape": shape,
             "description": desc,
-            "fat_ratio": float(fat_ratio) # Ép kiểu float cho an toàn khi trả về JSON
+            "fat_ratio": float(fat_ratio)
         }
