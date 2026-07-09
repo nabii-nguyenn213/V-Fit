@@ -121,9 +121,9 @@ class _AiOnboardingBodyScanPageState
               title: 'AI Body Check',
               webSocketPath: '/ws/ai/body-analysis',
               queryParameters: const {},
-              readyText: 'Camera da san sang.',
-              streamingText: 'AI dang phan tich hinh the...',
-              stoppedText: 'Da dung phan tich body.',
+              readyText: 'Camera đã sẵn sàng.',
+              streamingText: 'AI đang phân tích hình thể...',
+              stoppedText: 'Đã dừng phân tích body.',
               autoStartStreaming: false,
               showStartStopButton: true,
               onStreamingStarted: _startCountdown,
@@ -193,7 +193,7 @@ class _ScanningBanner extends StatelessWidget {
           const SizedBox(width: AppSpacing.x3),
           Expanded(
             child: Text(
-              'Dang phan tich dang nguoi... ${secondsLeft}s',
+              'Đang phân tích dáng người... ${secondsLeft}s',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -226,7 +226,7 @@ class _ReviewPanel extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
-        title: const Text('Ket qua phan tich dang nguoi'),
+        title: const Text('Kết quả phân tích dáng người'),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -332,11 +332,11 @@ class _BodyAnalysisDetails extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _InfoRow(title: 'Tu the', value: result.posture),
+        _InfoRow(title: 'Tư thế', value: result.posture),
         const SizedBox(height: AppSpacing.x4),
-        _InfoRow(title: 'Lech co the', value: result.imbalance),
+        _InfoRow(title: 'Lệch cơ thể', value: result.imbalance),
         const SizedBox(height: AppSpacing.x4),
-        _InfoRow(title: 'Goi y', value: result.recommendation),
+        _InfoRow(title: 'Gợi ý', value: result.recommendation),
         const SizedBox(height: AppSpacing.x4),
         const Divider(),
         const SizedBox(height: AppSpacing.x4),
@@ -358,7 +358,7 @@ class _BodyAnalysisDetails extends StatelessWidget {
             const SizedBox(width: AppSpacing.x4),
             Expanded(
               child: _MetricBlock(
-                label: 'Do tin cay',
+                label: 'Độ tin cậy',
                 value: '${(result.confidence * 100).round()}%',
               ),
             ),
@@ -444,7 +444,7 @@ class _SavingOverlay extends StatelessWidget {
             ),
             SizedBox(height: AppSpacing.x4),
             Text(
-              'Dang luu ket qua...',
+              'Đang lưu kết quả...',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -488,7 +488,7 @@ class _BodyAnalysisPanel extends StatelessWidget {
               const SizedBox(width: AppSpacing.x2),
               Expanded(
                 child: Text(
-                  result == null ? 'Dang cho phan hoi AI' : result!.posture,
+                  result == null ? 'Đang chờ phản hồi AI' : result!.posture,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.headerMediumFor(context),
@@ -500,7 +500,7 @@ class _BodyAnalysisPanel extends StatelessWidget {
           Text(
             result?.imbalance ??
                 statusText ??
-                'Dung thang nguoi trong khung hinh de AI cap nhat chi so.',
+                'Đứng thẳng người trong khung hình để AI cập nhật chỉ số.',
             style: AppTypography.bodyFor(context),
           ),
           if (result != null) ...[
@@ -588,11 +588,11 @@ class _BodyAnalysisFeedback {
     final estimate = _asMap(json['estimate']);
     final recommendation = _asMap(json['recommendation']);
     return _BodyAnalysisFeedback(
-      posture: posture['summary']?.toString() ?? 'Body analysis pending',
+      posture: posture['summary']?.toString() ?? 'Đang phân tích...',
       imbalance: imbalance['summary']?.toString() ??
-          'No imbalance estimate available.',
+          'Không có dữ liệu lệch cơ thể.',
       recommendation:
-          recommendation['focus']?.toString() ?? 'Continue current routine.',
+          recommendation['focus']?.toString() ?? 'Duy trì lịch tập luyện hiện tại.',
       confidence: (estimate['confidence'] as num?)?.toDouble() ?? 0,
       fallback: json['fallback'] == true,
       waistShoulderRatio: (estimate['waistShoulderRatio'] as num?)?.toDouble(),
