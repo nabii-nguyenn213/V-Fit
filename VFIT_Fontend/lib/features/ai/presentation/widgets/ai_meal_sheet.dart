@@ -199,9 +199,9 @@ class _AiMealSheetState extends ConsumerState<AiMealSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildMacroColumn('Protein', '${protein}g', Colors.orange),
-                  _buildMacroColumn('Carbs', '${carbs}g', Colors.blue),
-                  _buildMacroColumn('Fat', '${fat}g', Colors.red),
+                  _buildMacroColumn('Đạm', '${protein}g', Colors.orange),
+                  _buildMacroColumn('Carb', '${carbs}g', Colors.blue),
+                  _buildMacroColumn('Béo', '${fat}g', Colors.red),
                 ],
               ),
             ],

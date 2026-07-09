@@ -306,10 +306,10 @@ class _BodyAnalysisDetails extends StatelessWidget {
             ),
             _MetricChip(
               label: 'AI',
-              value: result.fallback ? 'Fallback' : 'Analyzed',
+              value: result.fallback ? 'Dự phòng' : 'Đã phân tích',
             ),
             _MetricChip(
-              label: 'Confidence',
+              label: 'Độ tin cậy',
               value: '${(result.confidence * 100).round()}%',
             ),
           ],
@@ -402,10 +402,10 @@ class _BodyAnalysisPanel extends StatelessWidget {
                 ),
                 _MetricChip(
                   label: 'AI',
-                  value: result!.fallback ? 'Fallback' : 'Live',
+                  value: result!.fallback ? 'Dự phòng' : 'Trực tiếp',
                 ),
                 _MetricChip(
-                  label: 'Confidence',
+                  label: 'Độ tin cậy',
                   value: '${(result!.confidence * 100).round()}%',
                 ),
               ],

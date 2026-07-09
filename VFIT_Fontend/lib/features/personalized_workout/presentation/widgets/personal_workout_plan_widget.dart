@@ -698,7 +698,7 @@ class _PersonalWorkoutPlanWidgetState
                       child: _buildNutritionTile(
                         context,
                         icon: Icons.fitness_center_rounded,
-                        label: 'Protein',
+                        label: 'Đạm',
                         value: nutrition.proteinTarget,
                         color: Colors.blue,
                       ),

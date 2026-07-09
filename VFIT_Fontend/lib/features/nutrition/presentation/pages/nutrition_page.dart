@@ -601,7 +601,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildMacroDetailItem('Protein', '${protein}g', Colors.orange),
+                  _buildMacroDetailItem('Đạm', '${protein}g', Colors.orange),
                   _buildMacroDetailItem('Tinh bột', '${carbs}g', Colors.blue),
                   _buildMacroDetailItem('Chất béo', '${fat}g', Colors.red),
                 ],
@@ -1842,7 +1842,7 @@ class _MacroCalculatorSheetState extends State<_MacroCalculatorSheet> {
                     child: Column(
                       children: [
                         _MacroValueTile(
-                          label: 'Protein',
+                          label: 'Đạm',
                           value: protein,
                           color: scheme.primary,
                         ),
@@ -1854,7 +1854,7 @@ class _MacroCalculatorSheetState extends State<_MacroCalculatorSheet> {
                         ),
                         const SizedBox(height: 8),
                         _MacroValueTile(
-                          label: 'Fat',
+                          label: 'Béo',
                           value: fat,
                           color: const Color(0xFFD8FF3E),
                         ),

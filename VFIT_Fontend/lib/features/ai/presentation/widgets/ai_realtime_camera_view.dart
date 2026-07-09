@@ -489,7 +489,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
                               color: AppColors.energyMagenta,
                               label: _waitingForFeedback
                                   ? 'ĐANG PHÂN TÍCH'
-                                  : 'LIVE',
+                                  : 'TRỰC TIẾP',
                             ),
                           ),
                         if (_streaming)

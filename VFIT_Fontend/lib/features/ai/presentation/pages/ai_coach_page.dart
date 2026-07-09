@@ -69,7 +69,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
         extendBodyBehindAppBar: false,
         appBar: AppBar(
           title: const Text(
-            'V-FIT AI Workspace',
+            'Không gian AI V-FIT',
             style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
           ),
           elevation: 0,
@@ -184,7 +184,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                 showDialog<void>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Reset workspace?'),
+                    title: const Text('Xác nhận làm mới?'),
                     content: const Text('Lịch sử chat và kế hoạch hiện tại sẽ được làm mới.'),
                     actions: [
                       TextButton(
@@ -200,7 +200,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                           Navigator.pop(context);
                         },
                         child: const Text(
-                          'Reset',
+                          'Làm mới',
                           style: TextStyle(color: Colors.red),
                         ),
                       ),
@@ -1492,9 +1492,9 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildMacroColumn('Protein', '${protein}g', Colors.orange),
-                  _buildMacroColumn('Carbs', '${carbs}g', Colors.blue),
-                  _buildMacroColumn('Fat', '${fat}g', Colors.red),
+                  _buildMacroColumn('Đạm', '${protein}g', Colors.orange),
+                  _buildMacroColumn('Carb', '${carbs}g', Colors.blue),
+                  _buildMacroColumn('Béo', '${fat}g', Colors.red),
                 ],
               ),
             ],
