@@ -270,7 +270,7 @@ def analyze_form_frame(frame, keypoints, session: RealtimeSession, exercise: str
 
 def posture_from_imbalances(imbalances):
     if not imbalances:
-        return "Tu the can bang", 8, "OK"
+        return "Tư thế cân bằng", 8, "OK"
     risk_score = min(100, 20 + len(imbalances) * 20)
     severity = "HIGH" if risk_score >= 60 else "LOW"
     return "; ".join(imbalances), risk_score, severity

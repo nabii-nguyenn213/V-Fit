@@ -34,15 +34,15 @@ class ImbalanceDetector:
         if l_shoulder and r_shoulder:
             shoulder_angle = self._calculate_absolute_angle(l_shoulder, r_shoulder)
             if shoulder_angle > self.threshold:
-                direction = "phai" if l_shoulder['y'] > r_shoulder['y'] else "trai"
-                issues.append(f"Nghieng vai {direction} ({round(shoulder_angle, 1)} do)")
+                direction = "phải" if l_shoulder['y'] > r_shoulder['y'] else "trái"
+                issues.append(f"Nghiêng vai {direction} ({round(shoulder_angle, 1)} độ)")
 
         # 2. Kiểm tra nghiêng hông
         if l_hip and r_hip:
             hip_angle = self._calculate_absolute_angle(l_hip, r_hip)
             if hip_angle > self.threshold:
-                direction = "phai" if l_hip['y'] > r_hip['y'] else "trai"
-                issues.append(f"Nghieng hong {direction} ({round(hip_angle, 1)} do)")
+                direction = "phải" if l_hip['y'] > r_hip['y'] else "trái"
+                issues.append(f"Nghiêng hông {direction} ({round(hip_angle, 1)} độ)")
 
         # 3. Kiểm tra nghiêng đầu / lệch cổ
         if nose and l_shoulder and r_shoulder:
@@ -53,8 +53,8 @@ class ImbalanceDetector:
             if shoulder_width > 0:
                 deviation_ratio = abs(head_deviation) / shoulder_width
                 if deviation_ratio > 0.15: # Đầu lệch khỏi tâm vai quá 15%
-                    direction = "phai" if head_deviation > 0 else "trai"
-                    issues.append(f"Dau lech sang {direction}")
+                    direction = "phải" if head_deviation > 0 else "trái"
+                    issues.append(f"Đầu lệch sang {direction}")
 
         # 4. Kiểm tra nghiêng CẢ NGƯỜI (Trục cơ thể)
         if l_shoulder and r_shoulder and l_hip and r_hip:
@@ -69,7 +69,7 @@ class ImbalanceDetector:
             if dy > 0:
                 body_tilt = math.degrees(math.atan(dx / dy)) # Góc so với trục dọc
                 if body_tilt > self.threshold:
-                    direction = "phai" if mid_shoulder_x > mid_hip_x else "trai"
-                    issues.append(f"Nghieng ca nguoi {direction} ({round(body_tilt, 1)} do)")
+                    direction = "phải" if mid_shoulder_x > mid_hip_x else "trái"
+                    issues.append(f"Nghiêng cả người {direction} ({round(body_tilt, 1)} độ)")
 
         return issues

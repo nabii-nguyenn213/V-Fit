@@ -43,15 +43,15 @@ class BodyShapePredictor:
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
-            self.classes = ["CHU V", "CHU NHAT", "QUA LE"]
+            self.classes = ["Chữ V", "Chữ nhật", "Quả lê"]
             
         except Exception as e:
             print(f"[!] Loi load model: {e}")
             self.model = None
-
+ 
     def predict(self, frame):
         if self.model is None or frame is None:
-            return "Chua xac dinh"
+            return "Chưa xác định"
             
         try:
             # 1. CẮT ẢNH VUÔNG Ở GIỮA ĐỂ KHÔNG BỊ MÉO DÁNG
@@ -72,4 +72,4 @@ class BodyShapePredictor:
                 return self.classes[preds[0].item()]
         except Exception as e:
             print(f"[!] Loi du doan: {e}")
-            return "Chua xac dinh"
+            return "Chưa xác định"

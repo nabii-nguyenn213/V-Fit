@@ -15,18 +15,18 @@ class PostureAnalyzer:
         
         ratio = shoulder_width / hip_width if hip_width > 0 else 0
         
-        body_type = "Chua xac dinh"
+        body_type = "Chưa xác định"
         if ratio > 1.3:
-            body_type = "Dang chu V (Vai rong)"
+            body_type = "Dáng chữ V (Vai rộng)"
         elif 0.95 <= ratio <= 1.3:
-            body_type = "Dang chu nhat"
+            body_type = "Dáng chữ nhật"
         else:
-            body_type = "Dang qua le (Hong to)"
-
+            body_type = "Dáng quả lê (Hông to)"
+ 
         # ---------------------------------------------------------
         # 2. ĐO ĐỘ BÉO/GẦY BẰNG MẶT NẠ (ĐÃ SỬA HỆ TỌA ĐỘ VÀ LỌC CÁNH TAY)
         # ---------------------------------------------------------
-        condition = "Chua ro (Thieu Mask)"
+        condition = "Chưa rõ (Thiếu Mask)"
         
         if segmentation_mask is not None:
             height, width = segmentation_mask.shape
@@ -59,12 +59,12 @@ class PostureAnalyzer:
                     
                     # Cập nhật lại mốc so sánh vì đã gọt bỏ cánh tay
                     if fat_ratio < 0.80:
-                        condition = "GAY (Thieu can)"
+                        condition = "Gầy (Thiếu cân)"
                     elif fat_ratio > 1.05:
-                        condition = "BEO (Thua can)"
+                        condition = "Béo (Thừa cân)"
                     else:
-                        condition = "VUA (Can doi)"
-
+                        condition = "Vừa (Cân đối)"
+ 
         return {
             "shoulder_hip_ratio": round(ratio, 2),
             "body_type": body_type,
