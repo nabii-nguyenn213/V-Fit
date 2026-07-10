@@ -13,6 +13,7 @@ import '../../../../presentation/theme/app_typography.dart';
 import '../../../ai/presentation/widgets/ai_realtime_camera_view.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../data/repositories/onboarding_repository.dart';
+import '../utils/body_analysis_text_localizer.dart';
 
 enum ScanState { scanning, reviewing, saving }
 
@@ -106,7 +107,8 @@ class _AiOnboardingBodyScanPageState
     } catch (e) {
       if (!mounted) return;
       setState(() => _scanState = ScanState.reviewing);
-      AppFeedback.error('Lưu kết quả thất bại: $e. Vui lòng thử lại.');
+      debugPrint('[AiOnboardingBodyScanPage] Không thể lưu kết quả: $e');
+      AppFeedback.error('Không thể lưu kết quả. Vui lòng thử lại.');
     }
   }
 
@@ -118,12 +120,12 @@ class _AiOnboardingBodyScanPageState
           if (_scanState == ScanState.scanning)
             AiRealtimeCameraView(
               key: ValueKey(_retryCount),
-              title: 'AI Body Check',
+              title: 'Kiểm tra hình thể bằng AI',
               webSocketPath: '/ws/ai/body-analysis',
               queryParameters: const {},
               readyText: 'Camera đã sẵn sàng.',
               streamingText: 'AI đang phân tích hình thể...',
-              stoppedText: 'Đã dừng phân tích body.',
+              stoppedText: 'Đã dừng phân tích hình thể.',
               autoStartStreaming: false,
               showStartStopButton: true,
               onStreamingStarted: _startCountdown,
@@ -588,11 +590,18 @@ class _BodyAnalysisFeedback {
     final estimate = _asMap(json['estimate']);
     final recommendation = _asMap(json['recommendation']);
     return _BodyAnalysisFeedback(
-      posture: posture['summary']?.toString() ?? 'Đang phân tích...',
-      imbalance: imbalance['summary']?.toString() ??
-          'Không có dữ liệu lệch cơ thể.',
-      recommendation:
-          recommendation['focus']?.toString() ?? 'Duy trì lịch tập luyện hiện tại.',
+      posture: BodyAnalysisTextLocalizer.localize(
+        posture['summary'],
+        fallback: 'Đang phân tích...',
+      ),
+      imbalance: BodyAnalysisTextLocalizer.localize(
+        imbalance['summary'],
+        fallback: 'Không có dữ liệu lệch cơ thể.',
+      ),
+      recommendation: BodyAnalysisTextLocalizer.localize(
+        recommendation['focus'],
+        fallback: 'Duy trì lịch tập luyện hiện tại.',
+      ),
       confidence: (estimate['confidence'] as num?)?.toDouble() ?? 0,
       fallback: json['fallback'] == true,
       waistShoulderRatio: (estimate['waistShoulderRatio'] as num?)?.toDouble(),

@@ -10,7 +10,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../../../core/network/network_providers.dart';
 import '../../../../core/network/web_socket_url_builder.dart';
 import '../../../../core/utils/camera_error_messages.dart';
-import '../../../../core/utils/permission_helper.dart';  // ✨ NEW
+import '../../../../core/utils/permission_helper.dart'; // ✨ NEW
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../presentation/theme/app_colors.dart';
@@ -86,7 +86,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     WidgetsBinding.instance.removeObserver(this);
     _stopStreaming(fromDispose: true);
     _cameraController?.dispose();
-    _cleanupTempFrames();  // ✨ FIX #7: Cleanup temp files
+    _cleanupTempFrames(); // ✨ FIX #7: Cleanup temp files
     super.dispose();
   }
 
@@ -107,20 +107,23 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
 
     try {
       // ✨ FIX #1: REQUEST CAMERA PERMISSION
-      final hasCameraPermission = await PermissionHelper.requestCameraPermission();
+      final hasCameraPermission =
+          await PermissionHelper.requestCameraPermission();
       if (!hasCameraPermission) {
         setState(() {
           _initializing = false;
-          _statusText = 'Không có quyền camera. Vui lòng cấp quyền trong cài đặt.';
+          _statusText =
+              'Không có quyền camera. Vui lòng cấp quyền trong cài đặt.';
         });
-        
+
         // Show dialog to direct user to settings
         if (mounted) {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Cấp quyền camera'),
-              content: const Text('V-FIT cần quyền truy cập camera để quét hình ảnh.'),
+              content: const Text(
+                  'V-FIT cần quyền truy cập camera để quét hình ảnh.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -156,7 +159,8 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     } on CameraException catch (error) {
       _showSetupError(CameraErrorMessages.fromCameraException(error));
     } catch (error) {
-      _showSetupError(error.toString());
+      debugPrint('[AiRealtimeCameraView] Không thể khởi tạo camera: $error');
+      _showSetupError(CameraErrorMessages.cameraUnavailable);
     }
   }
 
@@ -206,7 +210,8 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     } on CameraException catch (error) {
       _showSetupError(CameraErrorMessages.fromCameraException(error));
     } catch (error) {
-      _showSetupError(error.toString());
+      debugPrint('[AiRealtimeCameraView] Không thể mở camera: $error');
+      _showSetupError(CameraErrorMessages.cameraUnavailable);
     }
   }
 
@@ -261,13 +266,19 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     } catch (error) {
       await _stopStreaming(isError: true);
       if (mounted) {
-        AppFeedback.error('Không thể bắt đầu phân tích AI: $error');
+        debugPrint(
+          '[AiRealtimeCameraView] Không thể bắt đầu phân tích AI: $error',
+        );
+        AppFeedback.error(
+          'Không thể bắt đầu phân tích AI. Vui lòng thử lại.',
+        );
         setState(() => _statusText = 'Kết nối AI thất bại.');
       }
     }
   }
 
-  Future<void> _stopStreaming({bool fromDispose = false, bool isError = false}) async {
+  Future<void> _stopStreaming(
+      {bool fromDispose = false, bool isError = false}) async {
     _captureTimer?.cancel();
     _captureTimer = null;
     _streaming = false;
@@ -316,7 +327,10 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
       _waitingForFeedback = false;
       print('[AI CAMERA] Error capturing frame: $error');
       if (mounted) {
-        setState(() => _statusText = 'Bỏ qua một khung hình: $error');
+        setState(
+          () => _statusText =
+              'Không thể xử lý khung hình. Hệ thống đang thử lại...',
+        );
       }
     } finally {
       _capturing = false;
@@ -363,8 +377,10 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
       hasError = true;
       print('[AI CAMERA] WebSocket stream error: $error');
       if (mounted) {
-        setState(() => _statusText = 'Lỗi kết nối AI: $error');
-        AppFeedback.error('Lỗi kết nối AI: $error');
+        setState(() => _statusText = 'Kết nối AI bị gián đoạn.');
+        AppFeedback.error(
+          'Kết nối AI bị gián đoạn. Vui lòng thử lại.',
+        );
       }
     } finally {
       if (mounted && _streaming) {
