@@ -66,7 +66,17 @@ class ErrorView extends StatelessWidget {
 }
 
 class PendingOnboardingPlaceholder extends StatelessWidget {
-  const PendingOnboardingPlaceholder({super.key});
+  const PendingOnboardingPlaceholder({
+    super.key,
+    this.title = 'Cập nhật thể trạng cơ thể',
+    this.message =
+        'Hệ thống cần biết các chỉ số cơ thể của bạn (chiều cao, cân nặng...) để có thể tính toán lộ trình và cung cấp dữ liệu cá nhân hóa chính xác nhất.',
+    this.actionLabel = 'Tiếp tục thiết lập',
+  });
+
+  final String title;
+  final String message;
+  final String actionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +117,7 @@ class PendingOnboardingPlaceholder extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'Cập nhật thể trạng cơ thể',
+            title,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 17,
@@ -118,7 +128,7 @@ class PendingOnboardingPlaceholder extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Hệ thống cần biết các chỉ số cơ thể của bạn (chiều cao, cân nặng...) để có thể tính toán lộ trình và cung cấp dữ liệu cá nhân hóa chính xác nhất.',
+            message,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -130,7 +140,10 @@ class PendingOnboardingPlaceholder extends StatelessWidget {
           FilledButton.icon(
             onPressed: () => context.push('/onboarding'),
             icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-            label: const Text('Tiếp tục thiết lập', style: TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(
+              actionLabel,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(

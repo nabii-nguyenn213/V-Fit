@@ -174,50 +174,11 @@ class ProfilePage extends ConsumerWidget {
           VipPromotionCard(user: user),
         ],
         const SizedBox(height: 16),
-        if (user.onboardingStatus == OnboardingStatus.pending)
-          const PendingOnboardingPlaceholder()
-        else
-          bodyMetrics.when(
-            data: (metric) => AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Chỉ số cơ thể',
-                    style: AppTypography.labelFor(context),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 12,
-                    children: [
-                      _Value(
-                        label: 'Chiều cao',
-                        value: '${metric.heightCm ?? '-'} cm',
-                      ),
-                      _Value(
-                        label: 'Cân nặng',
-                        value: '${metric.weightKg ?? '-'} kg',
-                      ),
-                      _Value(
-                        label: 'Chỉ số BMI',
-                        value: metric.bmi?.toStringAsFixed(1) ?? '-',
-                      ),
-                      _Value(
-                        label: 'Tỷ lệ mỡ',
-                        value: '${metric.bodyFatPercent ?? '-'}%',
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            loading: () => const AppCard(child: LinearProgressIndicator()),
-            error: (error, _) => ErrorView(
-              message: error.toString(),
-              onRetry: () => ref.invalidate(bodyMetricsProvider),
-            ),
-          ),
+        ProfileBodyMetricsSection(
+          isOnboardingCompleted: user.isOnboardingCompleted,
+          bodyMetrics: bodyMetrics,
+          onRetry: () => ref.invalidate(bodyMetricsProvider),
+        ),
         const SizedBox(height: 16),
         _ProfileAction(
           icon: Icons.edit,
@@ -294,6 +255,73 @@ class ProfilePage extends ConsumerWidget {
         }
       }
     }
+  }
+}
+
+class ProfileBodyMetricsSection extends StatelessWidget {
+  const ProfileBodyMetricsSection({
+    super.key,
+    required this.isOnboardingCompleted,
+    required this.bodyMetrics,
+    required this.onRetry,
+  });
+
+  final bool isOnboardingCompleted;
+  final AsyncValue<BodyMetricModel> bodyMetrics;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isOnboardingCompleted) {
+      return const PendingOnboardingPlaceholder(
+        title: 'Hoàn tất thiết lập ban đầu',
+        message:
+            'Hiện tại bạn chưa hoàn tất bước thiết lập. Hãy nhấp vào đây để hoàn thành, để chúng tôi chuẩn bị cho bạn một kế hoạch chi tiết nhất nhé.',
+        actionLabel: 'Hoàn tất thiết lập',
+      );
+    }
+
+    return bodyMetrics.when(
+      data: (metric) => AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Chỉ số cơ thể',
+              style: AppTypography.labelFor(context),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              children: [
+                _Value(
+                  label: 'Chiều cao',
+                  value: '${metric.heightCm ?? '-'} cm',
+                ),
+                _Value(
+                  label: 'Cân nặng',
+                  value: '${metric.weightKg ?? '-'} kg',
+                ),
+                _Value(
+                  label: 'Chỉ số BMI',
+                  value: metric.bmi?.toStringAsFixed(1) ?? '-',
+                ),
+                _Value(
+                  label: 'Tỷ lệ mỡ',
+                  value: '${metric.bodyFatPercent ?? '-'}%',
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      loading: () => const AppCard(child: LinearProgressIndicator()),
+      error: (error, _) => ErrorView(
+        message: error.toString(),
+        onRetry: onRetry,
+      ),
+    );
   }
 }
 
@@ -1424,13 +1452,16 @@ class _ThemeSelector extends StatelessWidget {
                               fontWeight: value == ThemeMode.light ? FontWeight.w800 : FontWeight.w600,
                               fontSize: 12,
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.light_mode_rounded, size: 14),
-                                SizedBox(width: 4),
-                                Text('Sáng'),
-                              ],
+                            child: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.light_mode_rounded, size: 14),
+                                  SizedBox(width: 4),
+                                  Text('Sáng'),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -1446,13 +1477,16 @@ class _ThemeSelector extends StatelessWidget {
                               fontWeight: value == ThemeMode.dark ? FontWeight.w800 : FontWeight.w600,
                               fontSize: 12,
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.dark_mode_rounded, size: 14),
-                                SizedBox(width: 4),
-                                Text('Tối'),
-                              ],
+                            child: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.dark_mode_rounded, size: 14),
+                                  SizedBox(width: 4),
+                                  Text('Tối'),
+                                ],
+                              ),
                             ),
                           ),
                         ),
