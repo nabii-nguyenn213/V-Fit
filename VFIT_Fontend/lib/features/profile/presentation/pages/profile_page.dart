@@ -131,10 +131,12 @@ class ProfilePage extends ConsumerWidget {
                       vertical: AppSpacing.x1,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryOf(context).withValues(alpha: 0.10),
+                      color:
+                          AppColors.primaryOf(context).withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
-                        color: AppColors.primaryOf(context).withValues(alpha: 0.24),
+                        color: AppColors.primaryOf(context)
+                            .withValues(alpha: 0.24),
                       ),
                     ),
                     child: Text(
@@ -282,40 +284,51 @@ class ProfileBodyMetricsSection extends StatelessWidget {
     }
 
     return bodyMetrics.when(
-      data: (metric) => AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Chỉ số cơ thể',
-              style: AppTypography.labelFor(context),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 16,
-              runSpacing: 12,
-              children: [
-                _Value(
-                  label: 'Chiều cao',
-                  value: '${metric.heightCm ?? '-'} cm',
-                ),
-                _Value(
-                  label: 'Cân nặng',
-                  value: '${metric.weightKg ?? '-'} kg',
-                ),
-                _Value(
-                  label: 'Chỉ số BMI',
-                  value: metric.bmi?.toStringAsFixed(1) ?? '-',
-                ),
-                _Value(
-                  label: 'Tỷ lệ mỡ',
-                  value: '${metric.bodyFatPercent ?? '-'}%',
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+      data: (metric) {
+        if (!metric.hasRequiredOnboardingMetrics) {
+          return const PendingOnboardingPlaceholder(
+            title: 'Hãy điền đầy đủ thông tin để tiếp tục',
+            message:
+                'Hệ thống chưa có đủ chỉ số cơ thể của bạn. Hãy cập nhật chiều cao và cân nặng để V-FIT cá nhân hóa lộ trình chính xác hơn.',
+            actionLabel: 'Cập nhật thông tin',
+          );
+        }
+
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Chỉ số cơ thể',
+                style: AppTypography.labelFor(context),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 16,
+                runSpacing: 12,
+                children: [
+                  _Value(
+                    label: 'Chiều cao',
+                    value: '${metric.heightCm ?? '-'} cm',
+                  ),
+                  _Value(
+                    label: 'Cân nặng',
+                    value: '${metric.weightKg ?? '-'} kg',
+                  ),
+                  _Value(
+                    label: 'Chỉ số BMI',
+                    value: metric.bmi?.toStringAsFixed(1) ?? '-',
+                  ),
+                  _Value(
+                    label: 'Tỷ lệ mỡ',
+                    value: '${metric.bodyFatPercent ?? '-'}%',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
       loading: () => const AppCard(child: LinearProgressIndicator()),
       error: (error, _) => ErrorView(
         message: error.toString(),
@@ -492,7 +505,8 @@ class VipActiveStatusCard extends StatelessWidget {
           ],
           stops: [0.0, 0.7, 1.0],
         ),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.2),
+        border:
+            Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: accent.withValues(alpha: 0.14),
@@ -559,7 +573,9 @@ class VipActiveStatusCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.x2),
             Text(
               'Gói VIP năm đang hoạt động',
-              style: AppTypography.body(color: Colors.white.withValues(alpha: 0.9)),
+              style: AppTypography.body(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
             ),
           ],
           const SizedBox(height: AppSpacing.x4),
@@ -639,8 +655,6 @@ class VipActiveStatusCard extends StatelessWidget {
       _ => 'VIP',
     };
   }
-
-
 
   static bool _isYearlyPlan(String? value) {
     return switch (value) {
@@ -1378,128 +1392,144 @@ class _ThemeSelector extends StatelessWidget {
           horizontal: AppSpacing.x4,
           vertical: 12,
         ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.primaryOf(context).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppRadius.input),
-            ),
-            child: Icon(Icons.contrast, color: AppColors.primaryOf(context)),
-          ),
-          const SizedBox(width: AppSpacing.x3),
-          Expanded(
-            child: Text(
-              'Giao diện',
-              style: AppTypography.headerMediumFor(context),
-            ),
-          ),
-          GestureDetector(
-            onTap: () => onChanged(value == ThemeMode.light ? ThemeMode.dark : ThemeMode.light),
-            child: Container(
-              width: 110,
-              height: 44,
-              padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: AppColors.isDark(context) 
-                    ? Colors.black.withValues(alpha: 0.5) 
-                    : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(
-                  color: AppColors.isDark(context)
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.05),
-                ),
+                color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.input),
               ),
-              child: Stack(
-                children: [
-                  AnimatedAlign(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
-                    alignment: value == ThemeMode.light
-                        ? Alignment.centerLeft
-                        : Alignment.centerRight,
-                    child: Container(
-                      width: 50,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.isDark(context)
-                            ? Colors.white.withValues(alpha: 0.15)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(99),
-                        boxShadow: AppColors.isDark(context) ? [] : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+              child: Icon(Icons.contrast, color: AppColors.primaryOf(context)),
+            ),
+            const SizedBox(width: AppSpacing.x3),
+            Expanded(
+              child: Text(
+                'Giao diện',
+                style: AppTypography.headerMediumFor(context),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => onChanged(
+                value == ThemeMode.light ? ThemeMode.dark : ThemeMode.light,
+              ),
+              child: Container(
+                width: 110,
+                height: 44,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.isDark(context)
+                      ? Colors.black.withValues(alpha: 0.5)
+                      : Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(
+                    color: AppColors.isDark(context)
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    AnimatedAlign(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
+                      alignment: value == ThemeMode.light
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+                      child: Container(
+                        width: 50,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.isDark(context)
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(99),
+                          boxShadow: AppColors.isDark(context)
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                        ),
                       ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 300),
-                            style: TextStyle(
-                              color: value == ThemeMode.light
-                                  ? (AppColors.isDark(context) ? Colors.white : Colors.black)
-                                  : (AppColors.isDark(context) ? Colors.white54 : Colors.black54),
-                              fontWeight: value == ThemeMode.light ? FontWeight.w800 : FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                            child: const FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.light_mode_rounded, size: 14),
-                                  SizedBox(width: 4),
-                                  Text('Sáng'),
-                                ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 300),
+                              style: TextStyle(
+                                color: value == ThemeMode.light
+                                    ? (AppColors.isDark(context)
+                                        ? Colors.white
+                                        : Colors.black)
+                                    : (AppColors.isDark(context)
+                                        ? Colors.white54
+                                        : Colors.black54),
+                                fontWeight: value == ThemeMode.light
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.light_mode_rounded, size: 14),
+                                    SizedBox(width: 4),
+                                    Text('Sáng'),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 300),
-                            style: TextStyle(
-                              color: value == ThemeMode.dark
-                                  ? (AppColors.isDark(context) ? Colors.white : Colors.black)
-                                  : (AppColors.isDark(context) ? Colors.white54 : Colors.black54),
-                              fontWeight: value == ThemeMode.dark ? FontWeight.w800 : FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                            child: const FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.dark_mode_rounded, size: 14),
-                                  SizedBox(width: 4),
-                                  Text('Tối'),
-                                ],
+                        Expanded(
+                          child: Center(
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 300),
+                              style: TextStyle(
+                                color: value == ThemeMode.dark
+                                    ? (AppColors.isDark(context)
+                                        ? Colors.white
+                                        : Colors.black)
+                                    : (AppColors.isDark(context)
+                                        ? Colors.white54
+                                        : Colors.black54),
+                                fontWeight: value == ThemeMode.dark
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.dark_mode_rounded, size: 14),
+                                    SizedBox(width: 4),
+                                    Text('Tối'),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }

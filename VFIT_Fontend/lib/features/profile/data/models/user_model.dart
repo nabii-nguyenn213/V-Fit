@@ -169,6 +169,8 @@ class BodyMetricModel {
   final double? bmi;
   final DateTime? measuredAt;
 
+  bool get hasRequiredOnboardingMetrics => heightCm != null && weightKg != null;
+
   factory BodyMetricModel.fromJson(Map<String, dynamic> json) {
     return BodyMetricModel(
       heightCm: (json['heightCm'] as num?)?.toDouble(),
