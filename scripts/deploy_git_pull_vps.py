@@ -26,6 +26,13 @@ def main():
         ssh.connect(hostname, username=username, password=password, timeout=20)
         print("[+] SSH connection successful!")
         
+        # Stop all V-Fit services to release file locks on virtual environments, jars, and other resources
+        print("[*] Stopping V-Fit services on VPS...")
+        services_to_stop = ['vfit-backend', 'vfit-ai', 'vfit-recommendation', 'vfit-gemini-web2api']
+        for svc in services_to_stop:
+            print(f"[*] Stopping service: {svc}")
+            execute_remote_cmd(ssh, f"powershell Stop-Service {svc}")
+            
         # 1. Remove blocking files on the VPS
         print("[*] Removing blocking untracked files on the VPS...")
         cleanup_script = """
@@ -206,6 +213,17 @@ java -jar target\\vfit-backend-0.1.0.jar
             print(f"[ERROR] Failed to start service: {err}")
             sys.exit(1)
         print("[+] Started vfit-backend service successfully.")
+        
+        # Start all other AI services
+        print("[*] Starting other AI services on VPS...")
+        services_to_start = ['vfit-ai', 'vfit-recommendation', 'vfit-gemini-web2api']
+        for svc in services_to_start:
+            print(f"[*] Starting service: {svc}")
+            status, out, err = execute_remote_cmd(ssh, f"powershell Start-Service {svc}")
+            if status != 0:
+                print(f"[ERROR] Failed to start service {svc}: {err}")
+                sys.exit(1)
+            print(f"[+] Started {svc} successfully.")
         
         ssh.close()
         print("[+] Finished deployment.")
