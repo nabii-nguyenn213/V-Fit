@@ -90,7 +90,7 @@ public class OnboardingGuardFilter extends OncePerRequestFilter {
         }
 
         // 6. Allow payments so pending users can upgrade to VIP
-        if (path.startsWith("/api/v1/payments")) {
+        if (path.startsWith("/api/v1/payments") || path.startsWith("/api/payments")) {
             return true;
         }
 

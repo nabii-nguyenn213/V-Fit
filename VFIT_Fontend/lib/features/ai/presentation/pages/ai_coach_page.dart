@@ -459,6 +459,145 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     );
   }
 
+  void _showOnboardingRequiredDialog(BuildContext pageContext) {
+    final isDark = AppColors.isDark(pageContext);
+    showDialog<void>(
+      context: pageContext,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF3B82F6),
+                          Color(0xFF1D4ED8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withValues(alpha: 0.4),
+                          blurRadius: 15,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.accessibility_new_rounded,
+                      color: Colors.white,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Yêu cầu hoàn thành thiết lập',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Chúng tôi cần bạn hoàn thành phân tích cơ thể để đưa ra những lộ trình chính xác nhất.',
+                    style: TextStyle(
+                      color: AppColors.textSecondaryOf(context),
+                      height: 1.5,
+                      fontSize: 13,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        pageContext.go('/onboarding');
+                      },
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF3B82F6),
+                              Color(0xFF1D4ED8),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withValues(alpha: 0.35),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'BẮT ĐẦU PHÂN TÍCH',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.8,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // --- TAB 1: AI Coach ---
   Widget _buildChatInterface(BuildContext context) {
     final chatState = ref.watch(aiCoachProvider);
@@ -824,8 +963,11 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                     onPressed: state.isLoading
                         ? null
                         : () {
+                            final isOnboardingCompleted = auth.user?.isOnboardingCompleted == true;
                             if (!isVip) {
                               _showVipUpgradeDialog(context);
+                            } else if (!isOnboardingCompleted) {
+                              _showOnboardingRequiredDialog(context);
                             } else {
                               ref.read(aiWorkoutPlannerProvider.notifier).generateWorkoutPlan(
                                     level: _selectedLevel,
@@ -1366,8 +1508,11 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                     onPressed: state.isLoading
                         ? null
                         : () {
+                            final isOnboardingCompleted = auth.user?.isOnboardingCompleted == true;
                             if (!isVip) {
                               _showVipUpgradeDialog(context);
+                            } else if (!isOnboardingCompleted) {
+                              _showOnboardingRequiredDialog(context);
                             } else {
                               ref.read(aiMealPlannerProvider.notifier).generateMealPlan(
                                     mealsPerDay: _mealsPerDay,
