@@ -41,4 +41,67 @@ class AdminDashboardRepository {
       throw ApiException.fromDio(error);
     }
   }
+
+  Future<PaginatedUserResponseModel> getAdminUsers({
+    bool onlyVip = false,
+    int page = 0,
+    int size = 20,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'size': size,
+      };
+      if (onlyVip) {
+        queryParams['filter'] = 'VIP';
+      }
+      final response = await _dio.get<dynamic>(
+        '/api/admin/users',
+        queryParameters: queryParams,
+      );
+      return ApiResponseParser.unwrap(
+        response,
+        (json) => PaginatedUserResponseModel.fromJson(Map<String, dynamic>.from(json as Map)),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  Future<TrafficMetricsResponseModel> getTrafficMetrics({
+    int page = 0,
+    int size = 20,
+  }) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/api/admin/metrics/traffic',
+        queryParameters: {'page': page, 'size': size},
+      );
+      return ApiResponseParser.unwrap(
+        response,
+        (json) => TrafficMetricsResponseModel.fromJson(Map<String, dynamic>.from(json as Map)),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  Future<List<SearchMetricItemModel>> getSearchMetrics({
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/api/admin/metrics/searches',
+        queryParameters: {'limit': limit},
+      );
+      return ApiResponseParser.unwrap(
+        response,
+        (json) => (json as List)
+            .map((item) => SearchMetricItemModel.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList(),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
 }

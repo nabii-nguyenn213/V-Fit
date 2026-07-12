@@ -25,7 +25,10 @@ public class UserQueryServiceImpl implements UserQueryService {
     }
 
     @Override
-    public Page<UserResponse> getUsers(RoleName role, Pageable pageable) {
+    public Page<UserResponse> getUsers(RoleName role, String filter, Pageable pageable) {
+        if ("VIP".equalsIgnoreCase(filter)) {
+            return userRepository.findActiveVipUsers(pageable).map(userMapper::toResponse);
+        }
         if (role == null) {
             return userRepository.findAll(pageable).map(userMapper::toResponse);
         }

@@ -5,6 +5,7 @@ import com.vfit.modules.nutrition.entity.Food;
 import com.vfit.modules.nutrition.repository.FoodRepository;
 import com.vfit.modules.nutrition.repository.FoodSearchRepository;
 import com.vfit.modules.nutrition.service.FoodSearchService;
+import com.vfit.modules.nutrition.service.FoodSearchMetricsService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,7 @@ public class FoodSearchServiceImpl implements FoodSearchService {
 
     private final FoodRepository foodRepository;
     private final FoodSearchRepository foodSearchRepository;
+    private final FoodSearchMetricsService foodSearchMetricsService;
 
     @Override
     public List<FoodResponse> search(String keyword, int page, int size) {
@@ -27,6 +29,12 @@ public class FoodSearchServiceImpl implements FoodSearchService {
                 ? foodSearchRepository.searchByKeyword(keyword, SEARCH_LIMIT)
                 : foodRepository.findByIsGymFriendlyTrueOrderByPopularityScoreDesc(
                         PageRequest.of(safePage, safeSize));
+        
+        if (StringUtils.hasText(keyword) && !foods.isEmpty()) {
+            List<String> matchedIds = foods.stream().map(Food::getId).toList();
+            foodSearchMetricsService.incrementSearchCount(matchedIds);
+        }
+
         return foods.stream().map(FoodResponse::from).toList();
     }
 }

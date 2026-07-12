@@ -21,6 +21,9 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     Page<User> findByRole(RoleName role, Pageable pageable);
 
+    @Query("{ 'role': 'USER', 'subscription.status': 'ACTIVE', 'subscription.planCode': { $in: ['VIP_MONTHLY', 'VIP_YEARLY'] } }")
+    Page<User> findActiveVipUsers(Pageable pageable);
+
     @Query(value = "{ 'subscription.status': ?0, 'subscription.planCode': ?1 }", count = true)
     long countBySubscriptionStatusAndPlanCode(SubscriptionStatus status, String planCode);
 

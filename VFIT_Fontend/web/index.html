@@ -127,6 +127,9 @@
     "keywords": "vfit, fitness, v-fit fitness, V-FIT Fitness, vfit-fitness, vfitfitness, v-fit-fitness, app tập luyện, tập gym, thể hình, theo dõi sức khỏe, calo, dinh dưỡng AI, trung tran vfit, v-fit, v-fit tap luyen, vfit fitness, ứng dụng AI sửa tư thế tập gym, cách chấm điểm squat bằng AI, app phân tích form tập fitness thời gian thực"
   }
   </script>
+  <script>
+    fetch('/api/track/visit', { method: 'POST', keepalive: true }).catch(() => {});
+  </script>
 </head>
 <body>
   <div id="ios-webview-overlay">
