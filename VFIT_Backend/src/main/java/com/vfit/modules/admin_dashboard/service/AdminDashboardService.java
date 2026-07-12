@@ -7,4 +7,6 @@ import com.vfit.modules.admin_dashboard.dto.OrderDto;
 public interface AdminDashboardService {
     MonthlyRevenueResponse getMonthlyRevenueReport();
     PaginatedResponse<OrderDto> getTransactions(int page, int size);
+    java.util.List<OrderDto> getMonthlyRevenueDetails(String month);
+    java.util.List<OrderDto> getUserTransactionHistory(String userId);
 }

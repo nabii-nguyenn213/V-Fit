@@ -31,4 +31,18 @@ public class AdminDashboardController {
         log.info("Received request for PAGINATED TRANSACTIONS (page: {}, size: {})", page, size);
         return ApiResponse.ok(adminDashboardService.getTransactions(page, size));
     }
+
+    @GetMapping("/monthly-details")
+    public ApiResponse<java.util.List<com.vfit.modules.admin_dashboard.dto.OrderDto>> getMonthlyRevenueDetails(
+            @org.springframework.web.bind.annotation.RequestParam String month) {
+        log.info("Received request for MONTHLY REVENUE DETAILS for month: {}", month);
+        return ApiResponse.ok(adminDashboardService.getMonthlyRevenueDetails(month));
+    }
+
+    @GetMapping("/user-transactions")
+    public ApiResponse<java.util.List<com.vfit.modules.admin_dashboard.dto.OrderDto>> getUserTransactionHistory(
+            @org.springframework.web.bind.annotation.RequestParam String userId) {
+        log.info("Received request for USER TRANSACTION HISTORY for user: {}", userId);
+        return ApiResponse.ok(adminDashboardService.getUserTransactionHistory(userId));
+    }
 }

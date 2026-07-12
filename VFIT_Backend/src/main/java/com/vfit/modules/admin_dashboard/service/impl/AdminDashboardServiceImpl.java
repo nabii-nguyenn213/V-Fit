@@ -120,4 +120,68 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             .last(orderPage.isLast())
             .build();
     }
+
+    @Override
+    public List<OrderDto> getMonthlyRevenueDetails(String monthStr) {
+        log.info("Fetching details for month: {}", monthStr);
+        String[] parts = monthStr.split("-");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid month format. Expected YYYY-MM");
+        }
+        int year = Integer.parseInt(parts[0]);
+        int month = Integer.parseInt(parts[1]);
+
+        java.time.ZoneId vnZone = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
+        java.time.ZonedDateTime startZoned = java.time.LocalDate.of(year, month, 1)
+            .atStartOfDay(vnZone);
+        java.time.ZonedDateTime endZoned = startZoned.plusMonths(1).minusNanos(1);
+
+        List<Order> orders = orderRepository.findByStatusAndCreatedAtBetweenOrderByCreatedAtDesc(
+            "SUCCESS",
+            startZoned.toInstant(),
+            endZoned.toInstant()
+        );
+
+        return orders.stream()
+            .map(order -> {
+                String email = userRepository.findById(order.getUserId())
+                    .map(com.vfit.modules.user.document.User::getEmail)
+                    .orElse("unknown@vfit.com");
+                return new OrderDto(
+                    order.getId(),
+                    order.getUserId(),
+                    email,
+                    order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
+                    order.getAmount() != null ? order.getAmount() : 0.0,
+                    order.getStatus(),
+                    order.getVoucherCode(),
+                    order.getCreatedAt()
+                );
+            })
+            .toList();
+    }
+
+    @Override
+    public List<OrderDto> getUserTransactionHistory(String userId) {
+        log.info("Fetching transaction history for user: {}", userId);
+        List<Order> orders = orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        return orders.stream()
+            .map(order -> {
+                String email = userRepository.findById(order.getUserId())
+                    .map(com.vfit.modules.user.document.User::getEmail)
+                    .orElse("unknown@vfit.com");
+                return new OrderDto(
+                    order.getId(),
+                    order.getUserId(),
+                    email,
+                    order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
+                    order.getAmount() != null ? order.getAmount() : 0.0,
+                    order.getStatus(),
+                    order.getVoucherCode(),
+                    order.getCreatedAt()
+                );
+            })
+            .toList();
+    }
 }

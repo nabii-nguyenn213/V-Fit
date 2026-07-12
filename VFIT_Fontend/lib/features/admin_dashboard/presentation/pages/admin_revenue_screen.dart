@@ -307,7 +307,9 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
               final item = report.monthlyDetails[index];
               final isPositive = item.growthRate >= 0.0;
 
-              return Container(
+              return GestureDetector(
+                onTap: () => _showMonthlyDetailsDialog(context, item.month),
+                child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: const Color(0xff1C1D24).withValues(alpha: 0.7),
@@ -391,6 +393,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                     ),
                   ],
                 ),
+              ),
               );
             },
           ),
@@ -739,7 +742,9 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
               itemBuilder: (context, index) {
                 final user = displayedUsers[index];
                 final regDate = DateFormat('dd/MM/yyyy').format(user.createdAt.toLocal());
-                return Container(
+                return GestureDetector(
+                  onTap: () => _showUserDetailsDialog(context, user),
+                  child: Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
@@ -840,6 +845,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                         ),
                     ],
                   ),
+                ),
                 );
               },
             ),
@@ -1105,8 +1111,9 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                                   Text(
                                     timeString,
                                     style: const TextStyle(
-                                      color: Colors.white30,
-                                      fontSize: 9,
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ],
@@ -1479,6 +1486,20 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
     );
   }
 
+  void _showMonthlyDetailsDialog(BuildContext context, String month) {
+    showDialog(
+      context: context,
+      builder: (context) => _MonthlyDetailsDialog(month: month),
+    );
+  }
+
+  void _showUserDetailsDialog(BuildContext context, AdminUserModel user) {
+    showDialog(
+      context: context,
+      builder: (context) => _UserDetailsDialog(user: user),
+    );
+  }
+
   String _formatRelativeTime(DateTime dateTime) {
     final duration = DateTime.now().difference(dateTime);
     if (duration.inMinutes < 1) {
@@ -1490,5 +1511,511 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
     } else {
       return '${duration.inDays} ngày trước';
     }
+  }
+}
+
+class _MonthlyDetailsDialog extends ConsumerStatefulWidget {
+  final String month;
+  const _MonthlyDetailsDialog({required this.month});
+
+  @override
+  ConsumerState<_MonthlyDetailsDialog> createState() => _MonthlyDetailsDialogState();
+}
+
+class _MonthlyDetailsDialogState extends ConsumerState<_MonthlyDetailsDialog> {
+  late Future<List<RecentTransactionModel>> _detailsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _detailsFuture = ref.read(adminDashboardRepositoryProvider).getMonthlyRevenueDetails(widget.month);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final monthParts = widget.month.split('-');
+    final formattedMonth = '${monthParts[1]}/${monthParts[0]}';
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: 'đ',
+      decimalDigits: 0,
+    );
+
+    return Dialog(
+      backgroundColor: const Color(0xff0D0E11),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: AppResponsive.centeredContent(
+        context: context,
+        maxWidth: 600,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxHeight: 550),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'CHI TIẾT DOANH THU',
+                          style: TextStyle(
+                            color: Color(0xff00E676),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Tháng $formattedMonth',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const Divider(height: 28, color: Colors.white10),
+
+              // Future builder for content
+              Expanded(
+                child: FutureBuilder<List<RecentTransactionModel>>(
+                  future: _detailsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: Color(0xff00E676)),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Có lỗi xảy ra: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+
+                    final list = snapshot.data ?? [];
+                    if (list.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Không có hóa đơn thanh toán nào trong tháng này.',
+                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: list.length,
+                      itemBuilder: (context, index) {
+                        final tx = list[index];
+                        final isVipYear = tx.orderType.toUpperCase().contains('YEAR') || tx.orderType.toUpperCase().contains('NĂM');
+                        final packageLabel = isVipYear ? 'VIP 1 Năm 🌟' : 'VIP 1 Tháng ⚡';
+                        final badgeColor = isVipYear ? const Color(0xffFFB300) : const Color(0xff00E676);
+                        final txTime = tx.createdAt != null
+                            ? DateFormat('HH:mm - dd/MM/yyyy').format(tx.createdAt!.toLocal())
+                            : '';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xff1C1D24).withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.02)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      tx.userEmail,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Text(
+                                    '+${currencyFormatter.format(tx.amount)}',
+                                    style: const TextStyle(
+                                      color: Color(0xff00E676),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: badgeColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: badgeColor.withValues(alpha: 0.2)),
+                                    ),
+                                    child: Text(
+                                      packageLabel,
+                                      style: TextStyle(
+                                        color: badgeColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    txTime,
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UserDetailsDialog extends ConsumerStatefulWidget {
+  final AdminUserModel user;
+  const _UserDetailsDialog({required this.user});
+
+  @override
+  ConsumerState<_UserDetailsDialog> createState() => _UserDetailsDialogState();
+}
+
+class _UserDetailsDialogState extends ConsumerState<_UserDetailsDialog> {
+  late Future<List<RecentTransactionModel>> _historyFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _historyFuture = ref.read(adminDashboardRepositoryProvider).getUserTransactionHistory(widget.user.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: 'đ',
+      decimalDigits: 0,
+    );
+    final regDate = DateFormat('dd/MM/yyyy').format(widget.user.createdAt.toLocal());
+    final isVip = widget.user.premiumActive;
+    final expiredStr = widget.user.premiumExpiredAt != null
+        ? DateFormat('dd/MM/yyyy HH:mm').format(widget.user.premiumExpiredAt!.toLocal())
+        : '';
+
+    return Dialog(
+      backgroundColor: const Color(0xff0D0E11),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: AppResponsive.centeredContent(
+        context: context,
+        maxWidth: 600,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxHeight: 600),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'THÔNG TIN KHÁCH HÀNG',
+                    style: TextStyle(
+                      color: Color(0xffFFB300),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: const Color(0xff1C1D24),
+                    backgroundImage: widget.user.avatarUrl != null && widget.user.avatarUrl!.isNotEmpty
+                        ? NetworkImage(widget.user.avatarUrl!)
+                        : null,
+                    child: widget.user.avatarUrl == null || widget.user.avatarUrl!.isEmpty
+                        ? Text(
+                            widget.user.fullName.isNotEmpty ? widget.user.fullName[0].toUpperCase() : 'U',
+                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.user.fullName.isNotEmpty ? widget.user.fullName : 'Chưa đặt tên',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.user.email,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Ngày gia nhập: $regDate',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isVip ? const Color(0xffFFB300).withValues(alpha: 0.08) : const Color(0xff1C1D24),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isVip ? const Color(0xffFFB300).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isVip ? Icons.workspace_premium : Icons.person_outline,
+                      color: isVip ? const Color(0xffFFB300) : Colors.grey,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isVip ? 'Trạng thái: VIP ACTIVE 🌟' : 'Trạng thái: FREE PLAN ⚡',
+                            style: TextStyle(
+                              color: isVip ? const Color(0xffFFB300) : Colors.grey,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (isVip && expiredStr.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Hết hạn: $expiredStr',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 32, color: Colors.white10),
+              const Text(
+                'LỊCH SỬ ĐĂNG KÝ VIP',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: FutureBuilder<List<RecentTransactionModel>>(
+                  future: _historyFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: Color(0xffFFB300)),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Có lỗi khi tải lịch sử: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+
+                    final list = snapshot.data ?? [];
+                    if (list.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Khách hàng này chưa từng đăng ký gói VIP.',
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: list.length,
+                      itemBuilder: (context, index) {
+                        final tx = list[index];
+                        final isSuccess = tx.status.toUpperCase() == 'SUCCESS';
+                        final isPending = tx.status.toUpperCase() == 'PENDING';
+                        final statusText = isSuccess
+                            ? 'THÀNH CÔNG'
+                            : isPending
+                                ? 'ĐANG CHỜ'
+                                : 'THẤT BẠI';
+                        final statusColor = isSuccess
+                            ? const Color(0xff00E676)
+                            : isPending
+                                ? const Color(0xffFFB300)
+                                : const Color(0xffFF3D00);
+                        final txTime = tx.createdAt != null
+                            ? DateFormat('HH:mm - dd/MM/yyyy').format(tx.createdAt!.toLocal())
+                            : '';
+                        final isVipYear = tx.orderType.toUpperCase().contains('YEAR') || tx.orderType.toUpperCase().contains('NĂM');
+                        final packageLabel = isVipYear ? 'VIP 1 Năm' : 'VIP 1 Tháng';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xff1C1D24).withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.02)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    packageLabel,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    txTime,
+                                    style: const TextStyle(
+                                      color: Colors.white30,
+                                      fontSize: 9,
+                                    ),
+                                  ),
+                                  if (tx.voucherCode != null && tx.voucherCode!.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Voucher: ${tx.voucherCode}',
+                                      style: const TextStyle(
+                                        color: Color(0xffFFB300),
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    currencyFormatter.format(tx.amount),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    statusText,
+                                    style: TextStyle(
+                                      color: statusColor,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

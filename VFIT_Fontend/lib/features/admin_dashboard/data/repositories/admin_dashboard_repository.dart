@@ -104,4 +104,38 @@ class AdminDashboardRepository {
       throw ApiException.fromDio(error);
     }
   }
+
+  Future<List<RecentTransactionModel>> getMonthlyRevenueDetails(String month) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/api/v1/admin/revenue/monthly-details',
+        queryParameters: {'month': month},
+      );
+      return ApiResponseParser.unwrap(
+        response,
+        (json) => (json as List)
+            .map((item) => RecentTransactionModel.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList(),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  Future<List<RecentTransactionModel>> getUserTransactionHistory(String userId) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/api/v1/admin/revenue/user-transactions',
+        queryParameters: {'userId': userId},
+      );
+      return ApiResponseParser.unwrap(
+        response,
+        (json) => (json as List)
+            .map((item) => RecentTransactionModel.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList(),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
 }
