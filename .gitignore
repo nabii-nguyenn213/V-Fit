@@ -17,6 +17,7 @@ AndroidUserHome/
 # ── Backend build & runtime artifacts ──
 VFIT_Backend/target/
 VFIT_Backend/uploads/
+VFIT_Backend/web/
 VFIT_Backend/*.log
 VFIT_Backend/*.err
 VFIT_Backend/*.out
