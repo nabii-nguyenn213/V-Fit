@@ -5,7 +5,7 @@ import com.vfit.modules.admin.dto.DashboardStatsResponse;
 import com.vfit.modules.admin.service.AdminDashboardService;
 import com.vfit.modules.subscription.SubscriptionPlanCatalog;
 import com.vfit.modules.user.repository.UserRepository;
-import com.vfit.modules.admin_dashboard.repository.OrderRepository;
+import com.vfit.modules.subscription.repository.PaymentTransactionRepository;
 import com.vfit.modules.admin_dashboard.dto.MonthlyRevenueAggregationResult;
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AdminDashboardServiceImpl implements AdminDashboardService {
     private final UserRepository userRepository;
-    private final OrderRepository orderRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
 
     @Override
     public DashboardStatsResponse getStats() {
@@ -33,8 +33,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         BigDecimal yearlyRevenue = SubscriptionPlanCatalog.VIP_YEARLY.price()
                 .multiply(BigDecimal.valueOf(yearlyVipCustomers));
 
-        // Real Lifetime Revenue from orders collection
-        List<MonthlyRevenueAggregationResult> aggregated = orderRepository.aggregateMonthlyRevenue();
+        // Real Lifetime Revenue from payment_transactions collection
+        List<MonthlyRevenueAggregationResult> aggregated = paymentTransactionRepository.aggregateMonthlyRevenue();
         double lifetimeRevenue = 0.0;
         for (MonthlyRevenueAggregationResult res : aggregated) {
             if (res.getTotalRevenue() != null) {

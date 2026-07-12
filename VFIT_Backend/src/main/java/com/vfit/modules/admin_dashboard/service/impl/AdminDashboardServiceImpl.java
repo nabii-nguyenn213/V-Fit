@@ -32,7 +32,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         log.info("Generating dynamic monthly financial revenue report...");
         
         // 1. Fetch aggregated monthly statistics (timezone-aligned via MongoDB Repository)
-        List<MonthlyRevenueAggregationResult> rawResults = orderRepository.aggregateMonthlyRevenue();
+        List<MonthlyRevenueAggregationResult> rawResults = paymentTransactionRepository.aggregateMonthlyRevenue();
         
         List<MonthlyRevenueItem> monthlyDetails = new ArrayList<>();
         double lifetimeRevenue = 0.0;
@@ -69,22 +69,13 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         lifetimeRevenue = Math.round(lifetimeRevenue * 100.0) / 100.0;
         
         // 3. Fetch top 5 recent successful transactions
-        List<Order> recentOrders = orderRepository.findTop5ByStatusOrderByCreatedAtDesc("SUCCESS");
+        List<PaymentTransaction> recentOrders = paymentTransactionRepository.findTop5ByPaymentStatusOrderByCreatedAtDesc(com.vfit.modules.payment.enums.PaymentStatus.PAID);
         List<OrderDto> recentTransactions = recentOrders.stream()
-            .map(order -> {
-                String email = userRepository.findById(order.getUserId())
+            .map(payment -> {
+                String email = userRepository.findById(payment.getUserId())
                     .map(com.vfit.modules.user.document.User::getEmail)
                     .orElse("unknown@vfit.com");
-                return new OrderDto(
-                    order.getId(),
-                    order.getUserId(),
-                    email,
-                    order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
-                    order.getAmount() != null ? order.getAmount() : 0.0,
-                    order.getStatus(),
-                    order.getVoucherCode(),
-                    order.getCreatedAt()
-                );
+                return toOrderDto(payment, email);
             })
             .toList();
             
@@ -95,23 +86,14 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override
     public com.vfit.common.api.PaginatedResponse<OrderDto> getTransactions(int page, int size) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        org.springframework.data.domain.Page<Order> orderPage = orderRepository.findByStatusOrderByCreatedAtDesc("SUCCESS", pageable);
+        org.springframework.data.domain.Page<PaymentTransaction> orderPage = paymentTransactionRepository.findByPaymentStatusOrderByCreatedAtDesc(com.vfit.modules.payment.enums.PaymentStatus.PAID, pageable);
         
         List<OrderDto> content = orderPage.getContent().stream()
-            .map(order -> {
-                String email = userRepository.findById(order.getUserId())
+            .map(payment -> {
+                String email = userRepository.findById(payment.getUserId())
                     .map(com.vfit.modules.user.document.User::getEmail)
                     .orElse("unknown@vfit.com");
-                return new OrderDto(
-                    order.getId(),
-                    order.getUserId(),
-                    email,
-                    order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
-                    order.getAmount() != null ? order.getAmount() : 0.0,
-                    order.getStatus(),
-                    order.getVoucherCode(),
-                    order.getCreatedAt()
-                );
+                return toOrderDto(payment, email);
             })
             .toList();
 
@@ -140,27 +122,18 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             .atStartOfDay(vnZone);
         java.time.ZonedDateTime endZoned = startZoned.plusMonths(1).minusNanos(1);
 
-        List<Order> orders = orderRepository.findByStatusAndCreatedAtBetweenOrderByCreatedAtDesc(
-            "SUCCESS",
+        List<PaymentTransaction> orders = paymentTransactionRepository.findByPaymentStatusAndCreatedAtBetweenOrderByCreatedAtDesc(
+            com.vfit.modules.payment.enums.PaymentStatus.PAID,
             startZoned.toInstant(),
             endZoned.toInstant()
         );
 
         return orders.stream()
-            .map(order -> {
-                String email = userRepository.findById(order.getUserId())
+            .map(payment -> {
+                String email = userRepository.findById(payment.getUserId())
                     .map(com.vfit.modules.user.document.User::getEmail)
                     .orElse("unknown@vfit.com");
-                return new OrderDto(
-                    order.getId(),
-                    order.getUserId(),
-                    email,
-                    order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
-                    order.getAmount() != null ? order.getAmount() : 0.0,
-                    order.getStatus(),
-                    order.getVoucherCode(),
-                    order.getCreatedAt()
-                );
+                return toOrderDto(payment, email);
             })
             .toList();
     }
