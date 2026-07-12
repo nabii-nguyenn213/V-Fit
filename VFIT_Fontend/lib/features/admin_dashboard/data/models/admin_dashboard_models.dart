@@ -211,6 +211,7 @@ class VisitorLogModel {
   final String os;
   final String browser;
   final String action;
+  final String? location;
   final DateTime createdAt;
 
   const VisitorLogModel({
@@ -219,6 +220,7 @@ class VisitorLogModel {
     required this.os,
     required this.browser,
     required this.action,
+    this.location,
     required this.createdAt,
   });
 
@@ -229,6 +231,7 @@ class VisitorLogModel {
       os: json['os']?.toString() ?? '',
       browser: json['browser']?.toString() ?? '',
       action: json['action']?.toString() ?? '',
+      location: json['location']?.toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'].toString())
           : DateTime.now(),

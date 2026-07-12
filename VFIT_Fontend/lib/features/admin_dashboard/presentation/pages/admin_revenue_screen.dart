@@ -1340,7 +1340,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  '${logItem.os} • ${logItem.browser} • ${logItem.action}',
+                                  '${logItem.os} • ${logItem.browser} • ${logItem.action} • Vị trí: ${logItem.location ?? "Hà Nội"}',
                                   style: const TextStyle(
                                     color: Colors.grey,
                                     fontSize: 10,

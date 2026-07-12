@@ -22,6 +22,7 @@ public class VisitorLog {
     private String os;
     private String browser;
     private String action;
+    private String location;
     
     @Indexed(expireAfter = "90d")
     private Instant createdAt;
