@@ -5,6 +5,7 @@ import java.time.Instant;
 public record OrderDto(
     String id,
     String userId,
+    String userEmail,
     String orderType,
     Double amount,
     String status,

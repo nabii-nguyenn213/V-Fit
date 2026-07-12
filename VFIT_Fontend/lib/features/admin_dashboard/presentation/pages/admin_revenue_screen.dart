@@ -297,7 +297,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 1.8,
+              childAspectRatio: 2.05,
             ),
             itemCount: report.monthlyDetails.length,
             itemBuilder: (context, index) {
@@ -305,56 +305,53 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
               final isPositive = item.growthRate >= 0.0;
 
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: const Color(0xff1C1D24).withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.05),
                   ),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Tháng ${item.month.substring(5)}/${item.month.substring(0, 4)}',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            currencyFormatter.format(item.totalRevenue),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            '${item.totalOrders} hóa đơn',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.4),
-                              fontSize: 9,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Column(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
+                        Text(
+                          'Tháng ${item.month.substring(5)}/${item.month.substring(0, 4)}',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const Icon(
                           Icons.insights,
-                          color: Colors.white10,
-                          size: 18,
+                          color: Colors.white24,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                    Text(
+                      currencyFormatter.format(item.totalRevenue),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${item.totalOrders} hóa đơn',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            fontSize: 10,
+                          ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -505,7 +502,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'User_${tx.userId.length > 8 ? tx.userId.substring(tx.userId.length - 8) : tx.userId} mua gói ${tx.orderType}',
+                              '${tx.userEmail} mua gói ${tx.orderType}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,

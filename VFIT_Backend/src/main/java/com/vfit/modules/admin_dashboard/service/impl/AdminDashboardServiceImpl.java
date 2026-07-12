@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import com.vfit.modules.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import java.util.List;
 public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
 
     @Override
     public MonthlyRevenueResponse getMonthlyRevenueReport() {
@@ -65,15 +67,21 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         // 3. Fetch top 5 recent successful transactions
         List<Order> recentOrders = orderRepository.findTop5ByStatusOrderByCreatedAtDesc("SUCCESS");
         List<OrderDto> recentTransactions = recentOrders.stream()
-            .map(order -> new OrderDto(
-                order.getId(),
-                order.getUserId(),
-                order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
-                order.getAmount() != null ? order.getAmount() : 0.0,
-                order.getStatus(),
-                order.getVoucherCode(),
-                order.getCreatedAt()
-            ))
+            .map(order -> {
+                String email = userRepository.findById(order.getUserId())
+                    .map(com.vfit.modules.user.document.User::getEmail)
+                    .orElse("unknown@vfit.com");
+                return new OrderDto(
+                    order.getId(),
+                    order.getUserId(),
+                    email,
+                    order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
+                    order.getAmount() != null ? order.getAmount() : 0.0,
+                    order.getStatus(),
+                    order.getVoucherCode(),
+                    order.getCreatedAt()
+                );
+            })
             .toList();
             
         log.info("Financial report calculated. Lifetime Revenue: {} đ", lifetimeRevenue);
@@ -86,15 +94,21 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         org.springframework.data.domain.Page<Order> orderPage = orderRepository.findByStatusOrderByCreatedAtDesc("SUCCESS", pageable);
         
         List<OrderDto> content = orderPage.getContent().stream()
-            .map(order -> new OrderDto(
-                order.getId(),
-                order.getUserId(),
-                order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
-                order.getAmount() != null ? order.getAmount() : 0.0,
-                order.getStatus(),
-                order.getVoucherCode(),
-                order.getCreatedAt()
-            ))
+            .map(order -> {
+                String email = userRepository.findById(order.getUserId())
+                    .map(com.vfit.modules.user.document.User::getEmail)
+                    .orElse("unknown@vfit.com");
+                return new OrderDto(
+                    order.getId(),
+                    order.getUserId(),
+                    email,
+                    order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
+                    order.getAmount() != null ? order.getAmount() : 0.0,
+                    order.getStatus(),
+                    order.getVoucherCode(),
+                    order.getCreatedAt()
+                );
+            })
             .toList();
 
         return com.vfit.common.api.PaginatedResponse.<OrderDto>builder()

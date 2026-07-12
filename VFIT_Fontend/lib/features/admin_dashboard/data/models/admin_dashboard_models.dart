@@ -50,6 +50,7 @@ class MonthlyRevenueItemModel {
 class RecentTransactionModel {
   final String id;
   final String userId;
+  final String userEmail;
   final String orderType;
   final double amount;
   final String status;
@@ -59,6 +60,7 @@ class RecentTransactionModel {
   const RecentTransactionModel({
     required this.id,
     required this.userId,
+    required this.userEmail,
     required this.orderType,
     required this.amount,
     required this.status,
@@ -70,6 +72,7 @@ class RecentTransactionModel {
     return RecentTransactionModel(
       id: json['id']?.toString() ?? '',
       userId: json['userId']?.toString() ?? '',
+      userEmail: json['userEmail']?.toString() ?? json['userId']?.toString() ?? '',
       orderType: json['orderType']?.toString() ?? 'PREMIUM',
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       status: json['status']?.toString() ?? 'SUCCESS',
