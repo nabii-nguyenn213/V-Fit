@@ -99,144 +99,6 @@ public class VisitorLoggingService {
         Map.entry("sapa", "Sa Pa")
     );
 
-    private static final Map<String, String[]> DISTRICT_MAP = Map.ofEntries(
-        Map.entry("Hà Nội", new String[]{
-            "Thạch Thất (Hòa Lạc), Hà Nội",
-            "Quận Cầu Giấy, Hà Nội",
-            "Quận Thanh Xuân, Hà Nội",
-            "Quận Nam Từ Liêm, Hà Nội",
-            "Quận Đống Đa, Hà Nội",
-            "Quận Ba Đình, Hà Nội",
-            "Quận Tây Hồ, Hà Nội",
-            "Huyện Đông Anh, Hà Nội",
-            "Thị xã Sơn Tây, Hà Nội",
-            "Huyện Gia Lâm, Hà Nội"
-        }),
-        Map.entry("Hồ Chí Minh", new String[]{
-            "Quận 1, Hồ Chí Minh",
-            "Quận 3, Hồ Chí Minh",
-            "Quận Bình Thạnh, Hồ Chí Minh",
-            "Thành phố Thủ Đức, Hồ Chí Minh",
-            "Huyện Củ Chi, Hồ Chí Minh",
-            "Quận Tân Bình, Hồ Chí Minh",
-            "Quận Gò Vấp, Hồ Chí Minh",
-            "Huyện Hóc Môn, Hồ Chí Minh"
-        }),
-        Map.entry("Đà Nẵng", new String[]{
-            "Quận Hải Châu, Đà Nẵng",
-            "Quận Ngũ Hành Sơn, Đà Nẵng",
-            "Quận Liên Chiểu, Đà Nẵng",
-            "Quận Sơn Trà, Đà Nẵng",
-            "Quận Cẩm Lệ, Đà Nẵng"
-        }),
-        Map.entry("Ninh Bình", new String[]{
-            "Huyện Gia Viễn, Ninh Bình",
-            "TP. Ninh Bình, Ninh Bình",
-            "Khu du lịch Tràng An, Ninh Bình",
-            "Huyện Nho Quan, Ninh Bình",
-            "Huyện Kim Sơn, Ninh Bình",
-            "TP. Tam Điệp, Ninh Bình"
-        }),
-        Map.entry("Nam Định", new String[]{
-            "TP. Nam Định, Nam Định",
-            "Huyện Mỹ Lộc, Nam Định",
-            "Huyện Giao Thủy, Nam Định",
-            "Huyện Hải Hậu, Nam Định",
-            "Huyện Ý Yên, Nam Định",
-            "Huyện Vụ Bản, Nam Định"
-        }),
-        Map.entry("Thanh Hóa", new String[]{
-            "TP. Thanh Hóa, Thanh Hóa",
-            "Thị xã Sầm Sơn, Thanh Hóa",
-            "Thị xã Bỉm Sơn, Thanh Hóa",
-            "Huyện Tĩnh Gia, Thanh Hóa",
-            "Huyện Thọ Xuân, Thanh Hóa"
-        }),
-        Map.entry("Quảng Ninh", new String[]{
-            "TP. Hạ Long, Quảng Ninh",
-            "TP. Móng Cái, Quảng Ninh",
-            "TP. Cẩm Phả, Quảng Ninh",
-            "TP. Uông Bí, Quảng Ninh",
-            "Huyện Vân Đồn, Quảng Ninh"
-        }),
-        Map.entry("Khánh Hòa", new String[]{
-            "TP. Nha Trang, Khánh Hòa",
-            "TP. Cam Ranh, Khánh Hòa",
-            "Huyện Diên Khánh, Khánh Hòa",
-            "Huyện Vạn Ninh, Khánh Hòa"
-        }),
-        Map.entry("Lâm Đồng", new String[]{
-            "TP. Đà Lạt, Lâm Đồng",
-            "TP. Bảo Lộc, Lâm Đồng",
-            "Huyện Đức Trọng, Lâm Đồng",
-            "Huyện Lạc Dương, Lâm Đồng"
-        }),
-        Map.entry("Đồng Nai", new String[]{
-            "TP. Biên Hòa, Đồng Nai",
-            "TP. Long Khánh, Đồng Nai",
-            "Huyện Nhơn Trạch, Đồng Nai",
-            "Huyện Trảng Bom, Đồng Nai"
-        }),
-        Map.entry("Bình Dương", new String[]{
-            "TP. Thủ Dầu Một, Bình Dương",
-            "TP. Dĩ An, Bình Dương",
-            "TP. Thuận An, Bình Dương",
-            "Huyện Bến Cát, Bình Dương"
-        }),
-        Map.entry("Bà Rịa - Vũng Tàu", new String[]{
-            "TP. Vũng Tàu, Bà Rịa - Vũng Tàu",
-            "TP. Bà Rịa, Bà Rịa - Vũng Tàu",
-            "Thị xã Phú Mỹ, Bà Rịa - Vũng Tàu",
-            "Huyện Côn Đảo, Bà Rịa - Vũng Tàu"
-        }),
-        Map.entry("Cần Thơ", new String[]{
-            "Quận Ninh Kiều, Cần Thơ",
-            "Quận Cái Răng, Cần Thơ",
-            "Quận Bình Thủy, Cần Thơ",
-            "Quận Ô Môn, Cần Thơ"
-        }),
-        Map.entry("Kiên Giang", new String[]{
-            "TP. Rạch Giá, Kiên Giang",
-            "TP. Phú Quốc, Kiên Giang",
-            "TP. Hà Tiên, Kiên Giang"
-        })
-    );
-
-    private static final String[] FALLBACK_LOCATIONS = {
-        "Thạch Thất (Hòa Lạc), Hà Nội",
-        "Quận Cầu Giấy, Hà Nội",
-        "Quận Thanh Xuân, Hà Nội",
-        "Quận 1, Hồ Chí Minh",
-        "Quận Bình Thạnh, Hồ Chí Minh",
-        "Thành phố Thủ Đức, Hồ Chí Minh",
-        "Quận Hải Châu, Đà Nẵng",
-        "Quận Ngũ Hành Sơn, Đà Nẵng",
-        "TP. Nam Định, Nam Định",
-        "Huyện Gia Viễn, Ninh Bình",
-        "TP. Ninh Bình, Ninh Bình",
-        "TP. Thanh Hóa, Thanh Hóa",
-        "TP. Vinh, Nghệ An",
-        "Thị xã Kỳ Anh, Hà Tĩnh",
-        "TP. Đồng Hới, Quảng Bình",
-        "TP. Huế, Thừa Thiên Huế",
-        "TP. Nha Trang, Khánh Hòa",
-        "TP. Quy Nhơn, Bình Định",
-        "TP. Tuy Hòa, Phú Yên",
-        "TP. Phan Thiết, Bình Thuận",
-        "TP. Đà Lạt, Lâm Đồng",
-        "TP. Buôn Ma Thuột, Đắk Lắk",
-        "TP. Biên Hòa, Đồng Nai",
-        "TP. Vũng Tàu, Bà Rịa - Vũng Tàu",
-        "TP. Thủ Dầu Một, Bình Dương",
-        "TP. Long An, Long An",
-        "TP. Mỹ Tho, Tiền Giang",
-        "TP. Bến Tre, Bến Tre",
-        "TP. Rạch Giá, Kiên Giang",
-        "TP. Phú Quốc, Kiên Giang",
-        "TP. Cần Thơ, Cần Thơ",
-        "TP. Cà Mau, Cà Mau"
-    };
-
     @Async("visitorLogExecutor")
     public void logVisit(String ip, String userAgent) {
         if (userAgent == null || BOT_PATTERN.matcher(userAgent).find()) {
@@ -273,48 +135,35 @@ public class VisitorLoggingService {
 
     private String resolveLocation(String ip) {
         if (ip == null || ip.isBlank() || ip.equals("127.0.0.1") || ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.16.") || ip.startsWith("0:")) {
-            return getDetailedLocation(null, ip);
+            return "Mạng nội bộ";
         }
         try {
             java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(1))
+                .connectTimeout(Duration.ofSeconds(2))
                 .build();
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                .uri(java.net.URI.create("http://ip-api.com/json/" + ip + "?fields=status,city,regionName"))
-                .timeout(Duration.ofSeconds(2))
+                .uri(java.net.URI.create("http://ip-api.com/json/" + ip + "?fields=status,regionName"))
+                .timeout(Duration.ofSeconds(3))
                 .GET()
                 .build();
             java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
                 String body = response.body();
                 if (body.contains("\"fail\"")) {
-                    return getDetailedLocation(null, ip);
+                    return "Không rõ vị trí";
                 }
                 
                 String regionName = extractJsonField(body, "regionName");
                 String translatedRegion = translateName(regionName);
                 
-                if (translatedRegion != null) {
-                    return getDetailedLocation(translatedRegion, ip);
+                if (translatedRegion != null && !translatedRegion.isBlank()) {
+                    return translatedRegion;
                 }
             }
         } catch (Exception e) {
             // fallback
         }
-        return getDetailedLocation(null, ip);
-    }
-
-    private String getDetailedLocation(String province, String ip) {
-        int hash = Math.abs(ip.hashCode());
-        if (province == null || province.isBlank()) {
-            return FALLBACK_LOCATIONS[hash % FALLBACK_LOCATIONS.length];
-        }
-        String[] districts = DISTRICT_MAP.get(province);
-        if (districts != null && districts.length > 0) {
-            return districts[hash % districts.length];
-        }
-        String[] prefixes = {"TP. Trung tâm, ", "Huyện ngoại thành, ", "Khu vực trung tâm, "};
-        return prefixes[hash % prefixes.length] + province;
+        return "Không rõ vị trí";
     }
 
     private String translateName(String name) {
