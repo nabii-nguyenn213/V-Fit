@@ -64,8 +64,52 @@ class AdminRevenueScreen extends ConsumerWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.logout, color: Colors.white70),
-                onPressed: () async {
-                  await ref.read(authControllerProvider.notifier).logout();
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        backgroundColor: const Color(0xff1C1D24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Text(
+                          'Xác nhận đăng xuất',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        content: const Text(
+                          'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản Admin không?',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text(
+                              'Hủy',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              await ref.read(authControllerProvider.notifier).logout();
+                            },
+                            child: const Text(
+                              'Đăng xuất',
+                              style: TextStyle(
+                                color: Color(0xffFF3D00),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
               ),
             ],
