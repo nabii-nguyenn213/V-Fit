@@ -33,6 +33,11 @@ VFIT_Backend/backend-dev.log
 VFIT_Backend/.env
 VFIT_Backend/secrets.local.md
 
+# Python virtual environments
+**/.venv/
+venv/
+.venv/
+
 # Android release signing secrets (NEVER commit)
 VFIT_Fontend/android/key.properties
 VFIT_Fontend/android/*.jks
