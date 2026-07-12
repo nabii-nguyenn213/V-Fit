@@ -207,7 +207,10 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
       decimalDigits: 0,
     );
 
-    return RefreshIndicator(
+    return AppResponsive.centeredContent(
+      context: context,
+      maxWidth: 960,
+      child: RefreshIndicator(
       color: const Color(0xff00E676),
       backgroundColor: const Color(0xff1C1D24),
       onRefresh: () async {
@@ -596,6 +599,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
           const SizedBox(height: 32),
         ],
       ),
+    ),
     );
   }
 
@@ -612,7 +616,10 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
           }).toList()
         : [];
 
-    return RefreshIndicator(
+    return AppResponsive.centeredContent(
+      context: context,
+      maxWidth: 960,
+      child: RefreshIndicator(
       color: const Color(0xff00E676),
       backgroundColor: const Color(0xff1C1D24),
       onRefresh: () async {
@@ -891,13 +898,17 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
           const SizedBox(height: 32),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildTrafficTab(BuildContext context, AdminDashboardLoaded state) {
     final trafficResponse = state.traffic;
 
-    return RefreshIndicator(
+    return AppResponsive.centeredContent(
+      context: context,
+      maxWidth: 960,
+      child: RefreshIndicator(
       color: const Color(0xff00E676),
       backgroundColor: const Color(0xff1C1D24),
       onRefresh: () async {
@@ -1170,6 +1181,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
           const SizedBox(height: 32),
         ],
       ),
+    ),
     );
   }
 
@@ -1294,7 +1306,10 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
   Widget _buildSearchesTab(BuildContext context, AdminDashboardLoaded state) {
     final searches = state.searches;
 
-    return RefreshIndicator(
+    return AppResponsive.centeredContent(
+      context: context,
+      maxWidth: 960,
+      child: RefreshIndicator(
       color: const Color(0xff00E676),
       backgroundColor: const Color(0xff1C1D24),
       onRefresh: () async {
@@ -1460,6 +1475,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
           const SizedBox(height: 32),
         ],
       ),
+    ),
     );
   }
 

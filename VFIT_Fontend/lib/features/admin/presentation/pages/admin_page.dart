@@ -87,122 +87,125 @@ class AdminPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: AppResponsive.pagePadding(context).copyWith(top: 16),
-        children: [
-          dashboard.when(
-            data: (stats) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 1. Lifetime Revenue Card (glowing Neon Emerald Green)
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xff1C1D24).withValues(alpha: 0.8),
-                        const Color(0xff0D0E11),
+      body: AppResponsive.centeredContent(
+        context: context,
+        maxWidth: 960,
+        child: ListView(
+          padding: AppResponsive.pagePadding(context).copyWith(top: 16),
+          children: [
+            dashboard.when(
+              data: (stats) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. Lifetime Revenue Card (glowing Neon Emerald Green)
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xff1C1D24).withValues(alpha: 0.8),
+                          const Color(0xff0D0E11),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xff00E676).withValues(alpha: 0.3),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xff00E676).withValues(alpha: 0.05),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                        ),
                       ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xff00E676).withValues(alpha: 0.3),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xff00E676).withValues(alpha: 0.05),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'TỔNG DOANH THU TOÀN THỜI GIAN',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'TỔNG DOANH THU TOÀN THỜI GIAN',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _vnd(stats.totalRevenue),
-                        style: const TextStyle(
-                          color: Color(0xff00E676),
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
-                          shadows: [
-                            Shadow(
-                              color: Color(0xff00E676),
-                              blurRadius: 10,
-                            ),
-                          ],
+                        const SizedBox(height: 8),
+                        Text(
+                          _vnd(stats.totalRevenue),
+                          style: const TextStyle(
+                            color: Color(0xff00E676),
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            shadows: [
+                              Shadow(
+                                color: Color(0xff00E676),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // 2. Breakdown Detail Card
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xff1C1D24).withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
-                  ),
-                  child: Column(
-                    children: [
-                      _RevenueRow(
-                        label: 'Gói VIP Tháng',
-                        value: _vnd(stats.monthlyRevenue),
-                        count: stats.monthlyVipCustomers,
-                        iconColor: const Color(0xffFFB300),
-                      ),
-                      const Divider(height: 28, color: Colors.white10),
-                      _RevenueRow(
-                        label: 'Gói VIP Năm',
-                        value: _vnd(stats.yearlyRevenue),
-                        count: stats.yearlyVipCustomers,
-                        iconColor: const Color(0xff00E676),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // 3. Navigation CTA Button (Neon highlighted button)
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff1C1D24),
-                    foregroundColor: const Color(0xff00E676),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(color: Color(0xff00E676), width: 1.2),
+                      ],
                     ),
-                    elevation: 4,
-                    shadowColor: const Color(0xff00E676).withValues(alpha: 0.2),
                   ),
-                  onPressed: () => context.push('/admin/revenue'),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.insights, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Giám Sát Dòng Tiền Thời Gian Thực ⚡',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
+                  const SizedBox(height: 20),
+
+                  // 2. Breakdown Detail Card
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff1C1D24).withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+                    ),
+                    child: Column(
+                      children: [
+                        _RevenueRow(
+                          label: 'Gói VIP Tháng',
+                          value: _vnd(stats.monthlyRevenue),
+                          count: stats.monthlyVipCustomers,
+                          iconColor: const Color(0xffFFB300),
+                        ),
+                        const Divider(height: 28, color: Colors.white10),
+                        _RevenueRow(
+                          label: 'Gói VIP Năm',
+                          value: _vnd(stats.yearlyRevenue),
+                          count: stats.yearlyVipCustomers,
+                          iconColor: const Color(0xff00E676),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // 3. Navigation CTA Button (Neon highlighted button)
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff1C1D24),
+                      foregroundColor: const Color(0xff00E676),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: Color(0xff00E676), width: 1.2),
+                      ),
+                      elevation: 4,
+                      shadowColor: const Color(0xff00E676).withValues(alpha: 0.2),
+                    ),
+                    onPressed: () => context.push('/admin/revenue'),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.insights, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Giám Sát Dòng Tiền Thời Gian Thực ⚡',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -218,6 +221,7 @@ class AdminPage extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
