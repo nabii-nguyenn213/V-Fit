@@ -54,10 +54,7 @@ for f in files:
         except Exception as e:
             print(f'Error removing file {f}: {e}')
 
-folders = [
-    r'C:\\V-Fit\\AI-VFIT',
-    r'C:\\V-Fit\\gemini-web2api'
-]
+folders = []
 for folder in folders:
     if os.path.exists(folder):
         try:
@@ -74,7 +71,7 @@ for folder in folders:
         # 2. Run git fetch and reset to origin/010-deploy-play-store
         print("[*] Resetting and cleaning working tree on VPS...")
         execute_remote_cmd(ssh, "git -C C:\\V-Fit reset --hard HEAD")
-        execute_remote_cmd(ssh, "git -C C:\\V-Fit clean -xffd")
+        execute_remote_cmd(ssh, "git -C C:\\V-Fit clean -fd")
         print("[*] Performing git fetch and reset to origin branch on VPS...")
         execute_remote_cmd(ssh, "git -C C:\\V-Fit fetch origin")
         status, out, err = execute_remote_cmd(ssh, "git -C C:\\V-Fit reset --hard origin/010-deploy-play-store")
