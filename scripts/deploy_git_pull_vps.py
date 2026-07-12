@@ -114,7 +114,9 @@ for folder in folders:
             roll_keep 3
         }
     }
-    reverse_proxy localhost:8080
+    reverse_proxy localhost:8080 {
+        header_up X-Forwarded-For {http.request.remote.host}
+    }
 }
 
 trungtranvfit.id.vn:8000 {
