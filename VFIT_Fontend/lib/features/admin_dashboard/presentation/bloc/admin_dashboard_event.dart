@@ -17,7 +17,10 @@ class ChangeTransactionPage extends AdminDashboardEvent {
 class ChangeUserPage extends AdminDashboardEvent {
   final int pageIndex;
   final bool onlyVip;
-  const ChangeUserPage(this.pageIndex, this.onlyVip);
+  final String? search;
+  final String? startDate;
+  final String? endDate;
+  const ChangeUserPage(this.pageIndex, this.onlyVip, {this.search, this.startDate, this.endDate});
 }
 
 class ChangeTrafficPage extends AdminDashboardEvent {
@@ -27,7 +30,10 @@ class ChangeTrafficPage extends AdminDashboardEvent {
 
 class ToggleVipFilter extends AdminDashboardEvent {
   final bool onlyVip;
-  const ToggleVipFilter(this.onlyVip);
+  final String? search;
+  final String? startDate;
+  final String? endDate;
+  const ToggleVipFilter(this.onlyVip, {this.search, this.startDate, this.endDate});
 }
 
 class RefreshTrafficLogs extends AdminDashboardEvent {

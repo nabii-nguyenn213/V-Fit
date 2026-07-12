@@ -72,6 +72,9 @@ class _StubAdminDashboardRepository extends AdminDashboardRepository {
   @override
   Future<PaginatedUserResponseModel> getAdminUsers({
     bool onlyVip = false,
+    String? search,
+    String? startDate,
+    String? endDate,
     int page = 0,
     int size = 20,
   }) async {

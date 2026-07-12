@@ -33,11 +33,15 @@ public class AdminUserController {
     public ApiResponse<PageResponse<UserResponse>> users(
             @RequestParam(required = false) RoleName role,
             @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        return ApiResponse.ok(PageResponse.from(userQueryService.getUsers(role, filter, PageRequest.of(safePage, safeSize))));
+        return ApiResponse.ok(PageResponse.from(userQueryService.getUsers(
+                role, filter, search, startDate, endDate, PageRequest.of(safePage, safeSize))));
     }
 
     @PutMapping("/{id}/role")

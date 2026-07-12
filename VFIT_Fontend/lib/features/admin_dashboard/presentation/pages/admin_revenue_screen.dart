@@ -27,6 +27,8 @@ class AdminRevenueScreen extends ConsumerStatefulWidget {
 
 class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
   String searchQuery = '';
+  DateTime? _userStartDate;
+  DateTime? _userEndDate;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
       create: (context) =>
           AdminDashboardBloc(repository)..add(const FetchMonthlyRevenue()),
       child: DefaultTabController(
-        length: 4,
+        length: 3,
         child: Scaffold(
           backgroundColor: const Color(0xff0D0E11), // Royal Black
           appBar: AppBar(
@@ -137,7 +139,6 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                 Tab(icon: Icon(Icons.analytics_outlined), text: 'Doanh thu'),
                 Tab(icon: Icon(Icons.people_alt_outlined), text: 'Khách hàng'),
                 Tab(icon: Icon(Icons.traffic_outlined), text: 'Lưu lượng Web'),
-                Tab(icon: Icon(Icons.search_outlined), text: 'Tìm kiếm'),
               ],
             ),
           ),
@@ -191,7 +192,6 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                     _buildRevenueTab(context, state),
                     _buildUsersTab(context, state),
                     _buildTrafficTab(context, state),
-                    _buildSearchesTab(context, state),
                   ],
                 );
               }
@@ -620,18 +620,88 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
     );
   }
 
+  Future<void> _selectStartDate(BuildContext context, AdminDashboardLoaded state) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _userStartDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xff00E676),
+              onPrimary: Colors.black,
+              surface: Color(0xff1C1D24),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _userStartDate) {
+      setState(() {
+        _userStartDate = DateTime(picked.year, picked.month, picked.day, 0, 0, 0);
+      });
+      _triggerUserSearch(context, state);
+    }
+  }
+
+  Future<void> _selectEndDate(BuildContext context, AdminDashboardLoaded state) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _userEndDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xff00E676),
+              onPrimary: Colors.black,
+              surface: Color(0xff1C1D24),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _userEndDate) {
+      setState(() {
+        _userEndDate = DateTime(picked.year, picked.month, picked.day, 23, 59, 59);
+      });
+      _triggerUserSearch(context, state);
+    }
+  }
+
+  void _triggerUserSearch(BuildContext context, AdminDashboardLoaded state) {
+    context.read<AdminDashboardBloc>().add(
+      ChangeUserPage(
+        0,
+        state.onlyVipFilter,
+        search: searchQuery,
+        startDate: _userStartDate?.toUtc().toIso8601String(),
+        endDate: _userEndDate?.toUtc().toIso8601String(),
+      ),
+    );
+  }
+
+  void _clearFilters(BuildContext context, AdminDashboardLoaded state) {
+    setState(() {
+      searchQuery = '';
+      _userStartDate = null;
+      _userEndDate = null;
+    });
+    context.read<AdminDashboardBloc>().add(
+      const ChangeUserPage(0, false, search: '', startDate: null, endDate: null),
+    );
+  }
+
   Widget _buildUsersTab(BuildContext context, AdminDashboardLoaded state) {
     final userResponse = state.users;
-
-    // Filter local list based on search box input
-    final List<AdminUserModel> displayedUsers = userResponse != null
-        ? userResponse.content.where((user) {
-            final query = searchQuery.toLowerCase().trim();
-            if (query.isEmpty) return true;
-            return user.fullName.toLowerCase().contains(query) ||
-                user.email.toLowerCase().contains(query);
-          }).toList()
-        : [];
+    final List<AdminUserModel> displayedUsers = userResponse != null ? userResponse.content : [];
 
     return AppResponsive.centeredContent(
       context: context,
@@ -640,9 +710,14 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
         color: const Color(0xff00E676),
         backgroundColor: const Color(0xff1C1D24),
         onRefresh: () async {
-          context
-              .read<AdminDashboardBloc>()
-              .add(ToggleVipFilter(state.onlyVipFilter));
+          context.read<AdminDashboardBloc>().add(
+            ToggleVipFilter(
+              state.onlyVipFilter,
+              search: searchQuery,
+              startDate: _userStartDate?.toUtc().toIso8601String(),
+              endDate: _userEndDate?.toUtc().toIso8601String(),
+            ),
+          );
         },
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -683,9 +758,14 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                   ),
                   onSelected: (selected) {
                     if (selected) {
-                      context
-                          .read<AdminDashboardBloc>()
-                          .add(const ToggleVipFilter(false));
+                      context.read<AdminDashboardBloc>().add(
+                        ToggleVipFilter(
+                          false,
+                          search: searchQuery,
+                          startDate: _userStartDate?.toUtc().toIso8601String(),
+                          endDate: _userEndDate?.toUtc().toIso8601String(),
+                        ),
+                      );
                     }
                   },
                 ),
@@ -712,9 +792,14 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                   ),
                   onSelected: (selected) {
                     if (selected) {
-                      context
-                          .read<AdminDashboardBloc>()
-                          .add(const ToggleVipFilter(true));
+                      context.read<AdminDashboardBloc>().add(
+                        ToggleVipFilter(
+                          true,
+                          search: searchQuery,
+                          startDate: _userStartDate?.toUtc().toIso8601String(),
+                          endDate: _userEndDate?.toUtc().toIso8601String(),
+                        ),
+                      );
                     }
                   },
                 ),
@@ -728,22 +813,103 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm theo tên hoặc email...',
                 hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-                prefixIcon:
-                    const Icon(Icons.search, color: Colors.grey, size: 18),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 18),
+                suffixIcon: searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey, size: 16),
+                        onPressed: () {
+                          setState(() {
+                            searchQuery = '';
+                          });
+                          _triggerUserSearch(context, state);
+                        },
+                      )
+                    : null,
                 fillColor: const Color(0xff1C1D24),
                 filled: true,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
-              onChanged: (val) {
-                setState(() {
-                  searchQuery = val;
-                });
+              textInputAction: TextInputAction.search,
+              onSubmitted: (val) {
+                _triggerUserSearch(context, state);
               },
+              onChanged: (val) {
+                searchQuery = val;
+              },
+            ),
+            const SizedBox(height: 10),
+
+            // Date Range Filters
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _selectStartDate(context, state),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xff1C1D24),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, color: Colors.grey, size: 14),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _userStartDate != null
+                                  ? DateFormat('dd/MM/yyyy').format(_userStartDate!)
+                                  : 'Từ ngày...',
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _selectEndDate(context, state),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xff1C1D24),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, color: Colors.grey, size: 14),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _userEndDate != null
+                                  ? DateFormat('dd/MM/yyyy').format(_userEndDate!)
+                                  : 'Đến ngày...',
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (_userStartDate != null || _userEndDate != null || searchQuery.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.redAccent, size: 20),
+                    tooltip: 'Xóa bộ lọc',
+                    onPressed: () => _clearFilters(context, state),
+                  ),
+                ],
+              ],
             ),
             const SizedBox(height: 16),
 
@@ -777,8 +943,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                     onTap: () => _showUserDetailsDialog(context, user),
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         color: const Color(0xff1C1D24).withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
@@ -791,12 +956,10 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                           CircleAvatar(
                             radius: 20,
                             backgroundColor: const Color(0xff1C1D24),
-                            backgroundImage: user.avatarUrl != null &&
-                                    user.avatarUrl!.isNotEmpty
+                            backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
                                 ? NetworkImage(user.avatarUrl!)
                                 : null,
-                            child: user.avatarUrl == null ||
-                                    user.avatarUrl!.isEmpty
+                            child: user.avatarUrl == null || user.avatarUrl!.isEmpty
                                 ? Text(
                                     user.fullName.isNotEmpty
                                         ? user.fullName[0].toUpperCase()
@@ -813,9 +976,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  user.fullName.isNotEmpty
-                                      ? user.fullName
-                                      : 'Chưa thiết lập tên',
+                                  user.fullName.isNotEmpty ? user.fullName : 'Chưa thiết lập tên',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 13,
@@ -842,22 +1003,17 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          if (user.premiumActive)
+                          if (user.premiumActive && user.premiumPlan != 'VIP_TRIAL')
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xffFFB300),
-                                    Color(0xffFF8F00)
-                                  ],
+                                  colors: [Color(0xffFFB300), Color(0xffFF8F00)],
                                 ),
                                 borderRadius: BorderRadius.circular(6),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xffFFB300)
-                                        .withValues(alpha: 0.2),
+                                    color: const Color(0xffFFB300).withValues(alpha: 0.2),
                                     blurRadius: 4,
                                   ),
                                 ],
@@ -873,8 +1029,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                             )
                           else
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: const Color(0xff1C1D24),
                                 borderRadius: BorderRadius.circular(6),
@@ -910,14 +1065,16 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                                     ChangeUserPage(
                                       userResponse.page - 1,
                                       state.onlyVipFilter,
+                                      search: searchQuery,
+                                      startDate: _userStartDate?.toUtc().toIso8601String(),
+                                      endDate: _userEndDate?.toUtc().toIso8601String(),
                                     ),
                                   );
                             }
                           : null,
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xff1C1D24),
                         borderRadius: BorderRadius.circular(8),
@@ -932,19 +1089,20 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                       ),
                     ),
                     IconButton(
-                      icon:
-                          const Icon(Icons.chevron_right, color: Colors.white),
-                      onPressed:
-                          (userResponse.page + 1 < userResponse.totalPages)
-                              ? () {
-                                  context.read<AdminDashboardBloc>().add(
-                                        ChangeUserPage(
-                                          userResponse.page + 1,
-                                          state.onlyVipFilter,
-                                        ),
-                                      );
-                                }
-                              : null,
+                      icon: const Icon(Icons.chevron_right, color: Colors.white),
+                      onPressed: (userResponse.page + 1 < userResponse.totalPages)
+                          ? () {
+                              context.read<AdminDashboardBloc>().add(
+                                    ChangeUserPage(
+                                      userResponse.page + 1,
+                                      state.onlyVipFilter,
+                                      search: searchQuery,
+                                      startDate: _userStartDate?.toUtc().toIso8601String(),
+                                      endDate: _userEndDate?.toUtc().toIso8601String(),
+                                    ),
+                                  );
+                            }
+                          : null,
                     ),
                   ],
                 ),
@@ -1378,188 +1536,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
     );
   }
 
-  Widget _buildSearchesTab(BuildContext context, AdminDashboardLoaded state) {
-    final searches = state.searches;
 
-    return AppResponsive.centeredContent(
-      context: context,
-      maxWidth: 960,
-      child: RefreshIndicator(
-        color: const Color(0xff00E676),
-        backgroundColor: const Color(0xff1C1D24),
-        onRefresh: () async {
-          context.read<AdminDashboardBloc>().add(const FetchMonthlyRevenue());
-        },
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: AppResponsive.pagePadding(context).copyWith(top: 16),
-          children: [
-            const Text(
-              'XU HƯỚNG TÌM KIẾM MÓN ĂN',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.8,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (searches == null)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: Center(
-                  child: CircularProgressIndicator(color: Color(0xff00E676)),
-                ),
-              )
-            else if (searches.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 80),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: const Color(0xff1C1D24),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color:
-                                const Color(0xff00E676).withValues(alpha: 0.3),
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xff00E676)
-                                  .withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.search_off_outlined,
-                          color: Color(0xff00E676),
-                          size: 40,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Chưa Có Xu Hướng Tìm Kiếm',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Hệ thống chưa ghi nhận lượt tìm kiếm món ăn nào\ntừ phía người dùng thực tế.',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: searches.length,
-                itemBuilder: (context, index) {
-                  final item = searches[index];
-                  final isTop3 = index < 3;
-                  final Color rankingColor = index == 0
-                      ? const Color(0xffFFD700) // Gold
-                      : index == 1
-                          ? const Color(0xffC0C0C0) // Silver
-                          : index == 2
-                              ? const Color(0xffCD7F32) // Bronze
-                              : Colors.grey;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xff1C1D24).withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.02)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: rankingColor.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              color: rankingColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            item.keyword,
-                            style: TextStyle(
-                              color: isTop3 ? Colors.white : Colors.white70,
-                              fontSize: 13,
-                              fontWeight:
-                                  isTop3 ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color:
-                                const Color(0xff00E676).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.search,
-                                  color: Color(0xff00E676), size: 12),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${item.searchCount}',
-                                style: const TextStyle(
-                                  color: Color(0xff00E676),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _showMonthlyDetailsDialog(BuildContext context, String month) {
     showDialog(
@@ -1848,7 +1825,7 @@ class _UserDetailsDialogState extends ConsumerState<_UserDetailsDialog> {
     );
     final regDate =
         DateFormat('dd/MM/yyyy').format(widget.user.createdAt.toLocal());
-    final isVip = widget.user.premiumActive;
+    final isVip = widget.user.premiumActive && widget.user.premiumPlan != 'VIP_TRIAL';
     final expiredStr = widget.user.premiumExpiredAt != null
         ? DateFormat('dd/MM/yyyy HH:mm')
             .format(widget.user.premiumExpiredAt!.toLocal())

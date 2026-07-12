@@ -44,6 +44,9 @@ class AdminDashboardRepository {
 
   Future<PaginatedUserResponseModel> getAdminUsers({
     bool onlyVip = false,
+    String? search,
+    String? startDate,
+    String? endDate,
     int page = 0,
     int size = 20,
   }) async {
@@ -54,6 +57,15 @@ class AdminDashboardRepository {
       };
       if (onlyVip) {
         queryParams['filter'] = 'VIP';
+      }
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+      if (startDate != null && startDate.trim().isNotEmpty) {
+        queryParams['startDate'] = startDate.trim();
+      }
+      if (endDate != null && endDate.trim().isNotEmpty) {
+        queryParams['endDate'] = endDate.trim();
       }
       final response = await _dio.get<dynamic>(
         '/api/admin/users',

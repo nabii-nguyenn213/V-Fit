@@ -83,6 +83,9 @@ class AdminDashboardBloc
     try {
       final users = await _repository.getAdminUsers(
         onlyVip: event.onlyVip,
+        search: event.search,
+        startDate: event.startDate,
+        endDate: event.endDate,
         page: event.pageIndex,
         size: 20,
       );
@@ -129,6 +132,9 @@ class AdminDashboardBloc
     try {
       final users = await _repository.getAdminUsers(
         onlyVip: event.onlyVip,
+        search: event.search,
+        startDate: event.startDate,
+        endDate: event.endDate,
         page: 0,
         size: 20,
       );
