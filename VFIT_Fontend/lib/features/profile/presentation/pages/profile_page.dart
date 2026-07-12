@@ -171,7 +171,7 @@ class ProfilePage extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         if (user.isVipActive) VipActiveStatusCard(user: user),
-        if (!user.isVipActive || user.canRenewVip) ...[
+        if (user.canPurchasePremium) ...[
           const SizedBox(height: 16),
           VipPromotionCard(user: user),
         ],
@@ -352,8 +352,10 @@ class _VipPromotionCardState extends ConsumerState<VipPromotionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isRenewal =
-        widget.user?.isVipActive == true && widget.user?.canRenewVip == true;
+    final isTrialUpgrade = widget.user?.isVipTrial == true;
+    final isRenewal = !isTrialUpgrade &&
+        widget.user?.isVipActive == true &&
+        widget.user?.canRenewVip == true;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,12 +389,26 @@ class _VipPromotionCardState extends ConsumerState<VipPromotionCard> {
             ],
           ),
           const SizedBox(height: AppSpacing.x3),
+          if (isTrialUpgrade) ...[
+            Text(
+              'Bạn đang dùng thử VIP miễn phí. Bạn có thể nâng cấp lên gói tháng hoặc năm bất kỳ lúc nào.',
+              style: AppTypography.bodyFor(
+                context,
+                color: AppColors.textSecondaryOf(context),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.x3),
+          ],
           const VipPlanSelector(),
           const SizedBox(height: AppSpacing.x4),
           const VipBenefitsTable(),
           const SizedBox(height: AppSpacing.x4),
           AppButton.add(
-            label: isRenewal ? 'Gia hạn Premium' : 'Premium',
+            label: isTrialUpgrade
+                ? 'Nâng cấp VIP ngay'
+                : isRenewal
+                    ? 'Gia hạn Premium'
+                    : 'Premium',
             fullWidth: true,
             loading: _creating,
             onPressed: _creating ? null : _startVipPayment,
@@ -411,7 +427,7 @@ class _VipPromotionCardState extends ConsumerState<VipPromotionCard> {
       }
       return;
     }
-    if (user.isVipActive && !user.canRenewVip) {
+    if (!user.canPurchasePremium) {
       AppFeedback.info(
         'VIP đang hoạt động. Bạn có thể gia hạn khi còn dưới 3 ngày.',
       );

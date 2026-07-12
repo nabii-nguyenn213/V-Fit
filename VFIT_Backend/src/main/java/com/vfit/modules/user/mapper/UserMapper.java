@@ -60,7 +60,9 @@ public class UserMapper {
                 .premiumStartedAt(resolvePremiumStartedAt(user, persistedSubscription))
                 .premiumExpiredAt(premiumUntil)
                 .premiumRemainingDays(remaining.toDays())
-                .canRenewPremium(!premiumActive || (premiumUntil != null && remaining.compareTo(Duration.ofDays(3)) < 0))
+                .canRenewPremium(isTrialPlan(planCode)
+                        || !premiumActive
+                        || (premiumUntil != null && remaining.compareTo(Duration.ofDays(3)) < 0))
                 .createdAt(user.getCreatedAt())
                 .build();
     }
@@ -120,6 +122,10 @@ public class UserMapper {
             case "VIP_MONTHLY", "VIP_YEARLY", "MONTHLY", "YEARLY", "VIP_TRIAL" -> true;
             default -> false;
         };
+    }
+
+    private boolean isTrialPlan(String planCode) {
+        return planCode != null && "VIP_TRIAL".equalsIgnoreCase(planCode.trim());
     }
 
     public BodyMetricResponse toBodyMetricResponse(User.BodyMetrics bodyMetrics) {

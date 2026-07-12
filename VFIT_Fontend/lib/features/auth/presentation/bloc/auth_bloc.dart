@@ -48,7 +48,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthBlocState> {
         otpCode: event.otpCode,
       );
       if (authController != null) {
-        authController!.setUser(response.user);
+        authController!.setUser(
+          response.user,
+          showTrialWelcome: response.newRegistration,
+        );
       }
       emit(OtpVerifySuccess(authResponse: response));
     } catch (e) {

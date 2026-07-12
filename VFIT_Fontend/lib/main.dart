@@ -12,6 +12,7 @@ import 'core/theme/theme_controller.dart';
 import 'core/utils/responsive.dart';
 import 'core/widgets/app_feedback.dart';
 import 'features/auth/application/auth_controller.dart';
+import 'features/auth/presentation/widgets/trial_welcome_dialog.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,8 @@ class VFitApp extends ConsumerStatefulWidget {
 }
 
 class _VFitAppState extends ConsumerState<VFitApp> {
+  bool _trialWelcomeScheduled = false;
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +62,13 @@ class _VFitAppState extends ConsumerState<VFitApp> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (next.trialWelcomePending &&
+          previous?.trialWelcomePending != true) {
+        _scheduleTrialWelcome();
+      }
+    });
+
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeControllerProvider);
     return MaterialApp.router(
@@ -86,6 +96,49 @@ class _VFitAppState extends ConsumerState<VFitApp> {
         );
       },
     );
+  }
+
+  void _scheduleTrialWelcome() {
+    if (_trialWelcomeScheduled) {
+      return;
+    }
+    _trialWelcomeScheduled = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+
+      final auth = ref.read(authControllerProvider);
+      if (!auth.trialWelcomePending) {
+        _trialWelcomeScheduled = false;
+        return;
+      }
+
+      final dialogContext = rootNavigatorKey.currentContext;
+      if (dialogContext == null) {
+        _trialWelcomeScheduled = false;
+        _scheduleTrialWelcome();
+        return;
+      }
+
+      final action = await showDialog<TrialWelcomeAction>(
+        context: dialogContext,
+        useRootNavigator: true,
+        barrierDismissible: false,
+        builder: (context) => const TrialWelcomeDialog(),
+      );
+
+      if (!mounted) {
+        return;
+      }
+      ref.read(authControllerProvider.notifier).consumeTrialWelcome();
+      _trialWelcomeScheduled = false;
+
+      if (action == TrialWelcomeAction.upgrade) {
+        ref.read(appRouterProvider).go('/premium');
+      }
+    });
   }
 }
 

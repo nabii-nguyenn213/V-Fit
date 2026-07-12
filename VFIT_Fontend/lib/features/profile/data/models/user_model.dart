@@ -50,8 +50,25 @@ class UserModel {
   bool get isAdmin => role == RoleName.admin;
   bool get isOnboardingCompleted =>
       onboardingStatus == OnboardingStatus.completed;
+
+  String? get _normalizedPremiumPlan {
+    final normalizedPremiumPlan = premiumPlan?.trim().toUpperCase();
+    if (normalizedPremiumPlan != null && normalizedPremiumPlan.isNotEmpty) {
+      return normalizedPremiumPlan;
+    }
+
+    final normalizedSubscriptionPlan =
+        subscriptionPlanCode?.trim().toUpperCase();
+    return normalizedSubscriptionPlan == null ||
+            normalizedSubscriptionPlan.isEmpty
+        ? null
+        : normalizedSubscriptionPlan;
+  }
+
+  bool get isVipTrial => _normalizedPremiumPlan == 'VIP_TRIAL';
+
   bool get hasVipPlan {
-    final plan = (premiumPlan ?? subscriptionPlanCode)?.toUpperCase();
+    final plan = _normalizedPremiumPlan;
     return plan == 'VIP_MONTHLY' ||
         plan == 'VIP_YEARLY' ||
         plan == 'MONTHLY' ||
@@ -82,6 +99,16 @@ class UserModel {
     }
     return canRenewPremium ||
         expiredAt.difference(DateTime.now()) < const Duration(days: 3);
+  }
+
+  bool get canPurchasePremium {
+    if (!isVipActive) {
+      return true;
+    }
+    if (isVipTrial) {
+      return true;
+    }
+    return canRenewVip;
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {

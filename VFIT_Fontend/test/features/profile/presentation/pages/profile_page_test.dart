@@ -78,47 +78,54 @@ const _pendingUser = UserModel(
   canRenewPremium: false,
 );
 
+Future<void> _pumpProfilePage(
+  WidgetTester tester,
+  _StubProfileRepository repository,
+) async {
+  tester.view.physicalSize = const Size(1080, 3000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
+  final router = GoRouter(
+    initialLocation: '/profile',
+    routes: [
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const Scaffold(body: ProfilePage()),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) =>
+            const Scaffold(body: Text('ONBOARDING_TARGET')),
+      ),
+    ],
+  );
+  addTearDown(router.dispose);
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        authControllerProvider.overrideWith(
+          (ref) => _TestAuthController(_pendingUser),
+        ),
+        profileRepositoryProvider.overrideWithValue(repository),
+        themeControllerProvider.overrideWith(
+          (ref) => ThemeController(false, (_, __) async => true),
+        ),
+      ],
+      child: MaterialApp.router(routerConfig: router),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets(
     'hồ sơ chưa hoàn tất thiết lập chỉ hiện lời nhắc và mở onboarding',
     (tester) async {
-      tester.view.physicalSize = const Size(1080, 3000);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
       final repository = _StubProfileRepository();
-      final router = GoRouter(
-        initialLocation: '/profile',
-        routes: [
-          GoRoute(
-            path: '/profile',
-            builder: (context, state) => const Scaffold(body: ProfilePage()),
-          ),
-          GoRoute(
-            path: '/onboarding',
-            builder: (context, state) =>
-                const Scaffold(body: Text('ONBOARDING_TARGET')),
-          ),
-        ],
-      );
-      addTearDown(router.dispose);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            authControllerProvider.overrideWith(
-              (ref) => _TestAuthController(_pendingUser),
-            ),
-            profileRepositoryProvider.overrideWithValue(repository),
-            themeControllerProvider.overrideWith(
-              (ref) => ThemeController(false, (_, __) async => true),
-            ),
-          ],
-          child: MaterialApp.router(routerConfig: router),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpProfilePage(tester, repository);
 
       expect(find.text('Hoàn tất thiết lập ban đầu'), findsOneWidget);
       expect(
@@ -134,10 +141,36 @@ void main() {
       expect(find.text('Tỷ lệ mỡ'), findsNothing);
       expect(repository.bodyMetricsCalls, 0);
 
+      await tester.ensureVisible(find.text('Hoàn tất thiết lập'));
       await tester.tap(find.text('Hoàn tất thiết lập'));
       await tester.pumpAndSettle();
 
       expect(find.text('ONBOARDING_TARGET'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'VIP Trial có thể mở nâng cấp dù chưa đến thời điểm gia hạn',
+    (tester) async {
+      await _pumpProfilePage(tester, _StubProfileRepository());
+
+      expect(find.text('Vip Trial'), findsOneWidget);
+      expect(
+        find.text(
+          'Bạn đang dùng thử VIP miễn phí. Bạn có thể nâng cấp lên gói tháng hoặc năm bất kỳ lúc nào.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Nâng cấp VIP ngay'), findsOneWidget);
+      expect(find.text('Gia hạn Premium'), findsNothing);
+
+      await tester.ensureVisible(find.text('Nâng cấp VIP ngay'));
+      await tester.tap(find.text('Nâng cấp VIP ngay'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Chọn gói Premium'), findsOneWidget);
+      expect(find.text('VIP 1 tháng'), findsOneWidget);
+      expect(find.text('VIP 1 năm'), findsOneWidget);
     },
   );
 }

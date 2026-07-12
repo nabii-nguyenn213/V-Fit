@@ -93,7 +93,10 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         // Issue tokens and return AuthResponse
-        return authMapper.toAuthResponse(userMapper.toResponse(user), issueTokens(user));
+        return authMapper.toAuthResponse(
+                userMapper.toResponse(user),
+                issueTokens(user),
+                true);
     }
 
     @Override
@@ -133,13 +136,17 @@ public class AuthServiceImpl implements AuthService {
         String provider = profile.getProvider().name();
         Optional<User> linkedUser = userRepository.findBySocialIdentity(provider, profile.getSubject());
         User user = linkedUser.orElseGet(() -> resolveUserForNewProviderIdentity(profile));
+        boolean newRegistration = user.getId() == null;
 
         rejectDisabledUser(user);
         linkOrRefreshProviderIdentity(user, profile);
         user = userRepository.save(user);
 
         log.info("[SECURITY AUDIT] Social login success. provider={}, userId={}", provider, user.getId());
-        return authMapper.toAuthResponse(userMapper.toResponse(user), issueTokens(user));
+        return authMapper.toAuthResponse(
+                userMapper.toResponse(user),
+                issueTokens(user),
+                newRegistration);
     }
 
     @Override

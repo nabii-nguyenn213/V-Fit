@@ -8,6 +8,17 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface AuthMapper {
     default AuthResponse toAuthResponse(UserResponse user, TokenResponse tokens) {
-        return AuthResponse.builder().user(user).tokens(tokens).build();
+        return toAuthResponse(user, tokens, false);
+    }
+
+    default AuthResponse toAuthResponse(
+            UserResponse user,
+            TokenResponse tokens,
+            boolean newRegistration) {
+        return AuthResponse.builder()
+                .user(user)
+                .tokens(tokens)
+                .newRegistration(newRegistration)
+                .build();
     }
 }

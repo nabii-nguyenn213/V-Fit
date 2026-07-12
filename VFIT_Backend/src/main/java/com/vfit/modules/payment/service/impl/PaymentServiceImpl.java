@@ -301,7 +301,9 @@ public class PaymentServiceImpl implements PaymentService {
         Duration remaining = expiredAt == null || !expiredAt.isAfter(now)
                 ? Duration.ZERO
                 : Duration.between(now, expiredAt);
-        boolean canRenew = !isVip || (expiredAt != null && remaining.compareTo(Duration.ofDays(3)) < 0);
+        boolean canRenew = isTrialPlan(planCode)
+                || !isVip
+                || (expiredAt != null && remaining.compareTo(Duration.ofDays(3)) < 0);
         return new VipStatusResponse(
                 isVip,
                 normalizeVipType(planCode),
@@ -351,6 +353,10 @@ public class PaymentServiceImpl implements PaymentService {
             case "VIP_MONTHLY", "VIP_YEARLY", "MONTHLY", "YEARLY", "VIP_TRIAL" -> true;
             default -> false;
         };
+    }
+
+    private boolean isTrialPlan(String planCode) {
+        return planCode != null && "VIP_TRIAL".equalsIgnoreCase(planCode.trim());
     }
 
     private String generateUniquePaymentCode() {
