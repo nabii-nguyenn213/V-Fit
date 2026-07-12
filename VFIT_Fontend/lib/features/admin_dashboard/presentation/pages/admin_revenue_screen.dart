@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/state_views.dart';
 import 'package:vfit_frontend/features/auth/application/auth_controller.dart';
+import '../../data/models/admin_dashboard_models.dart';
 import '../../data/repositories/admin_dashboard_repository.dart';
 import '../bloc/admin_dashboard_bloc.dart';
 import '../bloc/admin_dashboard_event.dart';
@@ -14,11 +16,18 @@ import '../bloc/admin_dashboard_state.dart';
 import '../widgets/animated_counter.dart';
 import '../widgets/financial_chart.dart';
 
-class AdminRevenueScreen extends ConsumerWidget {
+class AdminRevenueScreen extends ConsumerStatefulWidget {
   const AdminRevenueScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminRevenueScreen> createState() => _AdminRevenueScreenState();
+}
+
+class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
+  String searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
     final repository = ref.watch(adminDashboardRepositoryProvider);
 
     return BlocProvider<AdminDashboardBloc>(
@@ -280,7 +289,7 @@ class AdminRevenueScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
 
-          // 4. Monthly Grid Cards
+          // 4. Monthly Grid Cards (Optimized & shrunk by ~30%)
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -288,7 +297,7 @@ class AdminRevenueScreen extends ConsumerWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 1.35,
+              childAspectRatio: 1.8,
             ),
             itemCount: report.monthlyDetails.length,
             itemBuilder: (context, index) {
@@ -296,7 +305,7 @@ class AdminRevenueScreen extends ConsumerWidget {
               final isPositive = item.growthRate >= 0.0;
 
               return Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: const Color(0xff1C1D24).withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(16),
@@ -304,77 +313,81 @@ class AdminRevenueScreen extends ConsumerWidget {
                     color: Colors.white.withValues(alpha: 0.05),
                   ),
                 ),
-                child: Stack(
+                child: Row(
                   children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Tháng ${item.month.substring(5)}/${item.month.substring(0, 4)}',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            currencyFormatter.format(item.totalRevenue),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            '${item.totalOrders} hóa đơn',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              fontSize: 9,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          'Tháng ${item.month.substring(5)}/${item.month.substring(0, 4)}',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                        const Icon(
+                          Icons.insights,
+                          color: Colors.white10,
+                          size: 18,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isPositive
+                                ? const Color(0xff00E676).withValues(alpha: 0.1)
+                                : const Color(0xffFF3D00).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                                color: isPositive ? const Color(0xff00E676) : const Color(0xffFF3D00),
+                                size: 8,
+                              ),
+                              const SizedBox(width: 1),
+                              Text(
+                                '${item.growthRate.abs().toStringAsFixed(0)}%',
+                                style: TextStyle(
+                                  color: isPositive ? const Color(0xff00E676) : const Color(0xffFF3D00),
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              currencyFormatter.format(item.totalRevenue),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${item.totalOrders} hóa đơn',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.4),
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isPositive
-                              ? const Color(0xff00E676).withValues(alpha: 0.1)
-                              : const Color(0xffFF3D00).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                              color: isPositive ? const Color(0xff00E676) : const Color(0xffFF3D00),
-                              size: 10,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              '${item.growthRate.abs().toStringAsFixed(1)}%',
-                              style: TextStyle(
-                                color: isPositive ? const Color(0xff00E676) : const Color(0xffFF3D00),
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -550,47 +563,57 @@ class AdminRevenueScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xff1C1D24),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Trang ${state.currentPage + 1}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff1C1D24),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Trang ${state.currentPage + 1}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.white,
+                    ),
+                    onPressed: state.hasMore
+                        ? () {
+                            context.read<AdminDashboardBloc>().add(
+                                  ChangeTransactionPage(
+                                    state.currentPage + 1,
+                                  ),
+                                );
+                          }
+                        : null,
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(
-                  Icons.chevron_right,
-                  color: Colors.white,
-                ),
-                onPressed: state.hasMore
-                    ? () {
-                        context.read<AdminDashboardBloc>().add(
-                              ChangeTransactionPage(
-                                state.currentPage + 1,
-                              ),
-                            );
-                      }
-                    : null,
-              ),
-            ],
-          ),
-        ),
+            ),
 
-        const SizedBox(height: 32),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
 
   Widget _buildUsersTab(BuildContext context, AdminDashboardLoaded state) {
     final userResponse = state.users;
+
+    // Filter local list based on search box input
+    final List<AdminUserModel> displayedUsers = userResponse != null
+        ? userResponse.content.where((user) {
+            final query = searchQuery.toLowerCase().trim();
+            if (query.isEmpty) return true;
+            return user.fullName.toLowerCase().contains(query) ||
+                user.email.toLowerCase().contains(query);
+          }).toList()
+        : [];
 
     return RefreshIndicator(
       color: const Color(0xff00E676),
@@ -602,7 +625,7 @@ class AdminRevenueScreen extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: AppResponsive.pagePadding(context).copyWith(top: 16),
         children: [
-          // Filter Row
+          // Filter Row & VIP Toggle
           Row(
             children: [
               const Text(
@@ -664,6 +687,29 @@ class AdminRevenueScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          // Search Box with prefix search icon
+          TextField(
+            style: const TextStyle(color: Colors.white, fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm theo tên hoặc email...',
+              hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+              prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 18),
+              fillColor: const Color(0xff1C1D24),
+              filled: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onChanged: (val) {
+              setState(() {
+                searchQuery = val;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+
           if (state.isUserLoading)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 40),
@@ -671,7 +717,7 @@ class AdminRevenueScreen extends ConsumerWidget {
                 child: CircularProgressIndicator(color: Color(0xff00E676)),
               ),
             )
-          else if (userResponse == null || userResponse.content.isEmpty)
+          else if (userResponse == null || displayedUsers.isEmpty)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: const Center(
@@ -685,9 +731,10 @@ class AdminRevenueScreen extends ConsumerWidget {
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: userResponse.content.length,
+              itemCount: displayedUsers.length,
               itemBuilder: (context, index) {
-                final user = userResponse.content[index];
+                final user = displayedUsers[index];
+                final regDate = DateFormat('dd/MM/yyyy').format(user.createdAt.toLocal());
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -732,6 +779,14 @@ class AdminRevenueScreen extends ConsumerWidget {
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.5),
                                 fontSize: 11,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Đăng ký: $regDate',
+                              style: TextStyle(
+                                color: Colors.white30,
+                                fontSize: 9,
                               ),
                             ),
                           ],
@@ -863,17 +918,23 @@ class AdminRevenueScreen extends ConsumerWidget {
               ),
             )
           else ...[
-            // KPI Traffic Cards
+            // KPI Traffic Cards (Blue-Purple glowing color zone)
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xff1A237E), Color(0xff0D0E11)],
+                  colors: [Color(0xff1E293B), Color(0xff0F172A)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blueAccent.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                  )
+                ]
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -881,7 +942,7 @@ class AdminRevenueScreen extends ConsumerWidget {
                   const Text(
                     'TỔNG LƯỢT TRUY CẬP HỆ THỐNG',
                     style: TextStyle(
-                      color: Colors.blueGrey,
+                      color: Color(0xff94A3B8),
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.0,
@@ -890,7 +951,7 @@ class AdminRevenueScreen extends ConsumerWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.trending_up, color: Colors.blueAccent, size: 24),
+                      const Icon(Icons.show_chart, color: Colors.blueAccent, size: 24),
                       const SizedBox(width: 8),
                       Text(
                         '${trafficResponse.totalVisits} lượt',
@@ -907,7 +968,7 @@ class AdminRevenueScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // Statistics Breakdown (OS & Browser)
+            // Statistics Breakdown (Interactive OS & Browser Pie Charts)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -916,6 +977,15 @@ class AdminRevenueScreen extends ConsumerWidget {
                     title: 'Hệ điều hành',
                     icon: Icons.laptop_mac,
                     stats: trafficResponse.osStats,
+                    getColor: (name) {
+                      final lName = name.toLowerCase();
+                      if (lName.contains('windows')) return Colors.blueAccent;
+                      if (lName.contains('ios')) return Colors.purpleAccent;
+                      if (lName.contains('android')) return const Color(0xff00E676);
+                      if (lName.contains('macos')) return Colors.orangeAccent;
+                      if (lName.contains('linux')) return Colors.redAccent;
+                      return Colors.grey;
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -924,6 +994,14 @@ class AdminRevenueScreen extends ConsumerWidget {
                     title: 'Trình duyệt',
                     icon: Icons.open_in_browser,
                     stats: trafficResponse.browserStats,
+                    getColor: (name) {
+                      final lName = name.toLowerCase();
+                      if (lName.contains('chrome')) return Colors.redAccent;
+                      if (lName.contains('safari')) return Colors.blueAccent;
+                      if (lName.contains('edge')) return Colors.tealAccent;
+                      if (lName.contains('firefox')) return Colors.orangeAccent;
+                      return Colors.grey;
+                    },
                   ),
                 ),
               ],
@@ -1102,7 +1180,10 @@ class AdminRevenueScreen extends ConsumerWidget {
     required String title,
     required IconData icon,
     required Map<String, int> stats,
+    required Color Function(String) getColor,
   }) {
+    final total = stats.values.fold<int>(0, (sum, val) => sum + val);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1127,32 +1208,87 @@ class AdminRevenueScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           if (stats.isEmpty)
-            const Text(
-              'Không có dữ liệu',
-              style: TextStyle(color: Colors.white30, fontSize: 10),
+            const SizedBox(
+              height: 80,
+              child: Center(
+                child: Text(
+                  'Không có dữ liệu',
+                  style: TextStyle(color: Colors.white30, fontSize: 10),
+                ),
+              ),
             )
           else
-            ...stats.entries.take(4).map((entry) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          entry.key,
-                          style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        '${entry.value} lượt',
-                        style: const TextStyle(color: Color(0xff00E676), fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ],
+            Row(
+              children: [
+                // 1. Beautiful Pie/Donut Chart using fl_chart
+                SizedBox(
+                  height: 64,
+                  width: 64,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 1.5,
+                      centerSpaceRadius: 18,
+                      startDegreeOffset: 270,
+                      sections: stats.entries.map((entry) {
+                        return PieChartSectionData(
+                          color: getColor(entry.key),
+                          value: entry.value.toDouble(),
+                          title: '',
+                          radius: 10,
+                        );
+                      }).toList(),
+                    ),
                   ),
-                )),
+                ),
+                const SizedBox(width: 12),
+                // 2. Legend with names and percentages
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: stats.entries.take(3).map((entry) {
+                      final percentage = total > 0 ? (entry.value / total * 100).toStringAsFixed(0) : '0';
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 5.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: getColor(entry.key),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                entry.key,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$percentage%',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 9,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -1190,12 +1326,55 @@ class AdminRevenueScreen extends ConsumerWidget {
               ),
             )
           else if (searches.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: const Center(
-                child: Text(
-                  'Chưa ghi nhận từ khóa tìm kiếm thực tế nào.',
-                  style: TextStyle(color: Colors.grey, fontSize: 13),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 80),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xff1C1D24),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xff00E676).withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xff00E676).withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.search_off_outlined,
+                        color: Color(0xff00E676),
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Chưa Có Xu Hướng Tìm Kiếm',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Hệ thống chưa ghi nhận lượt tìm kiếm món ăn nào\ntừ phía người dùng thực tế.',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             )
