@@ -5,7 +5,7 @@ def main():
     client = MongoClient("mongodb://vfit_app:VFITAa123%40mongo_app@127.0.0.1:27017/vfit?authSource=vfit")
     db = client['vfit']
     
-    email = "dg.hungdung@gmail.com"
+    email = "dungpthe180911@fpt.edu.vn"
     user = db.users.find_one({"email": email})
     
     if not user:
@@ -31,6 +31,25 @@ def main():
     print(f"Found {len(subscriptions)} subscription records:")
     for sub in subscriptions:
         print(f"  - ID: {sub.get('_id')}, Plan: {sub.get('planCode')}, Status: {sub.get('status')}, Expires: {sub.get('expiresAt')}")
+
+    print("\n=== ORDERS COLLECTION ===")
+    orders = list(db.orders.find({"user_id": user_id}))
+    print(f"Found {len(orders)} order records:")
+    print("\n=== ALL ORDERS COLLECTION ===")
+    all_orders = list(db.orders.find({}))
+    print(f"Total orders in db: {len(all_orders)}")
+    for o in all_orders:
+        print(f"  - ID: {o.get('_id')}, UserID: {o.get('user_id')}, Type: {o.get('order_type')}, Amount: {o.get('amount')}, Status: {o.get('status')}, Created: {o.get('created_at')}")
+
+
+    print("\n=== LEGACY VIP_TRIAL USERS ===")
+    trial_users = list(db.users.find({"subscription.planCode": "VIP_TRIAL"}))
+    print(f"Found {len(trial_users)} users with VIP_TRIAL plan:")
+    for u in trial_users:
+        sub = u.get('subscription', {})
+        print(f"  - ID: {u.get('_id')}, Email: {u.get('email')}, Status: {sub.get('status')}, PremiumUntil: {sub.get('premiumUntil')}")
+
+
 
 if __name__ == "__main__":
     main()

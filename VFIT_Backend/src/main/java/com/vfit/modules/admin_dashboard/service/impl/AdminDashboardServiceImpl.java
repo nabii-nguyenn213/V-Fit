@@ -7,12 +7,15 @@ import com.vfit.modules.admin_dashboard.dto.OrderDto;
 import com.vfit.modules.admin_dashboard.entity.Order;
 import com.vfit.modules.admin_dashboard.repository.OrderRepository;
 import com.vfit.modules.admin_dashboard.service.AdminDashboardService;
+import com.vfit.modules.subscription.document.PaymentTransaction;
+import com.vfit.modules.subscription.repository.PaymentTransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.vfit.modules.user.repository.UserRepository;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service("adminRevenueService")
@@ -21,6 +24,7 @@ import java.util.List;
 public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     private final OrderRepository orderRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -164,24 +168,58 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override
     public List<OrderDto> getUserTransactionHistory(String userId) {
         log.info("Fetching transaction history for user: {}", userId);
-        List<Order> orders = orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        String email = userRepository.findById(userId)
+            .map(com.vfit.modules.user.document.User::getEmail)
+            .orElse("unknown@vfit.com");
 
-        return orders.stream()
-            .map(order -> {
-                String email = userRepository.findById(order.getUserId())
-                    .map(com.vfit.modules.user.document.User::getEmail)
-                    .orElse("unknown@vfit.com");
-                return new OrderDto(
-                    order.getId(),
-                    order.getUserId(),
-                    email,
-                    order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
-                    order.getAmount() != null ? order.getAmount() : 0.0,
-                    order.getStatus(),
-                    order.getVoucherCode(),
-                    order.getCreatedAt()
-                );
-            })
-            .toList();
+        List<OrderDto> history = new ArrayList<>();
+        paymentTransactionRepository.findSuccessfulByUserId(userId).stream()
+            .map(payment -> toOrderDto(payment, email))
+            .forEach(history::add);
+        orderRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, "SUCCESS").stream()
+            .map(order -> toOrderDto(order, email))
+            .forEach(history::add);
+
+        history.sort(Comparator.comparing(
+            OrderDto::createdAt,
+            Comparator.nullsLast(Comparator.reverseOrder())
+        ));
+        return history;
+    }
+
+    private OrderDto toOrderDto(PaymentTransaction payment, String email) {
+        java.math.BigDecimal amount = payment.getFinalAmount() != null
+            ? payment.getFinalAmount()
+            : payment.getAmount();
+        String orderType = payment.getPlan() != null
+            ? payment.getPlan().planCode()
+            : "PREMIUM";
+        java.time.Instant transactionTime = payment.getPaidAt() != null
+            ? payment.getPaidAt()
+            : payment.getCreatedAt();
+
+        return new OrderDto(
+            payment.getId(),
+            payment.getUserId(),
+            email,
+            orderType,
+            amount != null ? amount.doubleValue() : 0.0,
+            "SUCCESS",
+            payment.getVoucherCode(),
+            transactionTime
+        );
+    }
+
+    private OrderDto toOrderDto(Order order, String email) {
+        return new OrderDto(
+            order.getId(),
+            order.getUserId(),
+            email,
+            order.getOrderType() != null ? order.getOrderType() : "PREMIUM",
+            order.getAmount() != null ? order.getAmount() : 0.0,
+            order.getStatus(),
+            order.getVoucherCode(),
+            order.getCreatedAt()
+        );
     }
 }
