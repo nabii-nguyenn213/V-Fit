@@ -69,9 +69,11 @@ class HomePage extends ConsumerWidget {
                   onStart: () => context.go('/workouts'),
                   onProgress: () => context.go('/progress'),
                 ),
-                const SizedBox(height: AppSpacing.x4),
                 if (kIsWeb) ...[
                   const _WebApkBanner(),
+                  const SizedBox(height: AppSpacing.x4),
+                ] else ...[
+                  const _SmallApkDownloadButton(),
                   const SizedBox(height: AppSpacing.x4),
                 ],
                 _MetricGrid(
@@ -795,27 +797,27 @@ class _AwardedVoucherStrip extends StatelessWidget {
   }
 }
 
-class _WebApkBanner extends StatelessWidget {
-  const _WebApkBanner();
-
-  Future<void> _downloadApk(BuildContext context) async {
-    final url = Uri.parse('/app-release.apk');
-    try {
-      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Không thể tải xuống file APK.')),
-          );
-        }
-      }
-    } catch (_) {
+Future<void> _launchApkDownload(BuildContext context) async {
+  final url = Uri.parse('/app-release.apk');
+  try {
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Có lỗi xảy ra khi tải file APK.')),
+          const SnackBar(content: Text('Không thể tải xuống file APK.')),
         );
       }
     }
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Có lỗi xảy ra khi tải file APK.')),
+      );
+    }
   }
+}
+
+class _WebApkBanner extends StatelessWidget {
+  const _WebApkBanner();
 
   @override
   Widget build(BuildContext context) {
@@ -871,7 +873,7 @@ class _WebApkBanner extends StatelessWidget {
                   icon: Icons.download_rounded,
                   variant: AppButtonVariant.primary,
                   fullWidth: true,
-                  onPressed: () => _downloadApk(context),
+                  onPressed: () => _launchApkDownload(context),
                 ),
               ],
             )
@@ -917,11 +919,63 @@ class _WebApkBanner extends StatelessWidget {
                   icon: Icons.download_rounded,
                   variant: AppButtonVariant.primary,
                   fullWidth: false,
-                  onPressed: () => _downloadApk(context),
+                  onPressed: () => _launchApkDownload(context),
                 ),
               ],
             ),
     );
   }
 }
+
+class _SmallApkDownloadButton extends StatelessWidget {
+  const _SmallApkDownloadButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _launchApkDownload(context),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x3,
+              vertical: 6.0,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primaryOf(context).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(
+                color: AppColors.primaryOf(context).withValues(alpha: 0.20),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.android_rounded,
+                  color: AppColors.primaryOf(context),
+                  size: 16,
+                ),
+                const SizedBox(width: 6.0),
+                Text(
+                  'Tải bản APK',
+                  style: AppTypography.label(
+                    color: AppColors.primaryOf(context),
+                  ).copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
 
