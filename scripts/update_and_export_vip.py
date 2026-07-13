@@ -36,7 +36,7 @@ def main():
         premium_until = datetime.utcnow() + timedelta(days=30)
         sub_snapshot = {
             "status": "ACTIVE",
-            "planCode": "VIP_1M",
+            "planCode": "VIP_MONTHLY",
             "premiumUntil": premium_until
         }
         
@@ -99,14 +99,14 @@ def main():
         
         tx_doc = {
             "userId": str(user["_id"]),
-            "plan": "VIP_1M",
+            "plan": "VIP_MONTHLY",
             "baseAmount": user_info["amount"],
             "discountAmount": 0,
             "finalAmount": user_info["amount"],
             "amount": user_info["amount"],
             "currency": "VND",
             "paymentCode": user_info["desc"],
-            "paymentStatus": "SUCCESS",
+            "paymentStatus": "PAID",
             "sepayTransactionId": user_info["sepay_id"],
             "paidAt": paid_at_dt,
             "createdAt": paid_at_dt,

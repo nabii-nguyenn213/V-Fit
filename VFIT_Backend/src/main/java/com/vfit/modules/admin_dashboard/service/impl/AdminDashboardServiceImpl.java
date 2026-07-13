@@ -79,8 +79,35 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             })
             .toList();
             
-        log.info("Financial report calculated. Lifetime Revenue: {} đ", lifetimeRevenue);
-        return new MonthlyRevenueResponse(lifetimeRevenue, monthlyDetails, recentTransactions);
+        long totalUsers = userRepository.countByRole(com.vfit.common.enums.RoleName.USER);
+        long activeVipUsers = userRepository.countBySubscriptionStatusAndRole(
+            com.vfit.common.enums.SubscriptionStatus.ACTIVE,
+            com.vfit.common.enums.RoleName.USER
+        );
+        long freeUsers = userRepository.countBySubscriptionStatusAndRole(
+            com.vfit.common.enums.SubscriptionStatus.FREE,
+            com.vfit.common.enums.RoleName.USER
+        );
+        long onboardingCompletedUsers = userRepository.countByOnboardingStatusAndRole(
+            com.vfit.common.enums.OnboardingStatus.COMPLETED,
+            com.vfit.common.enums.RoleName.USER
+        );
+        long onboardingPendingUsers = userRepository.countByOnboardingStatusAndRole(
+            com.vfit.common.enums.OnboardingStatus.PENDING,
+            com.vfit.common.enums.RoleName.USER
+        );
+
+        log.info("Financial report calculated. Lifetime Revenue: {} đ, Total Users: {}", lifetimeRevenue, totalUsers);
+        return new MonthlyRevenueResponse(
+            lifetimeRevenue,
+            monthlyDetails,
+            recentTransactions,
+            totalUsers,
+            activeVipUsers,
+            freeUsers,
+            onboardingCompletedUsers,
+            onboardingPendingUsers
+        );
     }
 
     @Override

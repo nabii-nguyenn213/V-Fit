@@ -59,7 +59,7 @@ def main():
     
     # Sum up successful transactions
     # Spring Boot uses "SUCCESS" status
-    success_status_matches = db.payment_transactions.find({"paymentStatus": "SUCCESS"})
+    success_status_matches = db.payment_transactions.find({"paymentStatus": "PAID"})
     total_rev = 0.0
     tx_count = 0
     reconciled_count = 0

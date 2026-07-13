@@ -29,5 +29,11 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     List<User> findByActiveFalseAndDeactivatedAtBefore(Instant threshold);
 
+    long countByRole(RoleName role);
+
+    long countByOnboardingStatusAndRole(com.vfit.common.enums.OnboardingStatus onboardingStatus, RoleName role);
+
+    long countBySubscriptionStatusAndRole(SubscriptionStatus status, RoleName role);
+
     void deleteByActiveFalseAndCreatedAtBefore(Instant threshold);
 }

@@ -699,9 +699,78 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
     );
   }
 
+  Widget _buildStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+    String? subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xff1C1D24).withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.05),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              Icon(
+                icon,
+                color: color.withValues(alpha: 0.8),
+                size: 16,
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              shadows: [
+                Shadow(
+                  color: color.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+          ),
+          if (subtitle != null) ...[
+            Text(
+              subtitle,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 9,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildUsersTab(BuildContext context, AdminDashboardLoaded state) {
     final userResponse = state.users;
     final List<AdminUserModel> displayedUsers = userResponse != null ? userResponse.content : [];
+    final report = state.report;
 
     return AppResponsive.centeredContent(
       context: context,
@@ -723,6 +792,44 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: AppResponsive.pagePadding(context).copyWith(top: 16),
           children: [
+            // User Analysis Dashboard Grid
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 2.1,
+              children: [
+                _buildStatCard(
+                  title: 'TỔNG SỐ THÀNH VIÊN',
+                  value: '${report.totalUsers}',
+                  icon: Icons.people_alt,
+                  color: const Color(0xff00E676),
+                ),
+                _buildStatCard(
+                  title: 'KHÁCH HÀNG VIP',
+                  value: '${report.activeVipUsers}',
+                  icon: Icons.workspace_premium,
+                  color: const Color(0xffFFB300),
+                ),
+                _buildStatCard(
+                  title: 'THÀNH VIÊN THƯỜNG',
+                  value: '${report.freeUsers}',
+                  icon: Icons.person_outline,
+                  color: Colors.blueAccent,
+                ),
+                _buildStatCard(
+                  title: 'THIẾT LẬP THỂ TRẠNG',
+                  value: '${report.onboardingCompletedUsers} / ${report.totalUsers}',
+                  icon: Icons.fitbit_outlined,
+                  color: Colors.purpleAccent,
+                  subtitle: 'Đã hoàn thành',
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
             // Filter Row & VIP Toggle
             Row(
               children: [

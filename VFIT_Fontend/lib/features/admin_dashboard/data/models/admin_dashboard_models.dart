@@ -2,11 +2,21 @@ class MonthlyRevenueResponseModel {
   final double lifetimeRevenue;
   final List<MonthlyRevenueItemModel> monthlyDetails;
   final List<RecentTransactionModel> recentTransactions;
+  final int totalUsers;
+  final int activeVipUsers;
+  final int freeUsers;
+  final int onboardingCompletedUsers;
+  final int onboardingPendingUsers;
 
   const MonthlyRevenueResponseModel({
     required this.lifetimeRevenue,
     required this.monthlyDetails,
     required this.recentTransactions,
+    this.totalUsers = 0,
+    this.activeVipUsers = 0,
+    this.freeUsers = 0,
+    this.onboardingCompletedUsers = 0,
+    this.onboardingPendingUsers = 0,
   });
 
   factory MonthlyRevenueResponseModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +30,11 @@ class MonthlyRevenueResponseModel {
               ?.map((item) => RecentTransactionModel.fromJson(Map<String, dynamic>.from(item as Map)))
               .toList() ??
           [],
+      totalUsers: (json['totalUsers'] as num?)?.toInt() ?? 0,
+      activeVipUsers: (json['activeVipUsers'] as num?)?.toInt() ?? 0,
+      freeUsers: (json['freeUsers'] as num?)?.toInt() ?? 0,
+      onboardingCompletedUsers: (json['onboardingCompletedUsers'] as num?)?.toInt() ?? 0,
+      onboardingPendingUsers: (json['onboardingPendingUsers'] as num?)?.toInt() ?? 0,
     );
   }
 }
