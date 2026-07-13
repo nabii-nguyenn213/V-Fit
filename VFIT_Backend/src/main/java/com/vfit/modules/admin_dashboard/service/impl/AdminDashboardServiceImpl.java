@@ -104,7 +104,9 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         org.springframework.data.mongodb.core.aggregation.Aggregation userAggregation = org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation(
             org.springframework.data.mongodb.core.aggregation.Aggregation.match(org.springframework.data.mongodb.core.query.Criteria.where("role").is(com.vfit.common.enums.RoleName.USER)),
             org.springframework.data.mongodb.core.aggregation.Aggregation.project()
-                .andExpression("dateToString('%Y-%m-%d', createdAt, 'Asia/Ho_Chi_Minh')").as("date"),
+                .and(org.springframework.data.mongodb.core.aggregation.DateOperators.dateOf("createdAt")
+                    .toString("%Y-%m-%d"))
+                .as("date"),
             org.springframework.data.mongodb.core.aggregation.Aggregation.group("date").count().as("count"),
             org.springframework.data.mongodb.core.aggregation.Aggregation.project("count").and("_id").as("date"),
             org.springframework.data.mongodb.core.aggregation.Aggregation.sort(org.springframework.data.domain.Sort.Direction.ASC, "date")
