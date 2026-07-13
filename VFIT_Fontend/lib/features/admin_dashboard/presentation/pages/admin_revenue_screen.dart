@@ -823,8 +823,12 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
       spots.add(FlSpot(i.toDouble(), trend[i].count.toDouble()));
     }
 
+    final int totalReg = trend.fold(0, (sum, item) => sum + item.count);
+    final int totalVip = trend.fold(0, (sum, item) => sum + item.vipCount);
+    final int totalFree = trend.fold(0, (sum, item) => sum + item.freeCount);
+
     return Container(
-      height: 220,
+      height: 245,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xff1C1D24).withValues(alpha: 0.6),
@@ -856,7 +860,38 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                'Tổng: $totalReg',
+                style: const TextStyle(
+                  color: Color(0xff00E676),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'VIP: $totalVip',
+                style: const TextStyle(
+                  color: Color(0xffFFB300),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'Thường: $totalFree',
+                style: const TextStyle(
+                  color: Colors.blueAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Expanded(
             child: LineChart(
               LineChartData(

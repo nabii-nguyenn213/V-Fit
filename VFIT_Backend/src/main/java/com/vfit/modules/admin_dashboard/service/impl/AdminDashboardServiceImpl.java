@@ -100,15 +100,26 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             com.vfit.common.enums.RoleName.USER
         );
 
-        // Group and count user registrations by day for non-admin users
+        // Group and count user registrations by day for non-admin users, including VIP and free breakdown
+        org.springframework.data.mongodb.core.aggregation.ConditionalOperators.Cond condVip = org.springframework.data.mongodb.core.aggregation.ConditionalOperators.Cond.when(
+            org.springframework.data.mongodb.core.query.Criteria.where("subscription.status").is("ACTIVE")
+        ).then(1).otherwise(0);
+
+        org.springframework.data.mongodb.core.aggregation.ConditionalOperators.Cond condFree = org.springframework.data.mongodb.core.aggregation.ConditionalOperators.Cond.when(
+            org.springframework.data.mongodb.core.query.Criteria.where("subscription.status").ne("ACTIVE")
+        ).then(1).otherwise(0);
+
         org.springframework.data.mongodb.core.aggregation.Aggregation userAggregation = org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation(
             org.springframework.data.mongodb.core.aggregation.Aggregation.match(org.springframework.data.mongodb.core.query.Criteria.where("role").is(com.vfit.common.enums.RoleName.USER)),
             org.springframework.data.mongodb.core.aggregation.Aggregation.project()
-                .and(org.springframework.data.mongodb.core.aggregation.DateOperators.dateOf("createdAt")
-                    .toString("%Y-%m-%d"))
-                .as("date"),
-            org.springframework.data.mongodb.core.aggregation.Aggregation.group("date").count().as("count"),
-            org.springframework.data.mongodb.core.aggregation.Aggregation.project("count").and("_id").as("date"),
+                .and(org.springframework.data.mongodb.core.aggregation.DateOperators.dateOf("createdAt").toString("%Y-%m-%d")).as("date")
+                .and(condVip).as("vipVal")
+                .and(condFree).as("freeVal"),
+            org.springframework.data.mongodb.core.aggregation.Aggregation.group("date")
+                .count().as("count")
+                .sum("vipVal").as("vipCount")
+                .sum("freeVal").as("freeCount"),
+            org.springframework.data.mongodb.core.aggregation.Aggregation.project("count", "vipCount", "freeCount").and("_id").as("date"),
             org.springframework.data.mongodb.core.aggregation.Aggregation.sort(org.springframework.data.domain.Sort.Direction.ASC, "date")
         );
 

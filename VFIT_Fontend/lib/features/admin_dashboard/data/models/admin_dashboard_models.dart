@@ -353,16 +353,22 @@ class SearchMetricItemModel {
 class RegistrationTrendItemModel {
   final String date;
   final int count;
+  final int vipCount;
+  final int freeCount;
 
   const RegistrationTrendItemModel({
     required this.date,
     required this.count,
+    required this.vipCount,
+    required this.freeCount,
   });
 
   factory RegistrationTrendItemModel.fromJson(Map<String, dynamic> json) {
     return RegistrationTrendItemModel(
       date: json['date']?.toString() ?? '',
       count: (json['count'] as num?)?.toInt() ?? 0,
+      vipCount: (json['vipCount'] as num?)?.toInt() ?? 0,
+      freeCount: (json['freeCount'] as num?)?.toInt() ?? 0,
     );
   }
 }
