@@ -16,3 +16,7 @@ ios/Flutter/flutter_export_environment.sh
 .env
 .env.*
 secrets.local.*
+
+# Ignore compiled APKs placed in the web directory for serving
+web/*.apk
+
