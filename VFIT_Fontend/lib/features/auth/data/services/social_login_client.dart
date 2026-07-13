@@ -55,10 +55,8 @@ class SocialLoginClient {
     try {
       _debugLogGoogleSignInStart();
       if (kIsWeb) {
-        // On web, attempt silent sign-in first, which is more reliable for retrieving the idToken
-        account = await _googleSignIn.signInSilently();
-      }
-      if (account == null) {
+        account = await _googleSignIn.signInSilently(reAuthenticate: true);
+      } else {
         try {
           await _googleSignIn.signOut();
         } catch (e) {
@@ -82,17 +80,12 @@ class SocialLoginClient {
     var auth = await account.authentication;
     var idToken = auth.idToken;
 
-    if (kIsWeb && (idToken == null || idToken.isEmpty)) {
-      debugPrint('[GoogleSignIn] Web idToken is null, attempting silent re-authentication...');
-      account = await _googleSignIn.signInSilently(reAuthenticate: true);
-      if (account != null) {
-        auth = await account.authentication;
-        idToken = auth.idToken;
-      }
-    }
-
     if (idToken == null || idToken.isEmpty) {
-      throw Exception('Google login did not return an identity token.');
+      throw Exception(
+        kIsWeb
+            ? 'Google web login needs the Google Identity Services button.'
+            : 'Google login did not return an identity token.',
+      );
     }
     return SocialLoginCredential(
       provider: SocialLoginProvider.google,

@@ -9,6 +9,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/vfit_logo_avatar.dart';
 import '../../application/auth_controller.dart';
+import '../widgets/google_web_sign_in_button.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -149,15 +150,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             SizedBox(height: compact ? 14 : 18),
                             _DividerLabel(palette: palette),
                             SizedBox(height: compact ? 12 : 14),
-                            _SocialLoginButton(
-                              label: 'Chọn tài khoản Google',
-                              supportingLabel: 'Mở màn hình chọn tài khoản',
-                              brandLabel: 'G',
-                              brandColor: const Color(0xFF4285F4),
-                              loading: auth.isLoading,
-                              palette: palette,
-                              onPressed: _loginWithGoogle,
-                            ),
+                            if (kIsWeb)
+                              GoogleWebSignInButton(
+                                loading: auth.isLoading,
+                                onIdToken: ref
+                                    .read(authControllerProvider.notifier)
+                                    .loginWithGoogleIdToken,
+                                onError: ref
+                                    .read(authControllerProvider.notifier)
+                                    .reportLoginError,
+                              )
+                            else
+                              _SocialLoginButton(
+                                label: 'Chọn tài khoản Google',
+                                supportingLabel: 'Mở màn hình chọn tài khoản',
+                                brandLabel: 'G',
+                                brandColor: const Color(0xFF4285F4),
+                                loading: auth.isLoading,
+                                palette: palette,
+                                onPressed: _loginWithGoogle,
+                              ),
                             SizedBox(height: compact ? 12 : 16),
                             _RegisterPrompt(palette: palette),
                           ],

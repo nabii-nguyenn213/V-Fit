@@ -122,6 +122,16 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
+  Future<void> loginWithGoogleIdToken(String idToken) async {
+    await _socialLogin(
+      () async => SocialLoginCredential(
+        provider: SocialLoginProvider.google,
+        providerToken: idToken,
+        platform: 'web',
+      ),
+    );
+  }
+
   Future<void> loginWithFacebook() async {
     await _socialLogin(
       () => _socialLoginClient.signInWithFacebook(),
@@ -191,6 +201,13 @@ class AuthController extends StateNotifier<AuthState> {
 
   void clearError() {
     state = state.copyWith(clearError: true);
+  }
+
+  void reportLoginError(String message) {
+    state = AuthState(
+      status: AuthStatus.unauthenticated,
+      error: message,
+    );
   }
 
   Future<void> logout() async {
