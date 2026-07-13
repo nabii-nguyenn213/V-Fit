@@ -767,6 +767,258 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
     );
   }
 
+  Widget _buildMemberDonutChartCard(MonthlyRevenueResponseModel report) {
+    final double vipVal = report.activeVipUsers.toDouble();
+    final double freeVal = report.freeUsers.toDouble();
+    final bool hasData = (vipVal + freeVal) > 0;
+
+    return Container(
+      height: 155,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xff1C1D24).withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'PHÂN TÍCH THÀNH VIÊN',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Row(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 3,
+                          centerSpaceRadius: 28,
+                          startDegreeOffset: -90,
+                          sections: hasData
+                              ? [
+                                  PieChartSectionData(
+                                    color: const Color(0xffFFB300),
+                                    value: vipVal,
+                                    title: '',
+                                    radius: 10,
+                                  ),
+                                  PieChartSectionData(
+                                    color: Colors.blueAccent,
+                                    value: freeVal,
+                                    title: '',
+                                    radius: 10,
+                                  ),
+                                ]
+                              : [
+                                  PieChartSectionData(
+                                    color: Colors.white12,
+                                    value: 1.0,
+                                    title: '',
+                                    radius: 10,
+                                  ),
+                                ],
+                        ),
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${report.totalUsers}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Text(
+                          'Tổng số',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 7,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLegendRow(
+                        color: const Color(0xffFFB300),
+                        label: 'Khách hàng VIP',
+                        count: report.activeVipUsers,
+                        percent: report.totalUsers > 0
+                            ? (report.activeVipUsers / report.totalUsers * 100)
+                                .toStringAsFixed(1)
+                            : '0.0',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildLegendRow(
+                        color: Colors.blueAccent,
+                        label: 'Thành viên thường',
+                        count: report.freeUsers,
+                        percent: report.totalUsers > 0
+                            ? (report.freeUsers / report.totalUsers * 100)
+                                .toStringAsFixed(1)
+                            : '0.0',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendRow({
+    required Color color,
+    required String label,
+    required int count,
+    required String percent,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 11,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        Text(
+          '$count ($percent%)',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBodyMetricsCard(MonthlyRevenueResponseModel report) {
+    final total = report.totalUsers;
+    final completed = report.onboardingCompletedUsers;
+    final percent = total > 0 ? (completed / total) : 0.0;
+    final percentStr = (percent * 100).toStringAsFixed(1);
+
+    return Container(
+      height: 155,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xff1C1D24).withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'THIẾT LẬP THỂ TRẠNG',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Row(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 72,
+                      height: 72,
+                      child: CircularProgressIndicator(
+                        value: percent,
+                        strokeWidth: 6,
+                        backgroundColor: Colors.white10,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.purpleAccent),
+                      ),
+                    ),
+                    Text(
+                      '$percentStr%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$completed / $total thành viên',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Đã hoàn thành nhập chỉ số BMI, chiều cao, cân nặng và mục tiêu thể chất ban đầu.',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 9,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRegistrationChart(MonthlyRevenueResponseModel report) {
     // 1. Filter trend items by selected date range
     List<RegistrationTrendItemModel> trend = report.registrationTrend;
@@ -1006,41 +1258,31 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: AppResponsive.pagePadding(context).copyWith(top: 16),
           children: [
-            // User Analysis Dashboard Grid
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 2.1,
-              children: [
-                _buildStatCard(
-                  title: 'TỔNG SỐ THÀNH VIÊN',
-                  value: '${report.totalUsers}',
-                  icon: Icons.people_alt,
-                  color: const Color(0xff00E676),
-                ),
-                _buildStatCard(
-                  title: 'KHÁCH HÀNG VIP',
-                  value: '${report.activeVipUsers}',
-                  icon: Icons.workspace_premium,
-                  color: const Color(0xffFFB300),
-                ),
-                _buildStatCard(
-                  title: 'THÀNH VIÊN THƯỜNG',
-                  value: '${report.freeUsers}',
-                  icon: Icons.person_outline,
-                  color: Colors.blueAccent,
-                ),
-                _buildStatCard(
-                  title: 'THIẾT LẬP THỂ TRẠNG',
-                  value: '${report.onboardingCompletedUsers} / ${report.totalUsers}',
-                  icon: Icons.fitbit_outlined,
-                  color: Colors.purpleAccent,
-                  subtitle: 'Đã hoàn thành',
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 700;
+                final donutChartCard = _buildMemberDonutChartCard(report);
+                final bodyMetricsCard = _buildBodyMetricsCard(report);
+
+                if (isWide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: donutChartCard),
+                      const SizedBox(width: 12),
+                      Expanded(child: bodyMetricsCard),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      donutChartCard,
+                      const SizedBox(height: 12),
+                      bodyMetricsCard,
+                    ],
+                  );
+                }
+              },
             ),
             const SizedBox(height: 24),
             _buildRegistrationChart(report),
