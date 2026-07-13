@@ -99,7 +99,7 @@ def main():
         
         tx_doc = {
             "userId": str(user["_id"]),
-            "plan": "VIP_MONTHLY",
+            "plan": "MONTHLY",
             "baseAmount": user_info["amount"],
             "discountAmount": 0,
             "finalAmount": user_info["amount"],

@@ -767,6 +767,185 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
     );
   }
 
+  Widget _buildRegistrationChart(MonthlyRevenueResponseModel report) {
+    // 1. Filter trend items by selected date range
+    List<RegistrationTrendItemModel> trend = report.registrationTrend;
+    if (_userStartDate != null) {
+      trend = trend.where((item) {
+        try {
+          final dt = DateTime.parse(item.date);
+          return dt.isAfter(_userStartDate!) || dt.isAtSameMomentAs(_userStartDate!);
+        } catch (_) {
+          return true;
+        }
+      }).toList();
+    }
+    if (_userEndDate != null) {
+      trend = trend.where((item) {
+        try {
+          final dt = DateTime.parse(item.date);
+          return dt.isBefore(_userEndDate!) || dt.isAtSameMomentAs(_userEndDate!);
+        } catch (_) {
+          return true;
+        }
+      }).toList();
+    }
+
+    // Keep only last 30 days if no date filter is selected to avoid cluttering
+    if (_userStartDate == null && _userEndDate == null && trend.length > 30) {
+      trend = trend.sublist(trend.length - 30);
+    }
+
+    if (trend.isEmpty) {
+      return Container(
+        height: 180,
+        decoration: BoxDecoration(
+          color: const Color(0xff1C1D24).withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: const Center(
+          child: Text(
+            'Không có dữ liệu đăng ký trong khoảng thời gian này.',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ),
+      );
+    }
+
+    // Get max count for Y axis scaling
+    final double maxCount = trend.map((e) => e.count.toDouble()).reduce((a, b) => a > b ? a : b);
+    final double maxY = maxCount == 0 ? 5.0 : (maxCount * 1.2).ceilToDouble();
+
+    // Map to spots
+    final List<FlSpot> spots = [];
+    for (int i = 0; i < trend.length; i++) {
+      spots.add(FlSpot(i.toDouble(), trend[i].count.toDouble()));
+    }
+
+    return Container(
+      height: 220,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xff1C1D24).withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'XU HƯỚNG ĐĂNG KÝ THÀNH VIÊN',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${trend.length} ngày ghi nhận',
+                style: const TextStyle(
+                  color: Color(0xff00E676),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Colors.white.withValues(alpha: 0.03),
+                    strokeWidth: 1,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 28,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          value.toInt().toString(),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            fontSize: 9,
+                            fontFamily: 'monospace',
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 20,
+                      interval: (trend.length / 5).clamp(1.0, 100.0),
+                      getTitlesWidget: (value, meta) {
+                        final idx = value.toInt();
+                        if (idx >= 0 && idx < trend.length) {
+                          final dateStr = trend[idx].date;
+                          final parts = dateStr.split('-');
+                          if (parts.length >= 3) {
+                            return SideTitleWidget(
+                              meta: meta,
+                              space: 4,
+                              child: Text(
+                                '${parts[2]}/${parts[1]}',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  fontSize: 8,
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                        return const SizedBox();
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: (spots.length - 1).toDouble(),
+                minY: 0,
+                maxY: maxY,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    color: const Color(0xff00E676),
+                    barWidth: 2,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: trend.length <= 15,
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: const Color(0xff00E676).withValues(alpha: 0.05),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildUsersTab(BuildContext context, AdminDashboardLoaded state) {
     final userResponse = state.users;
     final List<AdminUserModel> displayedUsers = userResponse != null ? userResponse.content : [];
@@ -828,6 +1007,8 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+            _buildRegistrationChart(report),
             const SizedBox(height: 24),
 
             // Filter Row & VIP Toggle

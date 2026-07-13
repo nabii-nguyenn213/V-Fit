@@ -10,5 +10,6 @@ public record MonthlyRevenueResponse(
     long activeVipUsers,
     long freeUsers,
     long onboardingCompletedUsers,
-    long onboardingPendingUsers
+    long onboardingPendingUsers,
+    List<RegistrationTrendItem> registrationTrend
 ) {}

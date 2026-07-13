@@ -7,6 +7,7 @@ class MonthlyRevenueResponseModel {
   final int freeUsers;
   final int onboardingCompletedUsers;
   final int onboardingPendingUsers;
+  final List<RegistrationTrendItemModel> registrationTrend;
 
   const MonthlyRevenueResponseModel({
     required this.lifetimeRevenue,
@@ -17,6 +18,7 @@ class MonthlyRevenueResponseModel {
     this.freeUsers = 0,
     this.onboardingCompletedUsers = 0,
     this.onboardingPendingUsers = 0,
+    this.registrationTrend = const [],
   });
 
   factory MonthlyRevenueResponseModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,10 @@ class MonthlyRevenueResponseModel {
       freeUsers: (json['freeUsers'] as num?)?.toInt() ?? 0,
       onboardingCompletedUsers: (json['onboardingCompletedUsers'] as num?)?.toInt() ?? 0,
       onboardingPendingUsers: (json['onboardingPendingUsers'] as num?)?.toInt() ?? 0,
+      registrationTrend: (json['registrationTrend'] as List?)
+              ?.map((item) => RegistrationTrendItemModel.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList() ??
+          [],
     );
   }
 }
@@ -340,6 +346,23 @@ class SearchMetricItemModel {
     return SearchMetricItemModel(
       keyword: json['keyword']?.toString() ?? '',
       searchCount: (json['searchCount'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class RegistrationTrendItemModel {
+  final String date;
+  final int count;
+
+  const RegistrationTrendItemModel({
+    required this.date,
+    required this.count,
+  });
+
+  factory RegistrationTrendItemModel.fromJson(Map<String, dynamic> json) {
+    return RegistrationTrendItemModel(
+      date: json['date']?.toString() ?? '',
+      count: (json['count'] as num?)?.toInt() ?? 0,
     );
   }
 }

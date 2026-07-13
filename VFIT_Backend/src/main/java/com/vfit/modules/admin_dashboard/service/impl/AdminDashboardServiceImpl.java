@@ -4,6 +4,7 @@ import com.vfit.modules.admin_dashboard.dto.MonthlyRevenueAggregationResult;
 import com.vfit.modules.admin_dashboard.dto.MonthlyRevenueItem;
 import com.vfit.modules.admin_dashboard.dto.MonthlyRevenueResponse;
 import com.vfit.modules.admin_dashboard.dto.OrderDto;
+import com.vfit.modules.admin_dashboard.dto.RegistrationTrendItem;
 import com.vfit.modules.admin_dashboard.entity.Order;
 import com.vfit.modules.admin_dashboard.repository.OrderRepository;
 import com.vfit.modules.admin_dashboard.service.AdminDashboardService;
@@ -11,6 +12,7 @@ import com.vfit.modules.subscription.document.PaymentTransaction;
 import com.vfit.modules.subscription.repository.PaymentTransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
 import com.vfit.modules.user.repository.UserRepository;
@@ -26,6 +28,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     private final OrderRepository orderRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final UserRepository userRepository;
+    private final MongoTemplate mongoTemplate;
 
     @Override
     public MonthlyRevenueResponse getMonthlyRevenueReport() {
@@ -97,7 +100,24 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             com.vfit.common.enums.RoleName.USER
         );
 
-        log.info("Financial report calculated. Lifetime Revenue: {} đ, Total Users: {}", lifetimeRevenue, totalUsers);
+        // Group and count user registrations by day for non-admin users
+        org.springframework.data.mongodb.core.aggregation.Aggregation userAggregation = org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation(
+            org.springframework.data.mongodb.core.aggregation.Aggregation.match(org.springframework.data.mongodb.core.query.Criteria.where("role").is(com.vfit.common.enums.RoleName.USER)),
+            org.springframework.data.mongodb.core.aggregation.Aggregation.project()
+                .andExpression("dateToString('%Y-%m-%d', createdAt, 'Asia/Ho_Chi_Minh')").as("date"),
+            org.springframework.data.mongodb.core.aggregation.Aggregation.group("date").count().as("count"),
+            org.springframework.data.mongodb.core.aggregation.Aggregation.project("count").and("_id").as("date"),
+            org.springframework.data.mongodb.core.aggregation.Aggregation.sort(org.springframework.data.domain.Sort.Direction.ASC, "date")
+        );
+
+        org.springframework.data.mongodb.core.aggregation.AggregationResults<RegistrationTrendItem> aggregationResults = mongoTemplate.aggregate(
+            userAggregation,
+            "users",
+            RegistrationTrendItem.class
+        );
+        List<RegistrationTrendItem> registrationTrend = aggregationResults.getMappedResults();
+
+        log.info("Financial report calculated. Lifetime Revenue: {} đ, Total Users: {}, Trend Items: {}", lifetimeRevenue, totalUsers, registrationTrend.size());
         return new MonthlyRevenueResponse(
             lifetimeRevenue,
             monthlyDetails,
@@ -106,7 +126,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             activeVipUsers,
             freeUsers,
             onboardingCompletedUsers,
-            onboardingPendingUsers
+            onboardingPendingUsers,
+            registrationTrend
         );
     }
 
