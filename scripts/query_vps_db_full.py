@@ -28,7 +28,7 @@ class CustomEncoder(json.JSONEncoder):
         return super().default(obj)
 
 def main():
-    uri = "mongodb://vfit_app:vfit_app_dev_password@127.0.0.1:27017/vfit?authSource=vfit"
+    uri = "mongodb://vfit_app:VFITAa123%40mongo_app@127.0.0.1:27017/vfit?authSource=vfit"
     client = pymongo.MongoClient(uri)
     db = client.vfit
     

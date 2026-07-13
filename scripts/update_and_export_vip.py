@@ -90,12 +90,12 @@ def main():
             
         paid_at_dt = datetime.strptime(user_info["time"], "%d/%m/%Y %H:%M:%S")
         
-        existing_tx = db.payment_transactions.find_one({
+        matching_txs = list(db.payment_transactions.find({
             "$or": [
                 {"sepayTransactionId": user_info["sepay_id"]},
                 {"paymentCode": user_info["desc"]}
             ]
-        })
+        }))
         
         tx_doc = {
             "userId": str(user["_id"]),
@@ -113,9 +113,15 @@ def main():
             "updatedAt": paid_at_dt
         }
         
-        if existing_tx:
+        if matching_txs:
+            primary_tx = matching_txs[0]
+            if len(matching_txs) > 1:
+                print(f"  [!] Found {len(matching_txs)} duplicate transactions for {email}. Consolidating...")
+                for extra_tx in matching_txs[1:]:
+                    db.payment_transactions.delete_one({"_id": extra_tx["_id"]})
+            
             db.payment_transactions.update_one(
-                {"_id": existing_tx["_id"]},
+                {"_id": primary_tx["_id"]},
                 {"$set": tx_doc}
             )
             print(f"  [+] Updated transaction record for {email}.")
