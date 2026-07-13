@@ -90,7 +90,8 @@ public class SecurityConfig {
                                 "/privacy.html",
                                 "/privacy-policy.html",
                                 "/assets/**",
-                                "/canvaskit/**")
+                                "/canvaskit/**",
+                                "/app-release.apk")
                         .permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
