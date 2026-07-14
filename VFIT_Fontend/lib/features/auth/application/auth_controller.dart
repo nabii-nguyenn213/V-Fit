@@ -48,8 +48,8 @@ class AuthState {
 
   bool get isAuthenticated =>
       (status == AuthStatus.active ||
-              status == AuthStatus.pendingOnboarding ||
-              status == AuthStatus.passwordSetupRequired) &&
+          status == AuthStatus.pendingOnboarding ||
+          status == AuthStatus.passwordSetupRequired) &&
       user != null;
   bool get isActive => status == AuthStatus.active && user != null;
   bool get requiresPasswordSetup =>
@@ -72,8 +72,7 @@ class AuthState {
       user: clearUser ? null : user ?? this.user,
       error: clearError ? null : error ?? this.error,
       loading: loading ?? this.loading,
-      trialWelcomePending:
-          trialWelcomePending ?? this.trialWelcomePending,
+      trialWelcomePending: trialWelcomePending ?? this.trialWelcomePending,
     );
   }
 }
@@ -197,8 +196,8 @@ class AuthController extends StateNotifier<AuthState> {
       status: user.requiresPasswordSetup
           ? AuthStatus.passwordSetupRequired
           : user.isOnboardingCompleted
-          ? AuthStatus.active
-          : AuthStatus.pendingOnboarding,
+              ? AuthStatus.active
+              : AuthStatus.pendingOnboarding,
       user: user,
       trialWelcomePending: showTrialWelcome && user.isVipTrial,
     );

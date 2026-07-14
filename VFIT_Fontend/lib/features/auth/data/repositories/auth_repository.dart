@@ -152,7 +152,8 @@ class AuthRepository {
 
   Future<void> clearUserDataCaches() async {
     try {
-      final workoutBox = await Hive.openBox<String>('personalized_workout_cache');
+      final workoutBox =
+          await Hive.openBox<String>('personalized_workout_cache');
       await workoutBox.clear();
       final mealBox = await Hive.openBox<dynamic>('ai_meal_plan_cache');
       await mealBox.clear();

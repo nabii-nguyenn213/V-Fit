@@ -38,7 +38,8 @@ class _SetupPasswordPageState extends ConsumerState<SetupPasswordPage> {
           .read(authControllerProvider.notifier)
           .setupPassword(_passwordController.text);
       if (mounted) {
-        AppFeedback.success('Đã thiết lập mật khẩu. Hãy tiếp tục thiết lập hồ sơ.');
+        AppFeedback.success(
+            'Đã thiết lập mật khẩu. Hãy tiếp tục thiết lập hồ sơ.');
       }
     } catch (error) {
       if (mounted) {

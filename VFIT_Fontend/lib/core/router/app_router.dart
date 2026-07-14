@@ -69,7 +69,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         '/reset-password',
       }.contains(path);
       final isPasswordSetupRoute = path == '/setup-password';
-      final isOnboardingRoute = path == '/onboarding' || path == '/onboarding/body-scan-realtime';
+      final isOnboardingRoute =
+          path == '/onboarding' || path == '/onboarding/body-scan-realtime';
       final isProtectedRoute = path.startsWith('/profile/edit') ||
           path.startsWith('/profile/change-password') ||
           path.startsWith('/admin');
