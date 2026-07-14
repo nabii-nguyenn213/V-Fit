@@ -27,7 +27,7 @@ if (Test-Path .env.production) {
 }
 
 # Run the jar in the foreground (so nssm can monitor it)
-java -jar target\\vfit-backend-0.1.0.jar
+java -Xms256m -Xmx512m -jar target\\vfit-backend-0.1.0.jar
 """
 
     print("[*] Creating run_backend.ps1 on VPS...")
