@@ -71,6 +71,9 @@ public class OnboardingGuardFilter extends OncePerRequestFilter {
         if (path.equals("/api/users/me") && "GET".equalsIgnoreCase(method)) {
             return true;
         }
+        if (path.equals("/api/users/password/setup") && "PUT".equalsIgnoreCase(method)) {
+            return true;
+        }
 
         // 3. Allow session endpoints to sign out / cancel onboarding
         if (path.startsWith("/api/users/sessions")) {
