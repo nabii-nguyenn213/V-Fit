@@ -114,6 +114,10 @@ for folder in folders:
             roll_keep 3
         }
     }
+    handle_path /ai-api/* {
+        reverse_proxy localhost:8002
+    }
+
     reverse_proxy localhost:8080 {
         header_up X-Forwarded-For {http.request.remote.host}
     }
