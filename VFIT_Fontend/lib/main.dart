@@ -64,7 +64,9 @@ class _VFitAppState extends ConsumerState<VFitApp> {
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (next.trialWelcomePending &&
-          previous?.trialWelcomePending != true) {
+          !next.requiresPasswordSetup &&
+          (previous?.trialWelcomePending != true ||
+              previous?.requiresPasswordSetup == true)) {
         _scheduleTrialWelcome();
       }
     });

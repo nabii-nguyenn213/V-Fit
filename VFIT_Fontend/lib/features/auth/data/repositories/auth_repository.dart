@@ -204,6 +204,25 @@ class AuthRepository {
     }
   }
 
+  Future<UserModel> setupPassword({
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _dio.put<dynamic>(
+        ApiEndpoints.setupPassword,
+        data: {
+          'newPassword': newPassword,
+        },
+      );
+      return ApiResponseParser.unwrap(
+        response,
+        (json) => UserModel.fromJson(Map<String, dynamic>.from(json as Map)),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
   Future<bool> hasValidLocalAccessToken() async {
     final tokens = await _tokenStorage.read();
     return tokens?.isAccessTokenValid == true;

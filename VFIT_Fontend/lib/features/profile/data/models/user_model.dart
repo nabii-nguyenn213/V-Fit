@@ -8,6 +8,7 @@ class UserModel {
     required this.role,
     required this.onboardingStatus,
     required this.active,
+    required this.requiresPasswordSetup,
     required this.xp,
     required this.level,
     required this.subscriptionStatus,
@@ -35,6 +36,7 @@ class UserModel {
   final RoleName role;
   final OnboardingStatus onboardingStatus;
   final bool active;
+  final bool requiresPasswordSetup;
   final int xp;
   final int level;
   final SubscriptionStatus subscriptionStatus;
@@ -125,6 +127,7 @@ class UserModel {
         json['onboardingStatus']?.toString(),
       ),
       active: json['active'] == true,
+      requiresPasswordSetup: json['requiresPasswordSetup'] == true,
       xp: (json['xp'] as num?)?.toInt() ?? 0,
       level: (json['level'] as num?)?.toInt() ?? 1,
       subscriptionStatus:

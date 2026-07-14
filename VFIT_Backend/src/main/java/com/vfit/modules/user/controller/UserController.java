@@ -2,6 +2,7 @@ package com.vfit.modules.user.controller;
 
 import com.vfit.common.api.ApiResponse;
 import com.vfit.modules.user.dto.request.ChangePasswordRequest;
+import com.vfit.modules.user.dto.request.SetupPasswordRequest;
 import com.vfit.modules.user.dto.request.UpdateProfileRequest;
 import com.vfit.modules.user.dto.response.BodyMetricResponse;
 import com.vfit.modules.user.dto.response.UserResponse;
@@ -52,6 +53,11 @@ public class UserController {
     public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         userService.changeCurrentUserPassword(request);
         return ApiResponse.message("Password changed");
+    }
+
+    @PutMapping("/password/setup")
+    public ApiResponse<UserResponse> setupPassword(@Valid @RequestBody SetupPasswordRequest request) {
+        return ApiResponse.ok(userService.setupCurrentUserPassword(request.getNewPassword()));
     }
 
     @GetMapping("/me/body-metrics")

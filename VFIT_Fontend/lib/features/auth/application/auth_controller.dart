@@ -21,7 +21,13 @@ final authControllerProvider =
   return controller;
 });
 
-enum AuthStatus { initial, unauthenticated, pendingOnboarding, active }
+enum AuthStatus {
+  initial,
+  unauthenticated,
+  passwordSetupRequired,
+  pendingOnboarding,
+  active,
+}
 
 class AuthState {
   const AuthState({
@@ -41,9 +47,13 @@ class AuthState {
   final bool trialWelcomePending;
 
   bool get isAuthenticated =>
-      (status == AuthStatus.active || status == AuthStatus.pendingOnboarding) &&
+      (status == AuthStatus.active ||
+              status == AuthStatus.pendingOnboarding ||
+              status == AuthStatus.passwordSetupRequired) &&
       user != null;
   bool get isActive => status == AuthStatus.active && user != null;
+  bool get requiresPasswordSetup =>
+      status == AuthStatus.passwordSetupRequired && user != null;
   bool get isPendingOnboarding =>
       status == AuthStatus.pendingOnboarding && user != null;
   bool get isLoading => loading || status == AuthStatus.initial;
@@ -184,12 +194,28 @@ class AuthController extends StateNotifier<AuthState> {
 
   void setUser(UserModel user, {bool showTrialWelcome = false}) {
     state = AuthState(
-      status: user.isOnboardingCompleted
+      status: user.requiresPasswordSetup
+          ? AuthStatus.passwordSetupRequired
+          : user.isOnboardingCompleted
           ? AuthStatus.active
           : AuthStatus.pendingOnboarding,
       user: user,
       trialWelcomePending: showTrialWelcome && user.isVipTrial,
     );
+  }
+
+  Future<void> setupPassword(String newPassword) async {
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final user = await _repository.setupPassword(newPassword: newPassword);
+      setUser(user, showTrialWelcome: state.trialWelcomePending);
+    } catch (error) {
+      state = state.copyWith(
+        loading: false,
+        error: error.toString(),
+      );
+      rethrow;
+    }
   }
 
   void consumeTrialWelcome() {

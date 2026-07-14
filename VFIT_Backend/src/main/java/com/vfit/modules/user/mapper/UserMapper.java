@@ -51,6 +51,7 @@ public class UserMapper {
                 .role(user.getRole() == RoleName.ADMIN ? RoleName.ADMIN : RoleName.USER)
                 .onboardingStatus(resolveOnboardingStatus(user))
                 .active(user.isActive())
+                .requiresPasswordSetup(User.requiresPasswordSetup(user.getPasswordHash()))
                 .xp(progress == null ? 0 : progress.getXp())
                 .level(progress == null ? 0 : progress.getLevel())
                 .subscriptionStatus(status)

@@ -23,6 +23,7 @@ public class UserResponse {
     private final RoleName role;
     private final OnboardingStatus onboardingStatus;
     private final boolean active;
+    private final boolean requiresPasswordSetup;
     private final int xp;
     private final int level;
     private final SubscriptionStatus subscriptionStatus;

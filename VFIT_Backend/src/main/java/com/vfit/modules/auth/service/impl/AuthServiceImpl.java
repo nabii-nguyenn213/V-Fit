@@ -318,7 +318,7 @@ public class AuthServiceImpl implements AuthService {
 
         return User.builder()
                 .email(profile.getEmail())
-                .passwordHash(passwordEncoder.encode(randomToken()))
+                .passwordHash(User.SOCIAL_PASSWORD_SETUP_REQUIRED)
                 .fullName(profile.getDisplayName())
                 .avatarUrl(profile.getAvatarUrl())
                 .role(RoleName.USER)

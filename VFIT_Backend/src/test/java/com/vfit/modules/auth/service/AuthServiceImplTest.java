@@ -2,7 +2,6 @@ package com.vfit.modules.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
@@ -184,7 +183,6 @@ class AuthServiceImplTest {
         when(userRepository.findBySocialIdentity("GOOGLE", "new-google-sub"))
                 .thenReturn(Optional.empty());
         when(userRepository.findByEmail("new-member@vfit.com")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(anyString())).thenReturn("generated-password-hash");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             if (user.getId() == null) {
@@ -221,6 +219,7 @@ class AuthServiceImplTest {
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
         User saved = captor.getValue();
+        assertThat(saved.getPasswordHash()).isEqualTo(User.SOCIAL_PASSWORD_SETUP_REQUIRED);
         assertThat(saved.getSubscription().getPlanCode()).isEqualTo("VIP_TRIAL");
         assertThat(saved.getSubscription().getPremiumUntil()).isAfter(java.time.Instant.now());
         verify(authMapper).toAuthResponse(eq(userResponse), any(TokenResponse.class), eq(true));
