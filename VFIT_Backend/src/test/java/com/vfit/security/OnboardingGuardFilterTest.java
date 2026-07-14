@@ -3,6 +3,7 @@ package com.vfit.security;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.vfit.common.enums.OnboardingStatus;
 import com.vfit.common.enums.RoleName;
 import com.vfit.modules.user.document.User;
@@ -16,7 +17,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 class OnboardingGuardFilterTest {
-    private final OnboardingGuardFilter filter = new OnboardingGuardFilter(new ObjectMapper());
+    private final OnboardingGuardFilter filter =
+            new OnboardingGuardFilter(new ObjectMapper().registerModule(new JavaTimeModule()));
 
     @AfterEach
     void clearSecurityContext() {
