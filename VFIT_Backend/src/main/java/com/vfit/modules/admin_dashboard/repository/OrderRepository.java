@@ -20,4 +20,7 @@ public interface OrderRepository extends MongoRepository<Order, String> {
 
     List<Order> findTop5ByStatusOrderByCreatedAtDesc(String status);
     org.springframework.data.domain.Page<Order> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
+    List<Order> findByStatusAndCreatedAtBetweenOrderByCreatedAtDesc(String status, java.time.Instant start, java.time.Instant end);
+    List<Order> findByUserIdOrderByCreatedAtDesc(String userId);
+    List<Order> findByUserIdAndStatusOrderByCreatedAtDesc(String userId, String status);
 }

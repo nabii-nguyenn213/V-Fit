@@ -17,6 +17,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -26,7 +27,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "users")
+@CompoundIndex(name = "admin_vip_filter_idx", def = "{'role': 1, 'subscription.status': 1, 'subscription.planCode': 1}")
 public class User {
+    public static final String SOCIAL_PASSWORD_SETUP_REQUIRED = "{VFIT_SOCIAL_PASSWORD_SETUP_REQUIRED}";
+
     @Id
     private String id;
     @Indexed(unique = true)
@@ -57,6 +61,10 @@ public class User {
     @LastModifiedDate
     private Instant updatedAt;
     private Instant deactivatedAt;
+
+    public static boolean requiresPasswordSetup(String passwordHash) {
+        return SOCIAL_PASSWORD_SETUP_REQUIRED.equals(passwordHash);
+    }
 
     @Getter
     @Setter

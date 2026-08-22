@@ -52,10 +52,8 @@ public class JwtPremiumHandshakeInterceptor implements HandshakeInterceptor {
             boolean isBodyAnalysis = "/ws/ai/body-analysis".equals(path);
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-            if (!(userDetails instanceof CustomUserDetails details)
-                    || (!isBodyAnalysis && details.getOnboardingStatus() != OnboardingStatus.COMPLETED)) {
-                log.warn("WebSocket handshake rejected: User details invalid or onboarding not completed (status: {}).",
-                        (userDetails instanceof CustomUserDetails d) ? d.getOnboardingStatus() : "null");
+            if (!(userDetails instanceof CustomUserDetails details)) {
+                log.warn("WebSocket handshake rejected: User details invalid.");
                 response.setStatusCode(HttpStatus.FORBIDDEN);
                 return false;
             }

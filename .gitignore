@@ -17,7 +17,10 @@ AndroidUserHome/
 # ── Backend build & runtime artifacts ──
 VFIT_Backend/target/
 VFIT_Backend/uploads/
+VFIT_Backend/web/
 VFIT_Backend/*.log
+AI-VFIT/V-Fit/run_ai.ps1
+AI-VFIT/V-Fit/RecommendationSystem/run_rec.ps1
 VFIT_Backend/*.err
 VFIT_Backend/*.out
 VFIT_Backend/jar-run.*
@@ -29,6 +32,11 @@ VFIT_Backend/backend-dev.log
 # ── Backend secrets (NEVER commit) ──
 VFIT_Backend/.env
 VFIT_Backend/secrets.local.md
+
+# Python virtual environments
+**/.venv/
+venv/
+.venv/
 
 # Android release signing secrets (NEVER commit)
 VFIT_Fontend/android/key.properties

@@ -71,6 +71,9 @@ public class OnboardingGuardFilter extends OncePerRequestFilter {
         if (path.equals("/api/users/me") && "GET".equalsIgnoreCase(method)) {
             return true;
         }
+        if (path.equals("/api/users/password/setup") && "PUT".equalsIgnoreCase(method)) {
+            return true;
+        }
 
         // 3. Allow session endpoints to sign out / cancel onboarding
         if (path.startsWith("/api/users/sessions")) {
@@ -86,6 +89,11 @@ public class OnboardingGuardFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/gamification") || 
             path.startsWith("/api/v1/checkin") || 
             path.startsWith("/api/progress/snaps")) {
+            return true;
+        }
+
+        // 6. Allow payments so pending users can upgrade to VIP
+        if (path.startsWith("/api/v1/payments") || path.startsWith("/api/payments")) {
             return true;
         }
 

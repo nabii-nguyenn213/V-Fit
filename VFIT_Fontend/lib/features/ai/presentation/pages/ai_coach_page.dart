@@ -5,7 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../presentation/theme/app_colors.dart';
+import '../../../../core/utils/enum_parsers.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../personalized_workout/domain/entities/personalized_workout.dart';
+import '../../../personalized_workout/data/repositories/personalized_workout_repository_impl.dart';
+import '../../../nutrition/data/repositories/nutrition_repository.dart';
 import '../providers/ai_coach_provider.dart';
 import '../providers/ai_workout_planner_provider.dart';
 import '../providers/ai_meal_planner_provider.dart';
@@ -29,6 +33,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
 
   // Meal Planner form state
   int _mealsPerDay = 3;
+  String _selectedDayKey = 'monday';
 
   // Food Scanner form state
   final TextEditingController _foodNameController = TextEditingController();
@@ -65,7 +70,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
         extendBodyBehindAppBar: false,
         appBar: AppBar(
           title: const Text(
-            'V-FIT AI Workspace',
+            'Không gian AI V-FIT',
             style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
           ),
           elevation: 0,
@@ -180,7 +185,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                 showDialog<void>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Reset workspace?'),
+                    title: const Text('Xác nhận làm mới?'),
                     content: const Text('Lịch sử chat và kế hoạch hiện tại sẽ được làm mới.'),
                     actions: [
                       TextButton(
@@ -196,7 +201,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                           Navigator.pop(context);
                         },
                         child: const Text(
-                          'Reset',
+                          'Làm mới',
                           style: TextStyle(color: Colors.red),
                         ),
                       ),
@@ -445,6 +450,145 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showOnboardingRequiredDialog(BuildContext pageContext) {
+    final isDark = AppColors.isDark(pageContext);
+    showDialog<void>(
+      context: pageContext,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF3B82F6),
+                          Color(0xFF1D4ED8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withValues(alpha: 0.4),
+                          blurRadius: 15,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.accessibility_new_rounded,
+                      color: Colors.white,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Yêu cầu hoàn thành thiết lập',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Chúng tôi cần bạn hoàn thành phân tích cơ thể để đưa ra những lộ trình chính xác nhất.',
+                    style: TextStyle(
+                      color: AppColors.textSecondaryOf(context),
+                      height: 1.5,
+                      fontSize: 13,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        pageContext.go('/onboarding');
+                      },
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF3B82F6),
+                              Color(0xFF1D4ED8),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withValues(alpha: 0.35),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'BẮT ĐẦU PHÂN TÍCH',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.8,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -819,8 +963,11 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                     onPressed: state.isLoading
                         ? null
                         : () {
+                            final isOnboardingCompleted = auth.user?.isOnboardingCompleted == true;
                             if (!isVip) {
                               _showVipUpgradeDialog(context);
+                            } else if (!isOnboardingCompleted) {
+                              _showOnboardingRequiredDialog(context);
                             } else {
                               ref.read(aiWorkoutPlannerProvider.notifier).generateWorkoutPlan(
                                     level: _selectedLevel,
@@ -1186,6 +1333,36 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
             ),
           ),
         ],
+        const SizedBox(height: 20),
+        AppButton.primary(
+          label: 'Đồng ý áp dụng lịch tập này',
+          icon: Icons.check_circle_rounded,
+          onPressed: () async {
+            try {
+              final personalizedWorkout = mapAiPlanToPersonalizedWorkout(plan);
+              await ref.read(personalizedWorkoutRepositoryProvider).applyAiPlan(personalizedWorkout);
+              ref.invalidate(isAiWorkoutPlanAppliedProvider);
+              
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã áp dụng lịch tập AI thành công!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Lỗi khi áp dụng lịch tập: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
       ],
     );
   }
@@ -1331,8 +1508,11 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                     onPressed: state.isLoading
                         ? null
                         : () {
+                            final isOnboardingCompleted = auth.user?.isOnboardingCompleted == true;
                             if (!isVip) {
                               _showVipUpgradeDialog(context);
+                            } else if (!isOnboardingCompleted) {
+                              _showOnboardingRequiredDialog(context);
                             } else {
                               ref.read(aiMealPlannerProvider.notifier).generateMealPlan(
                                     mealsPerDay: _mealsPerDay,
@@ -1419,17 +1599,60 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
   }
 
   Widget _buildMealPlanResult(Map<String, dynamic> plan) {
-    final dailyCal = plan['daily_calories'] ?? 0;
-    final protein = plan['protein_g'] ?? 0;
-    final carbs = plan['carbs_g'] ?? 0;
-    final fat = plan['fat_g'] ?? 0;
-    final meals = plan['meal_plan'] as Map<String, dynamic>? ?? {};
+    final weeklyPlan = plan['weekly_plan'] as Map<String, dynamic>? ?? {};
+    final dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    final dayLabels = {
+      'monday': 'Thứ 2',
+      'tuesday': 'Thứ 3',
+      'wednesday': 'Thứ 4',
+      'thursday': 'Thứ 5',
+      'friday': 'Thứ 6',
+      'saturday': 'Thứ 7',
+      'sunday': 'Chủ Nhật',
+    };
+
+    final selectedDayData = weeklyPlan[_selectedDayKey] as Map<String, dynamic>? ?? {};
+    final dailyCal = selectedDayData['daily_calories'] ?? 0;
+    final protein = selectedDayData['protein_g'] ?? 0;
+    final carbs = selectedDayData['carbs_g'] ?? 0;
+    final fat = selectedDayData['fat_g'] ?? 0;
+    final meals = selectedDayData['meal_plan'] as Map<String, dynamic>? ?? {};
     final note = plan['note'] ?? '';
     final isDark = AppColors.isDark(context);
+    final scheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Horizontal Day Selector
+        SizedBox(
+          height: 40,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: dayKeys.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final key = dayKeys[index];
+              final isSelected = _selectedDayKey == key;
+              return ChoiceChip(
+                label: Text(dayLabels[key]!),
+                selected: isSelected,
+                onSelected: (val) {
+                  if (val) {
+                    setState(() => _selectedDayKey = key);
+                  }
+                },
+                selectedColor: scheme.primary.withValues(alpha: 0.2),
+                checkmarkColor: scheme.primary,
+                labelStyle: TextStyle(
+                  color: isSelected ? scheme.primary : scheme.onSurfaceVariant,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -1446,7 +1669,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
           ),
           child: Column(
             children: [
-              const Text('Khuyến nghị Dinh dưỡng Hàng ngày', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text('Khuyến nghị ${dayLabels[_selectedDayKey]}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 12),
               Text(
                 '$dailyCal Kcal',
@@ -1458,9 +1681,9 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildMacroColumn('Protein', '${protein}g', Colors.orange),
-                  _buildMacroColumn('Carbs', '${carbs}g', Colors.blue),
-                  _buildMacroColumn('Fat', '${fat}g', Colors.red),
+                  _buildMacroColumn('Đạm', '${protein}g', Colors.orange),
+                  _buildMacroColumn('Carb', '${carbs}g', Colors.blue),
+                  _buildMacroColumn('Béo', '${fat}g', Colors.red),
                 ],
               ),
             ],
@@ -1550,6 +1773,38 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
             ),
           ),
         ],
+        const SizedBox(height: 20),
+        AppButton.primary(
+          label: 'Đồng ý áp dụng thực đơn tuần này',
+          icon: Icons.check_circle_rounded,
+          onPressed: () async {
+            try {
+              final repo = ref.read(nutritionRepositoryProvider);
+              await repo.saveAiMealPlan(plan);
+              await repo.applyAiMealPlan(true);
+              ref.invalidate(isAiMealPlanAppliedProvider);
+              ref.invalidate(aiMealPlanProvider);
+              
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã áp dụng thực đơn tuần AI thành công!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Lỗi khi áp dụng thực đơn: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
       ],
     );
   }
@@ -1760,6 +2015,117 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
           ),
         ],
       ),
+    );
+  }
+
+  PersonalizedWorkout mapAiPlanToPersonalizedWorkout(Map<String, dynamic> plan) {
+    final weeklySchedule = plan['weekly_schedule'] as Map<String, dynamic>? ?? {};
+    final schedule = <int, DaySchedule>{};
+
+    for (int i = 1; i <= 7; i++) {
+      final dayKey = 'day_$i';
+      final dayData = weeklySchedule[dayKey] as Map<String, dynamic>?;
+
+      if (dayData != null) {
+        final focus = dayData['focus']?.toString() ?? 'Nghỉ ngơi';
+        final warmUp = List<String>.from(dayData['warm_up'] ?? []);
+        final mainWorkout = List<String>.from(dayData['main_workout'] ?? []);
+        final coolDown = List<String>.from(dayData['cool_down'] ?? []);
+
+        final isRest = mainWorkout.isEmpty || focus.toLowerCase().contains('nghỉ') || focus.toLowerCase() == 'nghi';
+
+        final exercises = <ExerciseItemMetadata>[];
+        
+        for (final item in warmUp) {
+          exercises.add(parseExerciseString(item, prefix: 'warm-up'));
+        }
+        for (final item in mainWorkout) {
+          exercises.add(parseExerciseString(item, prefix: 'main'));
+        }
+        for (final item in coolDown) {
+          exercises.add(parseExerciseString(item, prefix: 'cool-down'));
+        }
+
+        schedule[i] = DaySchedule(
+          dayName: focus,
+          dayType: focus,
+          restDay: isRest,
+          exercises: exercises,
+          cardioAfterWorkout: coolDown.isNotEmpty ? coolDown.join(', ') : null,
+        );
+      } else {
+        schedule[i] = const DaySchedule(
+          dayName: 'Nghỉ ngơi',
+          dayType: 'Nghỉ ngơi',
+          restDay: true,
+          exercises: [],
+        );
+      }
+    }
+
+    final goalStr = plan['goal']?.toString() ?? '';
+    final goalType = goalStr.contains('Giảm') || goalStr.contains('giảm')
+        ? GoalType.loseWeight
+        : GoalType.gainMuscle;
+
+    final nutrition = const NutritionRecovery(
+      caloriesTarget: '2000',
+      proteinTarget: '130',
+      weightTarget: '70',
+      sleepTarget: '8',
+      waterTarget: '2.5',
+    );
+
+    return PersonalizedWorkout(
+      hasGoal: true,
+      goalType: goalType,
+      schedule: schedule,
+      nutritionRecovery: nutrition,
+      rules: const WorkoutRules(
+        compound: RuleDetail(reps: '8-12', rest: '2-3 mins', rir: '1-2'),
+        isolation: RuleDetail(reps: '10-15', rest: '1-2 mins', rir: '0-1'),
+      ),
+    );
+  }
+
+  ExerciseItemMetadata parseExerciseString(String item, {required String prefix}) {
+    final colonIndex = item.indexOf(':');
+    String name = item;
+    String details = '';
+    
+    if (colonIndex != -1) {
+      name = item.substring(0, colonIndex).trim();
+      details = item.substring(colonIndex + 1).trim();
+    }
+
+    int sets = 3;
+    String reps = '10-12';
+    
+    final setsMatch = RegExp(r'(\d+)\s*(sets|hiệp|x)').firstMatch(details.toLowerCase()) ??
+                      RegExp(r'(\d+)\s*(sets|hiệp|x)').firstMatch(name.toLowerCase());
+    if (setsMatch != null) {
+      sets = int.tryParse(setsMatch.group(1) ?? '') ?? 3;
+    }
+
+    final repsMatch = RegExp(r'x\s*([\d\-\–\s]+)\s*(reps|lần|cái)?').firstMatch(details.toLowerCase()) ??
+                      RegExp(r'([\d\-\–\s]+)\s*(reps|lần|cái)').firstMatch(details.toLowerCase());
+    if (repsMatch != null) {
+      reps = repsMatch.group(1)?.trim() ?? '10-12';
+    }
+
+    final cleanName = name
+        .replaceAll(RegExp(r'[^\w\s\-]'), '')
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '-');
+    
+    final exerciseId = cleanName.isEmpty ? 'exercise' : cleanName;
+
+    return ExerciseItemMetadata(
+      exerciseId: exerciseId,
+      sets: sets,
+      reps: reps,
+      notes: name,
     );
   }
 }

@@ -10,6 +10,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/register_otp_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
+import '../../features/auth/presentation/pages/setup_password_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/deactivated_page.dart';
 import '../../features/ai/presentation/pages/ai_body_analysis_page.dart';
@@ -67,7 +68,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         '/forgot-password',
         '/reset-password',
       }.contains(path);
-      final isOnboardingRoute = path == '/onboarding' || path == '/onboarding/body-scan-realtime';
+      final isPasswordSetupRoute = path == '/setup-password';
+      final isOnboardingRoute =
+          path == '/onboarding' || path == '/onboarding/body-scan-realtime';
       final isProtectedRoute = path.startsWith('/profile/edit') ||
           path.startsWith('/profile/change-password') ||
           path.startsWith('/admin');
@@ -83,11 +86,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      if (!auth.isAuthenticated && (isProtectedRoute || isOnboardingRoute)) {
+      if (auth.requiresPasswordSetup) {
+        return isPasswordSetupRoute ? null : '/setup-password';
+      }
+
+      if (!auth.isAuthenticated &&
+          (isProtectedRoute || isOnboardingRoute || isPasswordSetupRoute)) {
         return '/register';
       }
 
       if (auth.isAuthenticated && isAuthRoute) {
+        return auth.isPendingOnboarding ? '/onboarding' : '/home';
+      }
+
+      if (auth.isAuthenticated && isPasswordSetupRoute) {
         return auth.isPendingOnboarding ? '/onboarding' : '/home';
       }
 
@@ -96,13 +108,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (isSplash) {
+        if (auth.requiresPasswordSetup) {
+          return '/setup-password';
+        }
         if (auth.isPendingOnboarding) {
           return '/onboarding';
         }
         if (auth.isActive) {
           return '/home';
         }
-        return '/login';
+        return '/home';
       }
 
       if (path.startsWith('/admin') && auth.user?.role != RoleName.admin) {
@@ -136,6 +151,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reset-password',
         builder: (context, state) => const ResetPasswordPage(),
+      ),
+      GoRoute(
+        path: '/setup-password',
+        builder: (context, state) => const SetupPasswordPage(),
       ),
       GoRoute(
         path: '/onboarding',

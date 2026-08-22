@@ -131,10 +131,12 @@ class ProfilePage extends ConsumerWidget {
                       vertical: AppSpacing.x1,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryOf(context).withValues(alpha: 0.10),
+                      color:
+                          AppColors.primaryOf(context).withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
-                        color: AppColors.primaryOf(context).withValues(alpha: 0.24),
+                        color: AppColors.primaryOf(context)
+                            .withValues(alpha: 0.24),
                       ),
                     ),
                     child: Text(
@@ -169,51 +171,15 @@ class ProfilePage extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         if (user.isVipActive) VipActiveStatusCard(user: user),
-        if (!user.isVipActive || user.canRenewVip) ...[
+        if (user.canPurchasePremium) ...[
           const SizedBox(height: 16),
           VipPromotionCard(user: user),
         ],
         const SizedBox(height: 16),
-        bodyMetrics.when(
-          data: (metric) => AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Chỉ số cơ thể',
-                  style: AppTypography.labelFor(context),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
-                  children: [
-                    _Value(
-                      label: 'Chiều cao',
-                      value: '${metric.heightCm ?? '-'} cm',
-                    ),
-                    _Value(
-                      label: 'Cân nặng',
-                      value: '${metric.weightKg ?? '-'} kg',
-                    ),
-                    _Value(
-                      label: 'Chỉ số BMI',
-                      value: metric.bmi?.toStringAsFixed(1) ?? '-',
-                    ),
-                    _Value(
-                      label: 'Tỷ lệ mỡ',
-                      value: '${metric.bodyFatPercent ?? '-'}%',
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          loading: () => const AppCard(child: LinearProgressIndicator()),
-          error: (error, _) => ErrorView(
-            message: error.toString(),
-            onRetry: () => ref.invalidate(bodyMetricsProvider),
-          ),
+        ProfileBodyMetricsSection(
+          isOnboardingCompleted: user.isOnboardingCompleted,
+          bodyMetrics: bodyMetrics,
+          onRetry: () => ref.invalidate(bodyMetricsProvider),
         ),
         const SizedBox(height: 16),
         _ProfileAction(
@@ -294,6 +260,84 @@ class ProfilePage extends ConsumerWidget {
   }
 }
 
+class ProfileBodyMetricsSection extends StatelessWidget {
+  const ProfileBodyMetricsSection({
+    super.key,
+    required this.isOnboardingCompleted,
+    required this.bodyMetrics,
+    required this.onRetry,
+  });
+
+  final bool isOnboardingCompleted;
+  final AsyncValue<BodyMetricModel> bodyMetrics;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isOnboardingCompleted) {
+      return const PendingOnboardingPlaceholder(
+        title: 'Hoàn tất thiết lập ban đầu',
+        message:
+            'Hiện tại bạn chưa hoàn tất bước thiết lập. Hãy nhấp vào đây để hoàn thành, để chúng tôi chuẩn bị cho bạn một kế hoạch chi tiết nhất nhé.',
+        actionLabel: 'Hoàn tất thiết lập',
+      );
+    }
+
+    return bodyMetrics.when(
+      data: (metric) {
+        if (!metric.hasRequiredOnboardingMetrics) {
+          return const PendingOnboardingPlaceholder(
+            title: 'Hãy điền đầy đủ thông tin để tiếp tục',
+            message:
+                'Hệ thống chưa có đủ chỉ số cơ thể của bạn. Hãy cập nhật chiều cao và cân nặng để V-FIT cá nhân hóa lộ trình chính xác hơn.',
+            actionLabel: 'Cập nhật thông tin',
+          );
+        }
+
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Chỉ số cơ thể',
+                style: AppTypography.labelFor(context),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 16,
+                runSpacing: 12,
+                children: [
+                  _Value(
+                    label: 'Chiều cao',
+                    value: '${metric.heightCm ?? '-'} cm',
+                  ),
+                  _Value(
+                    label: 'Cân nặng',
+                    value: '${metric.weightKg ?? '-'} kg',
+                  ),
+                  _Value(
+                    label: 'Chỉ số BMI',
+                    value: metric.bmi?.toStringAsFixed(1) ?? '-',
+                  ),
+                  _Value(
+                    label: 'Tỷ lệ mỡ',
+                    value: '${metric.bodyFatPercent ?? '-'}%',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const AppCard(child: LinearProgressIndicator()),
+      error: (error, _) => ErrorView(
+        message: error.toString(),
+        onRetry: onRetry,
+      ),
+    );
+  }
+}
+
 class VipPromotionCard extends ConsumerStatefulWidget {
   const VipPromotionCard({super.key, this.user});
 
@@ -308,8 +352,10 @@ class _VipPromotionCardState extends ConsumerState<VipPromotionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isRenewal =
-        widget.user?.isVipActive == true && widget.user?.canRenewVip == true;
+    final isTrialUpgrade = widget.user?.isVipTrial == true;
+    final isRenewal = !isTrialUpgrade &&
+        widget.user?.isVipActive == true &&
+        widget.user?.canRenewVip == true;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,12 +389,26 @@ class _VipPromotionCardState extends ConsumerState<VipPromotionCard> {
             ],
           ),
           const SizedBox(height: AppSpacing.x3),
+          if (isTrialUpgrade) ...[
+            Text(
+              'Bạn đang dùng thử VIP miễn phí. Bạn có thể nâng cấp lên gói tháng hoặc năm bất kỳ lúc nào.',
+              style: AppTypography.bodyFor(
+                context,
+                color: AppColors.textSecondaryOf(context),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.x3),
+          ],
           const VipPlanSelector(),
           const SizedBox(height: AppSpacing.x4),
           const VipBenefitsTable(),
           const SizedBox(height: AppSpacing.x4),
           AppButton.add(
-            label: isRenewal ? 'Gia hạn Premium' : 'Premium',
+            label: isTrialUpgrade
+                ? 'Nâng cấp VIP ngay'
+                : isRenewal
+                    ? 'Gia hạn Premium'
+                    : 'Premium',
             fullWidth: true,
             loading: _creating,
             onPressed: _creating ? null : _startVipPayment,
@@ -361,13 +421,13 @@ class _VipPromotionCardState extends ConsumerState<VipPromotionCard> {
   Future<void> _startVipPayment() async {
     final user = ref.read(authControllerProvider).user;
     if (user == null) {
-      AppFeedback.info('Vui long dang nhap de nap VIP.');
+      AppFeedback.info('Vui lòng đăng nhập để nạp VIP.');
       if (mounted) {
         context.go('/login');
       }
       return;
     }
-    if (user.isVipActive && !user.canRenewVip) {
+    if (!user.canPurchasePremium) {
       AppFeedback.info(
         'VIP đang hoạt động. Bạn có thể gia hạn khi còn dưới 3 ngày.',
       );
@@ -442,16 +502,10 @@ class VipActiveStatusCard extends StatelessWidget {
     final accent = isExpiringSoon ? AppColors.warning : AppColors.success;
     final plan =
         _formatPremiumPlan(user.premiumPlan ?? user.subscriptionPlanCode);
-    final isMonthlyPlan =
-        _isMonthlyPlan(user.premiumPlan ?? user.subscriptionPlanCode);
+    final isYearlyPlan =
+        _isYearlyPlan(user.premiumPlan ?? user.subscriptionPlanCode);
     final dateFormat = DateFormat('dd/MM/yyyy');
-    final expiredAtText = expiredAt == null
-        ? 'Ngày hết hạn đang được đồng bộ'
-        : 'Hết hạn: ${dateFormat.format(expiredAt.toLocal())}';
-    final headline =
-        isMonthlyPlan ? 'Còn $remainingDays ngày VIP' : expiredAtText;
-    final supportingText =
-        isMonthlyPlan ? expiredAtText : 'Gói VIP năm đang hoạt động';
+    final headline = 'Còn $remainingDays ngày VIP';
 
     return Container(
       padding: AppResponsive.cardPadding(context),
@@ -467,7 +521,8 @@ class VipActiveStatusCard extends StatelessWidget {
           ],
           stops: [0.0, 0.7, 1.0],
         ),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.2),
+        border:
+            Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: accent.withValues(alpha: 0.14),
@@ -530,11 +585,13 @@ class VipActiveStatusCard extends StatelessWidget {
             headline,
             style: AppTypography.metric(color: Colors.white),
           ),
-          if (!isMonthlyPlan) ...[
+          if (isYearlyPlan) ...[
             const SizedBox(height: AppSpacing.x2),
             Text(
-              supportingText,
-              style: AppTypography.body(color: Colors.white.withValues(alpha: 0.9)),
+              'Gói VIP năm đang hoạt động',
+              style: AppTypography.body(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
             ),
           ],
           const SizedBox(height: AppSpacing.x4),
@@ -609,14 +666,15 @@ class VipActiveStatusCard extends StatelessWidget {
     return switch (value) {
       'VIP_MONTHLY' || 'MONTHLY' => 'MONTHLY',
       'VIP_YEARLY' || 'YEARLY' => 'YEARLY',
+      'VIP_TRIAL' => 'Vip Trial',
       final plan? when plan.isNotEmpty => plan,
       _ => 'VIP',
     };
   }
 
-  static bool _isMonthlyPlan(String? value) {
+  static bool _isYearlyPlan(String? value) {
     return switch (value) {
-      'VIP_MONTHLY' || 'MONTHLY' => true,
+      'VIP_YEARLY' || 'YEARLY' => true,
       _ => false,
     };
   }
@@ -1121,7 +1179,7 @@ class _PremiumPaymentDialogState extends ConsumerState<_PremiumPaymentDialog> {
           return;
         }
         unawaited(
-          _completePayment('Da nhan thanh toan. VIP da duoc kich hoat.'),
+          _completePayment('Đã nhận thanh toán. VIP đã được kích hoạt.'),
         );
       },
       onError: (_) {
@@ -1143,7 +1201,7 @@ class _PremiumPaymentDialogState extends ConsumerState<_PremiumPaymentDialog> {
       setState(() => _status = result.status);
       if (result.premiumUnlocked ||
           result.status == PremiumPaymentStatus.paid) {
-        await _completePayment('VIP da duoc kich hoat.');
+        await _completePayment('VIP đã được kích hoạt.');
       }
     } catch (_) {
       // Polling is best-effort; users can still press the manual check button.
@@ -1350,122 +1408,144 @@ class _ThemeSelector extends StatelessWidget {
           horizontal: AppSpacing.x4,
           vertical: 12,
         ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.primaryOf(context).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppRadius.input),
-            ),
-            child: Icon(Icons.contrast, color: AppColors.primaryOf(context)),
-          ),
-          const SizedBox(width: AppSpacing.x3),
-          Expanded(
-            child: Text(
-              'Giao diện',
-              style: AppTypography.headerMediumFor(context),
-            ),
-          ),
-          GestureDetector(
-            onTap: () => onChanged(value == ThemeMode.light ? ThemeMode.dark : ThemeMode.light),
-            child: Container(
-              width: 110,
-              height: 44,
-              padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: AppColors.isDark(context) 
-                    ? Colors.black.withValues(alpha: 0.5) 
-                    : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(
-                  color: AppColors.isDark(context)
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.05),
-                ),
+                color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.input),
               ),
-              child: Stack(
-                children: [
-                  AnimatedAlign(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
-                    alignment: value == ThemeMode.light
-                        ? Alignment.centerLeft
-                        : Alignment.centerRight,
-                    child: Container(
-                      width: 50,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.isDark(context)
-                            ? Colors.white.withValues(alpha: 0.15)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(99),
-                        boxShadow: AppColors.isDark(context) ? [] : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+              child: Icon(Icons.contrast, color: AppColors.primaryOf(context)),
+            ),
+            const SizedBox(width: AppSpacing.x3),
+            Expanded(
+              child: Text(
+                'Giao diện',
+                style: AppTypography.headerMediumFor(context),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => onChanged(
+                value == ThemeMode.light ? ThemeMode.dark : ThemeMode.light,
+              ),
+              child: Container(
+                width: 110,
+                height: 44,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.isDark(context)
+                      ? Colors.black.withValues(alpha: 0.5)
+                      : Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(
+                    color: AppColors.isDark(context)
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    AnimatedAlign(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
+                      alignment: value == ThemeMode.light
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+                      child: Container(
+                        width: 50,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.isDark(context)
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(99),
+                          boxShadow: AppColors.isDark(context)
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                        ),
                       ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 300),
-                            style: TextStyle(
-                              color: value == ThemeMode.light
-                                  ? (AppColors.isDark(context) ? Colors.white : Colors.black)
-                                  : (AppColors.isDark(context) ? Colors.white54 : Colors.black54),
-                              fontWeight: value == ThemeMode.light ? FontWeight.w800 : FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.light_mode_rounded, size: 14),
-                                SizedBox(width: 4),
-                                Text('Sáng'),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 300),
-                            style: TextStyle(
-                              color: value == ThemeMode.dark
-                                  ? (AppColors.isDark(context) ? Colors.white : Colors.black)
-                                  : (AppColors.isDark(context) ? Colors.white54 : Colors.black54),
-                              fontWeight: value == ThemeMode.dark ? FontWeight.w800 : FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.dark_mode_rounded, size: 14),
-                                SizedBox(width: 4),
-                                Text('Tối'),
-                              ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 300),
+                              style: TextStyle(
+                                color: value == ThemeMode.light
+                                    ? (AppColors.isDark(context)
+                                        ? Colors.white
+                                        : Colors.black)
+                                    : (AppColors.isDark(context)
+                                        ? Colors.white54
+                                        : Colors.black54),
+                                fontWeight: value == ThemeMode.light
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.light_mode_rounded, size: 14),
+                                    SizedBox(width: 4),
+                                    Text('Sáng'),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        Expanded(
+                          child: Center(
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 300),
+                              style: TextStyle(
+                                color: value == ThemeMode.dark
+                                    ? (AppColors.isDark(context)
+                                        ? Colors.white
+                                        : Colors.black)
+                                    : (AppColors.isDark(context)
+                                        ? Colors.white54
+                                        : Colors.black54),
+                                fontWeight: value == ThemeMode.dark
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.dark_mode_rounded, size: 14),
+                                    SizedBox(width: 4),
+                                    Text('Tối'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }

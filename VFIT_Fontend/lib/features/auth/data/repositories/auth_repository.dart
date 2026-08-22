@@ -152,7 +152,8 @@ class AuthRepository {
 
   Future<void> clearUserDataCaches() async {
     try {
-      final workoutBox = await Hive.openBox<String>('personalized_workout_cache');
+      final workoutBox =
+          await Hive.openBox<String>('personalized_workout_cache');
       await workoutBox.clear();
       final mealBox = await Hive.openBox<dynamic>('ai_meal_plan_cache');
       await mealBox.clear();
@@ -198,6 +199,25 @@ class AuthRepository {
           'resetToken': resetToken.trim(),
           'newPassword': newPassword,
         },
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  Future<UserModel> setupPassword({
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _dio.put<dynamic>(
+        ApiEndpoints.setupPassword,
+        data: {
+          'newPassword': newPassword,
+        },
+      );
+      return ApiResponseParser.unwrap(
+        response,
+        (json) => UserModel.fromJson(Map<String, dynamic>.from(json as Map)),
       );
     } on DioException catch (error) {
       throw ApiException.fromDio(error);

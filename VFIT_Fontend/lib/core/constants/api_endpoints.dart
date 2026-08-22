@@ -21,8 +21,10 @@ class ApiEndpoints {
   static const onboardingProfile = '/api/v1/users/onboarding/profile';
   static const onboardingBodyScan = '/api/v1/users/onboarding';
   static const onboardingRealtime = '/api/v1/users/onboarding/realtime';
+  static const onboardingReset = '/api/v1/users/onboarding/reset';
   static const avatar = '/api/users/me/avatar';
   static const changePassword = '/api/users/change-password';
+  static const setupPassword = '/api/users/password/setup';
   static const bodyMetrics = '/api/users/me/body-metrics';
 
   static const exercises = '/api/exercises';

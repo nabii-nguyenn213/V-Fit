@@ -21,10 +21,19 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     Page<User> findByRole(RoleName role, Pageable pageable);
 
+    @Query("{ 'role': 'USER', 'subscription.status': 'ACTIVE', 'subscription.planCode': { $in: ['VIP_MONTHLY', 'VIP_YEARLY'] } }")
+    Page<User> findActiveVipUsers(Pageable pageable);
+
     @Query(value = "{ 'subscription.status': ?0, 'subscription.planCode': ?1 }", count = true)
     long countBySubscriptionStatusAndPlanCode(SubscriptionStatus status, String planCode);
 
     List<User> findByActiveFalseAndDeactivatedAtBefore(Instant threshold);
+
+    long countByRole(RoleName role);
+
+    long countByOnboardingStatusAndRole(com.vfit.common.enums.OnboardingStatus onboardingStatus, RoleName role);
+
+    long countBySubscriptionStatusAndRole(SubscriptionStatus status, RoleName role);
 
     void deleteByActiveFalseAndCreatedAtBefore(Instant threshold);
 }

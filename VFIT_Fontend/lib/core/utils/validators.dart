@@ -1,9 +1,9 @@
 class Validators {
   const Validators._();
 
-  static String? required(String? value, {String label = 'Field'}) {
+  static String? required(String? value, {String label = 'Trường này'}) {
     if (value == null || value.trim().isEmpty) {
-      return '$label is required';
+      return '$label không được để trống';
     }
     return null;
   }
@@ -16,25 +16,25 @@ class Validators {
     final normalized = value!.trim();
     final isValid = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(normalized);
     if (!isValid) {
-      return 'Enter a valid email';
+      return 'Vui lòng nhập địa chỉ email hợp lệ';
     }
     return null;
   }
 
   static String? password(String? value) {
-    final requiredMessage = required(value, label: 'Password');
+    final requiredMessage = required(value, label: 'Mật khẩu');
     if (requiredMessage != null) {
       return requiredMessage;
     }
     final password = value!;
     if (password.length < 8) {
-      return 'Password must be at least 8 characters';
+      return 'Mật khẩu phải dài ít nhất 8 ký tự';
     }
     if (!RegExp('[A-Z]').hasMatch(password)) {
-      return 'Password must contain one uppercase letter';
+      return 'Mật khẩu phải chứa ít nhất một chữ hoa';
     }
     if (!RegExp(r'\d').hasMatch(password)) {
-      return 'Password must contain one number';
+      return 'Mật khẩu phải chứa ít nhất một chữ số';
     }
     return null;
   }
@@ -50,10 +50,10 @@ class Validators {
     }
     final parsed = double.tryParse(value.trim());
     if (parsed == null) {
-      return '$label must be a number';
+      return '$label phải là một số';
     }
     if (parsed < min || parsed > max) {
-      return '$label must be between $min and $max';
+      return '$label phải nằm trong khoảng từ $min đến $max';
     }
     return null;
   }

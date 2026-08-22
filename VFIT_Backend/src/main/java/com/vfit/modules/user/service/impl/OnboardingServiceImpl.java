@@ -224,4 +224,13 @@ public class OnboardingServiceImpl implements OnboardingService {
     private Double firstNonNull(Double primary, Double fallback) {
         return primary != null ? primary : fallback;
     }
+
+    @Override
+    @CacheEvict(value = "personalized_workouts", key = "T(com.vfit.common.util.SecurityUtil).requireCurrentUserId()")
+    public UserResponse resetOnboarding() {
+        User user = currentUser();
+        user.setOnboardingStatus(OnboardingStatus.PENDING);
+        user.setGoalType(null);
+        return userMapper.toResponse(userRepository.save(user));
+    }
 }

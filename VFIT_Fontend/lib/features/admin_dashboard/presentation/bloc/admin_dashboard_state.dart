@@ -21,12 +21,28 @@ class AdminDashboardLoaded extends AdminDashboardState {
   final bool hasMore;
   final bool isLoadingMore;
 
+  // New fields for User Monitoring, Traffic Logging, and Searches
+  final PaginatedUserResponseModel? users;
+  final bool onlyVipFilter;
+  final bool isUserLoading;
+  final TrafficMetricsResponseModel? traffic;
+  final bool isTrafficLoading;
+  final List<SearchMetricItemModel>? searches;
+  final bool isSearchesLoading;
+
   const AdminDashboardLoaded({
     required this.report,
     required this.paginatedTransactions,
     this.currentPage = 0,
     this.hasMore = true,
     this.isLoadingMore = false,
+    this.users,
+    this.onlyVipFilter = false,
+    this.isUserLoading = false,
+    this.traffic,
+    this.isTrafficLoading = false,
+    this.searches,
+    this.isSearchesLoading = false,
   });
 
   AdminDashboardLoaded copyWith({
@@ -35,6 +51,13 @@ class AdminDashboardLoaded extends AdminDashboardState {
     int? currentPage,
     bool? hasMore,
     bool? isLoadingMore,
+    PaginatedUserResponseModel? users,
+    bool? onlyVipFilter,
+    bool? isUserLoading,
+    TrafficMetricsResponseModel? traffic,
+    bool? isTrafficLoading,
+    List<SearchMetricItemModel>? searches,
+    bool? isSearchesLoading,
   }) {
     return AdminDashboardLoaded(
       report: report ?? this.report,
@@ -42,6 +65,13 @@ class AdminDashboardLoaded extends AdminDashboardState {
       currentPage: currentPage ?? this.currentPage,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      users: users ?? this.users,
+      onlyVipFilter: onlyVipFilter ?? this.onlyVipFilter,
+      isUserLoading: isUserLoading ?? this.isUserLoading,
+      traffic: traffic ?? this.traffic,
+      isTrafficLoading: isTrafficLoading ?? this.isTrafficLoading,
+      searches: searches ?? this.searches,
+      isSearchesLoading: isSearchesLoading ?? this.isSearchesLoading,
     );
   }
 }

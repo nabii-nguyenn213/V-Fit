@@ -81,10 +81,15 @@ class TokenResponse {
 }
 
 class AuthResponse {
-  const AuthResponse({required this.user, required this.tokens});
+  const AuthResponse({
+    required this.user,
+    required this.tokens,
+    this.newRegistration = false,
+  });
 
   final UserModel user;
   final TokenResponse tokens;
+  final bool newRegistration;
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
@@ -92,6 +97,7 @@ class AuthResponse {
       tokens: TokenResponse.fromJson(
         Map<String, dynamic>.from(json['tokens'] as Map),
       ),
+      newRegistration: json['newRegistration'] == true,
     );
   }
 }

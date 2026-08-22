@@ -98,7 +98,7 @@ bd close <id>         # Complete work
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read
-`specs/009-integrate-ai-planners/plan.md`.
+`specs/010-deploy-play-store/plan.md`.
 <!-- SPECKIT END -->
 
 ## Deploy Architecture Rules

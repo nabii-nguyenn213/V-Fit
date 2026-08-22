@@ -93,7 +93,10 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         // Issue tokens and return AuthResponse
-        return authMapper.toAuthResponse(userMapper.toResponse(user), issueTokens(user));
+        return authMapper.toAuthResponse(
+                userMapper.toResponse(user),
+                issueTokens(user),
+                true);
     }
 
     @Override
@@ -133,13 +136,17 @@ public class AuthServiceImpl implements AuthService {
         String provider = profile.getProvider().name();
         Optional<User> linkedUser = userRepository.findBySocialIdentity(provider, profile.getSubject());
         User user = linkedUser.orElseGet(() -> resolveUserForNewProviderIdentity(profile));
+        boolean newRegistration = user.getId() == null;
 
         rejectDisabledUser(user);
         linkOrRefreshProviderIdentity(user, profile);
         user = userRepository.save(user);
 
         log.info("[SECURITY AUDIT] Social login success. provider={}, userId={}", provider, user.getId());
-        return authMapper.toAuthResponse(userMapper.toResponse(user), issueTokens(user));
+        return authMapper.toAuthResponse(
+                userMapper.toResponse(user),
+                issueTokens(user),
+                newRegistration);
     }
 
     @Override
@@ -311,12 +318,17 @@ public class AuthServiceImpl implements AuthService {
 
         return User.builder()
                 .email(profile.getEmail())
-                .passwordHash(passwordEncoder.encode(randomToken()))
+                .passwordHash(User.SOCIAL_PASSWORD_SETUP_REQUIRED)
                 .fullName(profile.getDisplayName())
                 .avatarUrl(profile.getAvatarUrl())
                 .role(RoleName.USER)
                 .active(true)
                 .onboardingStatus(OnboardingStatus.PENDING)
+                .subscription(User.SubscriptionSnapshot.builder()
+                        .status(com.vfit.common.enums.SubscriptionStatus.ACTIVE)
+                        .planCode("VIP_TRIAL")
+                        .premiumUntil(Instant.now().plus(java.time.Duration.ofDays(3)))
+                        .build())
                 .build();
     }
 

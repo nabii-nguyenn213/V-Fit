@@ -5,11 +5,12 @@ import 'dart:ui';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../../core/network/network_providers.dart';
 import '../../../../core/network/web_socket_url_builder.dart';
 import '../../../../core/utils/camera_error_messages.dart';
-import '../../../../core/utils/permission_helper.dart';  // ✨ NEW
+import '../../../../core/utils/permission_helper.dart'; // ✨ NEW
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../presentation/theme/app_colors.dart';
@@ -60,7 +61,7 @@ class AiRealtimeCameraView extends StatefulWidget {
 class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     with WidgetsBindingObserver {
   CameraController? _cameraController;
-  WebSocket? _socket;
+  WebSocketChannel? _socketChannel;
   Timer? _captureTimer;
   List<CameraDescription> _cameras = const [];
   int _selectedCameraIndex = 0;
@@ -71,6 +72,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
   DateTime? _lastFrameSentAt;
   String? _statusText;
   Map<String, dynamic>? _latestFeedback;
+  bool _stopRequestedByUser = false;
 
   @override
   void initState() {
@@ -84,7 +86,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     WidgetsBinding.instance.removeObserver(this);
     _stopStreaming(fromDispose: true);
     _cameraController?.dispose();
-    _cleanupTempFrames();  // ✨ FIX #7: Cleanup temp files
+    _cleanupTempFrames(); // ✨ FIX #7: Cleanup temp files
     super.dispose();
   }
 
@@ -92,6 +94,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
+      _stopRequestedByUser = true;
       _stopStreaming();
     }
   }
@@ -104,20 +107,23 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
 
     try {
       // ✨ FIX #1: REQUEST CAMERA PERMISSION
-      final hasCameraPermission = await PermissionHelper.requestCameraPermission();
+      final hasCameraPermission =
+          await PermissionHelper.requestCameraPermission();
       if (!hasCameraPermission) {
         setState(() {
           _initializing = false;
-          _statusText = 'Không có quyền camera. Vui lòng cấp quyền trong cài đặt.';
+          _statusText =
+              'Không có quyền camera. Vui lòng cấp quyền trong cài đặt.';
         });
-        
+
         // Show dialog to direct user to settings
         if (mounted) {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Cấp quyền camera'),
-              content: const Text('V-FIT cần quyền truy cập camera để quét hình ảnh.'),
+              content: const Text(
+                  'V-FIT cần quyền truy cập camera để quét hình ảnh.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -153,7 +159,8 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     } on CameraException catch (error) {
       _showSetupError(CameraErrorMessages.fromCameraException(error));
     } catch (error) {
-      _showSetupError(error.toString());
+      debugPrint('[AiRealtimeCameraView] Không thể khởi tạo camera: $error');
+      _showSetupError(CameraErrorMessages.cameraUnavailable);
     }
   }
 
@@ -168,6 +175,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
 
     final wasStreaming = _streaming;
     if (wasStreaming) {
+      _stopRequestedByUser = true;
       await _stopStreaming();
     }
 
@@ -202,7 +210,8 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     } on CameraException catch (error) {
       _showSetupError(CameraErrorMessages.fromCameraException(error));
     } catch (error) {
-      _showSetupError(error.toString());
+      debugPrint('[AiRealtimeCameraView] Không thể mở camera: $error');
+      _showSetupError(CameraErrorMessages.cameraUnavailable);
     }
   }
 
@@ -210,8 +219,21 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     if (_cameras.length < 2 || _capturing || _initializing) {
       return;
     }
-    final nextIndex = (_selectedCameraIndex + 1) % _cameras.length;
-    await _openCamera(nextIndex);
+    final currentLensDirection = _cameras[_selectedCameraIndex].lensDirection;
+    final targetLensDirection = currentLensDirection == CameraLensDirection.back
+        ? CameraLensDirection.front
+        : CameraLensDirection.back;
+
+    int targetIndex = _cameras.indexWhere(
+      (camera) => camera.lensDirection == targetLensDirection,
+    );
+
+    // Fallback: If no camera in the target direction is found, cycle to next camera index
+    if (targetIndex < 0) {
+      targetIndex = (_selectedCameraIndex + 1) % _cameras.length;
+    }
+
+    await _openCamera(targetIndex);
   }
 
   Future<void> _startStreaming() async {
@@ -227,51 +249,62 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
         return;
       }
 
-      final socket = await WebSocket.connect(_webSocketUrl(token));
-      _socket = socket;
+      final channel = WebSocketChannel.connect(Uri.parse(_webSocketUrl(token)));
+      _socketChannel = channel;
       _streaming = true;
+      _stopRequestedByUser = false;
       _waitingForFeedback = false;
       setState(() => _statusText = widget.streamingText);
       widget.onStreamingStarted?.call();
 
-      unawaited(_listenForFeedback(socket));
+      unawaited(_listenForFeedback(channel));
       _captureTimer = Timer.periodic(
         widget.captureInterval,
         (_) => _sendSnapshot(),
       );
       await _sendSnapshot();
     } catch (error) {
-      await _stopStreaming();
+      await _stopStreaming(isError: true);
       if (mounted) {
-        AppFeedback.error('Không thể bắt đầu phân tích AI: $error');
+        debugPrint(
+          '[AiRealtimeCameraView] Không thể bắt đầu phân tích AI: $error',
+        );
+        AppFeedback.error(
+          'Không thể bắt đầu phân tích AI. Vui lòng thử lại.',
+        );
         setState(() => _statusText = 'Kết nối AI thất bại.');
       }
     }
   }
 
-  Future<void> _stopStreaming({bool fromDispose = false}) async {
+  Future<void> _stopStreaming(
+      {bool fromDispose = false, bool isError = false}) async {
     _captureTimer?.cancel();
     _captureTimer = null;
     _streaming = false;
     _waitingForFeedback = false;
-    final socket = _socket;
-    _socket = null;
-    if (socket != null) {
-      await socket.close();
+    final channel = _socketChannel;
+    _socketChannel = null;
+    if (channel != null) {
+      await channel.sink.close();
     }
     if (mounted && !fromDispose) {
-      setState(() => _statusText = widget.stoppedText);
+      if (isError) {
+        setState(() => _statusText = 'Mất kết nối với máy chủ AI.');
+      } else {
+        setState(() => _statusText = widget.stoppedText);
+      }
       widget.onStreamingStopped?.call();
     }
   }
 
   Future<void> _sendSnapshot() async {
     final controller = _cameraController;
-    final socket = _socket;
+    final channel = _socketChannel;
     if (!_streaming ||
         _capturing ||
         controller == null ||
-        socket == null ||
+        channel == null ||
         !controller.value.isInitialized) {
       return;
     }
@@ -288,13 +321,16 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
       final bytes = await image.readAsBytes();
       print(
           '[AI CAMERA] Successfully captured frame, size: ${bytes.length} bytes');
-      socket.add(bytes);
+      channel.sink.add(bytes);
       unawaited(_deleteTemporaryCapture(image.path));
     } catch (error) {
       _waitingForFeedback = false;
       print('[AI CAMERA] Error capturing frame: $error');
       if (mounted) {
-        setState(() => _statusText = 'Bỏ qua một khung hình: $error');
+        setState(
+          () => _statusText =
+              'Không thể xử lý khung hình. Hệ thống đang thử lại...',
+        );
       }
     } finally {
       _capturing = false;
@@ -317,9 +353,10 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
     return sentAt != null && DateTime.now().difference(sentAt).inSeconds >= 3;
   }
 
-  Future<void> _listenForFeedback(WebSocket socket) async {
+  Future<void> _listenForFeedback(WebSocketChannel channel) async {
+    bool hasError = false;
     try {
-      await for (final message in socket) {
+      await for (final message in channel.stream) {
         if (!mounted || message is! String) {
           continue;
         }
@@ -337,12 +374,17 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
         }
       }
     } catch (error) {
+      hasError = true;
+      print('[AI CAMERA] WebSocket stream error: $error');
       if (mounted) {
-        setState(() => _statusText = 'Kết nối AI đã đóng: $error');
+        setState(() => _statusText = 'Kết nối AI bị gián đoạn.');
+        AppFeedback.error(
+          'Kết nối AI bị gián đoạn. Vui lòng thử lại.',
+        );
       }
     } finally {
       if (mounted && _streaming) {
-        await _stopStreaming();
+        await _stopStreaming(isError: hasError || !_stopRequestedByUser);
       }
     }
   }
@@ -463,7 +505,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
                               color: AppColors.energyMagenta,
                               label: _waitingForFeedback
                                   ? 'ĐANG PHÂN TÍCH'
-                                  : 'LIVE',
+                                  : 'TRỰC TIẾP',
                             ),
                           ),
                         if (_streaming)
@@ -473,6 +515,7 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
                             child: _buildGlassButton(
                               icon: Icons.close_rounded,
                               onTap: () async {
+                                _stopRequestedByUser = true;
                                 await _stopStreaming();
                                 if (mounted) {
                                   Navigator.of(context).maybePop();
@@ -514,7 +557,14 @@ class _AiRealtimeCameraViewState extends State<AiRealtimeCameraView>
                     const SizedBox(height: AppSpacing.x3),
                     FilledButton.icon(
                       onPressed: cameraReady
-                          ? (_streaming ? _stopStreaming : _startStreaming)
+                          ? () {
+                              if (_streaming) {
+                                _stopRequestedByUser = true;
+                                _stopStreaming();
+                              } else {
+                                _startStreaming();
+                              }
+                            }
                           : null,
                       icon: Icon(
                         _streaming

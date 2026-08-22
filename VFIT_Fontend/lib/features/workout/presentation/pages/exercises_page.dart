@@ -12,7 +12,6 @@ import '../../../../core/widgets/state_views.dart';
 import '../../../../core/widgets/flashy_vip_required_modal.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../data/repositories/workout_repository.dart';
-import 'workout_page.dart';
 
 class ExercisesPage extends ConsumerStatefulWidget {
   const ExercisesPage({super.key});
@@ -151,10 +150,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
 
   Future<void> _handleFormScan(dynamic user) async {
     if (user == null) {
-      await showDialog<void>(
-        context: context,
-        builder: (context) => const LoginRequiredModal(),
-      );
+      context.go('/login');
       return;
     }
 

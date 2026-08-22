@@ -11,16 +11,22 @@ import com.vfit.common.enums.RoleName;
 import com.vfit.common.enums.OnboardingStatus;
 import com.vfit.common.exception.AppException;
 import com.vfit.bootstrap.storage.CloudinaryService;
+import com.vfit.modules.auth.repository.UserSessionRepository;
 import com.vfit.modules.user.document.User;
+import com.vfit.modules.user.dto.response.UserResponse;
 import com.vfit.modules.user.mapper.UserMapper;
 import com.vfit.modules.user.repository.UserRepository;
 import com.vfit.modules.user.service.impl.UserServiceImpl;
+import com.vfit.security.model.CustomUserDetails;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,8 +39,15 @@ class UserServiceImplTest {
     private UserMapper userMapper;
     @Mock
     private CloudinaryService cloudinaryService;
+    @Mock
+    private UserSessionRepository userSessionRepository;
     @InjectMocks
     private UserServiceImpl userService;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void createLocalUserStoresNormalizedEmailAndHashedPassword() {
@@ -66,5 +79,57 @@ class UserServiceImplTest {
                 .hasMessageContaining("Email");
         verify(userRepository, never()).delete(existing);
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void setupCurrentUserPasswordReplacesSocialPasswordMarker() {
+        User user = User.builder()
+                .id("user-1")
+                .email("member@vfit.com")
+                .passwordHash(User.SOCIAL_PASSWORD_SETUP_REQUIRED)
+                .role(RoleName.USER)
+                .active(true)
+                .build();
+        UserResponse response = UserResponse.builder()
+                .id("user-1")
+                .email("member@vfit.com")
+                .requiresPasswordSetup(false)
+                .build();
+        setCurrentUser(user);
+        when(userRepository.findById("user-1")).thenReturn(java.util.Optional.of(user));
+        when(passwordEncoder.encode("Password1")).thenReturn("hash");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toResponse(any(User.class))).thenReturn(response);
+
+        UserResponse result = userService.setupCurrentUserPassword("Password1");
+
+        assertThat(result.isRequiresPasswordSetup()).isFalse();
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertThat(captor.getValue().getPasswordHash()).isEqualTo("hash");
+    }
+
+    @Test
+    void setupCurrentUserPasswordRejectsUsersWithExistingPassword() {
+        User user = User.builder()
+                .id("user-1")
+                .email("member@vfit.com")
+                .passwordHash("hash")
+                .role(RoleName.USER)
+                .active(true)
+                .build();
+        setCurrentUser(user);
+        when(userRepository.findById("user-1")).thenReturn(java.util.Optional.of(user));
+
+        assertThatThrownBy(() -> userService.setupCurrentUserPassword("Password1"))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("already");
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    private void setCurrentUser(User user) {
+        CustomUserDetails details = new CustomUserDetails(user);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities()));
     }
 }

@@ -58,12 +58,12 @@ class Environment {
     }
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => [
+          'https://trungtranvfit.id.vn',
           'http://192.168.1.93:8080',
           'http://10.0.2.2:8080',
           'http://127.0.0.1:8080',
-          'https://trungtranvfit.id.vn',
         ],
-      _ => ['http://localhost:8080', 'https://trungtranvfit.id.vn'],
+      _ => ['https://trungtranvfit.id.vn', 'http://localhost:8080'],
     };
   }
 
@@ -84,21 +84,31 @@ class Environment {
       final host = Uri.base.host;
       final scheme = Uri.base.scheme;
       return [
+        '${Uri.base.origin}/ai-api',
+        'https://trungtranvfit.id.vn/ai-api',
         '$scheme://$host:8000',
         'https://trungtranvfit.id.vn:8000',
       ];
     }
     if (kReleaseMode) {
-      return ['https://trungtranvfit.id.vn:8000'];
+      return [
+        'https://trungtranvfit.id.vn/ai-api',
+        'https://trungtranvfit.id.vn:8000',
+      ];
     }
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => [
+          'https://trungtranvfit.id.vn/ai-api',
+          'https://trungtranvfit.id.vn:8000',
           'http://192.168.1.93:8000',
           'http://10.0.2.2:8000',
           'http://127.0.0.1:8000',
-          'https://trungtranvfit.id.vn:8000',
         ],
-      _ => ['http://localhost:8000', 'https://trungtranvfit.id.vn:8000'],
+      _ => [
+          'https://trungtranvfit.id.vn/ai-api',
+          'https://trungtranvfit.id.vn:8000',
+          'http://localhost:8000',
+        ],
     };
   }
 

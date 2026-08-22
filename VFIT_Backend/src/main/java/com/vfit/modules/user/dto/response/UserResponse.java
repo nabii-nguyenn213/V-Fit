@@ -23,12 +23,14 @@ public class UserResponse {
     private final RoleName role;
     private final OnboardingStatus onboardingStatus;
     private final boolean active;
+    private final boolean requiresPasswordSetup;
     private final int xp;
     private final int level;
     private final SubscriptionStatus subscriptionStatus;
     private final String subscriptionPlanCode;
     private final boolean premiumActive;
     private final String premiumPlan;
+    private final Instant premiumStartedAt;
     private final Instant premiumExpiredAt;
     private final long premiumRemainingDays;
     private final boolean canRenewPremium;

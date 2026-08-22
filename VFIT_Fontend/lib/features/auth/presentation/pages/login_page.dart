@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart';
+import '../../../../core/utils/webview_helper.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/vfit_logo_avatar.dart';
 import '../../application/auth_controller.dart';
+import '../widgets/google_web_sign_in_button.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -36,7 +40,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
   }
 
-  Future<void> _loginWithGoogle() {
+  Future<void> _loginWithGoogle() async {
+    if (kIsWeb) {
+      if (checkAndHandleWebViewGoogleLogin()) {
+        return;
+      }
+    }
     return ref.read(authControllerProvider.notifier).loginWithGoogle();
   }
 
@@ -101,7 +110,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               controller: _passwordController,
                               label: 'Mật khẩu',
                               icon: Icons.lock_outline_rounded,
-                              validator: Validators.required,
+                              validator: (value) => Validators.required(value, label: 'Mật khẩu'),
                               obscureText: true,
                               textInputAction: TextInputAction.done,
                               palette: palette,
@@ -141,15 +150,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             SizedBox(height: compact ? 14 : 18),
                             _DividerLabel(palette: palette),
                             SizedBox(height: compact ? 12 : 14),
-                            _SocialLoginButton(
-                              label: 'Chọn tài khoản Google',
-                              supportingLabel: 'Mở màn hình chọn tài khoản',
-                              brandLabel: 'G',
-                              brandColor: const Color(0xFF4285F4),
-                              loading: auth.isLoading,
-                              palette: palette,
-                              onPressed: _loginWithGoogle,
-                            ),
+                            if (kIsWeb)
+                              GoogleWebSignInButton(
+                                loading: auth.isLoading,
+                                onIdToken: ref
+                                    .read(authControllerProvider.notifier)
+                                    .loginWithGoogleIdToken,
+                                onError: ref
+                                    .read(authControllerProvider.notifier)
+                                    .reportLoginError,
+                              )
+                            else
+                              _SocialLoginButton(
+                                label: 'Chọn tài khoản Google',
+                                supportingLabel: 'Mở màn hình chọn tài khoản',
+                                brandLabel: 'G',
+                                brandColor: const Color(0xFF4285F4),
+                                loading: auth.isLoading,
+                                palette: palette,
+                                onPressed: _loginWithGoogle,
+                              ),
                             SizedBox(height: compact ? 12 : 16),
                             _RegisterPrompt(palette: palette),
                           ],
@@ -256,6 +276,9 @@ class _LoginShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (AppResponsive.isPhone(context)) {
+      return child;
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         color: palette.scaffold,

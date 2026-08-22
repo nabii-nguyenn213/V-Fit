@@ -17,6 +17,8 @@ public interface UserService {
 
     void changeCurrentUserPassword(ChangePasswordRequest request);
 
+    UserResponse setupCurrentUserPassword(String rawPassword);
+
     BodyMetricResponse getCurrentUserBodyMetrics();
 
     void updateRole(String userId, RoleName role);

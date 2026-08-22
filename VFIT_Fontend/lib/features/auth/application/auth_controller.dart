@@ -21,7 +21,13 @@ final authControllerProvider =
   return controller;
 });
 
-enum AuthStatus { initial, unauthenticated, pendingOnboarding, active }
+enum AuthStatus {
+  initial,
+  unauthenticated,
+  passwordSetupRequired,
+  pendingOnboarding,
+  active,
+}
 
 class AuthState {
   const AuthState({
@@ -29,6 +35,7 @@ class AuthState {
     this.user,
     this.error,
     this.loading = false,
+    this.trialWelcomePending = false,
   });
 
   const AuthState.initial() : this(status: AuthStatus.initial, loading: true);
@@ -37,11 +44,16 @@ class AuthState {
   final UserModel? user;
   final String? error;
   final bool loading;
+  final bool trialWelcomePending;
 
   bool get isAuthenticated =>
-      (status == AuthStatus.active || status == AuthStatus.pendingOnboarding) &&
+      (status == AuthStatus.active ||
+          status == AuthStatus.pendingOnboarding ||
+          status == AuthStatus.passwordSetupRequired) &&
       user != null;
   bool get isActive => status == AuthStatus.active && user != null;
+  bool get requiresPasswordSetup =>
+      status == AuthStatus.passwordSetupRequired && user != null;
   bool get isPendingOnboarding =>
       status == AuthStatus.pendingOnboarding && user != null;
   bool get isLoading => loading || status == AuthStatus.initial;
@@ -51,6 +63,7 @@ class AuthState {
     UserModel? user,
     String? error,
     bool? loading,
+    bool? trialWelcomePending,
     bool clearUser = false,
     bool clearError = false,
   }) {
@@ -59,6 +72,7 @@ class AuthState {
       user: clearUser ? null : user ?? this.user,
       error: clearError ? null : error ?? this.error,
       loading: loading ?? this.loading,
+      trialWelcomePending: trialWelcomePending ?? this.trialWelcomePending,
     );
   }
 }
@@ -117,6 +131,16 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
+  Future<void> loginWithGoogleIdToken(String idToken) async {
+    await _socialLogin(
+      () async => SocialLoginCredential(
+        provider: SocialLoginProvider.google,
+        providerToken: idToken,
+        platform: 'web',
+      ),
+    );
+  }
+
   Future<void> loginWithFacebook() async {
     await _socialLogin(
       () => _socialLoginClient.signInWithFacebook(),
@@ -150,7 +174,10 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(loading: true, clearError: true);
     try {
       final auth = await _repository.verifyOtp(email: email, otpCode: otpCode);
-      setUser(auth.user);
+      setUser(
+        auth.user,
+        showTrialWelcome: auth.newRegistration,
+      );
     } catch (error) {
       state = state.copyWith(
         loading: false,
@@ -164,17 +191,48 @@ class AuthController extends StateNotifier<AuthState> {
     setUser(await _repository.me());
   }
 
-  void setUser(UserModel user) {
+  void setUser(UserModel user, {bool showTrialWelcome = false}) {
     state = AuthState(
-      status: user.isOnboardingCompleted
-          ? AuthStatus.active
-          : AuthStatus.pendingOnboarding,
+      status: user.requiresPasswordSetup
+          ? AuthStatus.passwordSetupRequired
+          : user.isOnboardingCompleted
+              ? AuthStatus.active
+              : AuthStatus.pendingOnboarding,
       user: user,
+      trialWelcomePending: showTrialWelcome && user.isVipTrial,
     );
+  }
+
+  Future<void> setupPassword(String newPassword) async {
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final user = await _repository.setupPassword(newPassword: newPassword);
+      setUser(user, showTrialWelcome: state.trialWelcomePending);
+    } catch (error) {
+      state = state.copyWith(
+        loading: false,
+        error: error.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  void consumeTrialWelcome() {
+    if (!state.trialWelcomePending) {
+      return;
+    }
+    state = state.copyWith(trialWelcomePending: false);
   }
 
   void clearError() {
     state = state.copyWith(clearError: true);
+  }
+
+  void reportLoginError(String message) {
+    state = AuthState(
+      status: AuthStatus.unauthenticated,
+      error: message,
+    );
   }
 
   Future<void> logout() async {
@@ -210,7 +268,10 @@ class AuthController extends StateNotifier<AuthState> {
         return;
       }
       final auth = await _repository.socialLogin(credential);
-      setUser(auth.user);
+      setUser(
+        auth.user,
+        showTrialWelcome: auth.newRegistration,
+      );
     } catch (error) {
       await _repository.clearLocalSession();
       state = AuthState(

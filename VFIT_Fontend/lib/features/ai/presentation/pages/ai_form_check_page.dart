@@ -24,9 +24,9 @@ class AiFormCheckPage extends StatelessWidget {
         'cameraView': 'side',
       },
       captureInterval: const Duration(milliseconds: 200),
-      readyText: 'Camera da san sang.',
-      streamingText: 'AI dang kiem tra chuyen dong...',
-      stoppedText: 'Da dung kiem tra form.',
+      readyText: 'Camera đã sẵn sàng.',
+      streamingText: 'AI đang kiểm tra chuyển động...',
+      stoppedText: 'Đã dừng kiểm tra form.',
       feedbackBuilder: (context, feedbackJson, statusText) {
         return _FeedbackPanel(
           feedback: feedbackJson == null
@@ -176,14 +176,14 @@ class _FormCheckFeedback {
 
   String get phaseLabel {
     if (!repCounterEnabled && phase != 'no_pose') {
-      return 'AI rep offline';
+      return 'AI rep ngoại tuyến';
     }
     return switch (phase) {
-      'down' => 'xuong',
-      'up' => 'len',
-      'other' => 'ngoai form',
-      'unknown' => 'dang bat form',
-      'no_pose' => 'chua thay nguoi',
+      'down' => 'xuống',
+      'up' => 'lên',
+      'other' => 'ngoài form',
+      'unknown' => 'đang bắt form',
+      'no_pose' => 'chưa thấy người',
       _ => phase,
     };
   }
@@ -224,7 +224,7 @@ class _FormCheckFeedback {
       message: json['summary']?.toString() ??
           json['message']?.toString() ??
           firstFeedback?['warning']?.toString() ??
-          'Chua co phan hoi.',
+          'Chưa có phản hồi.',
       severity: json['severity']?.toString() ?? 'INFO',
       fallback: json['fallback'] == true,
       repCount: (json['rep_count'] as num?)?.toInt() ??

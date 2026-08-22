@@ -51,15 +51,19 @@ public class UserMapper {
                 .role(user.getRole() == RoleName.ADMIN ? RoleName.ADMIN : RoleName.USER)
                 .onboardingStatus(resolveOnboardingStatus(user))
                 .active(user.isActive())
+                .requiresPasswordSetup(User.requiresPasswordSetup(user.getPasswordHash()))
                 .xp(progress == null ? 0 : progress.getXp())
                 .level(progress == null ? 0 : progress.getLevel())
                 .subscriptionStatus(status)
                 .subscriptionPlanCode(planCode)
                 .premiumActive(premiumActive)
                 .premiumPlan(normalizePremiumPlan(planCode))
+                .premiumStartedAt(resolvePremiumStartedAt(user, persistedSubscription))
                 .premiumExpiredAt(premiumUntil)
                 .premiumRemainingDays(remaining.toDays())
-                .canRenewPremium(!premiumActive || (premiumUntil != null && remaining.compareTo(Duration.ofDays(3)) < 0))
+                .canRenewPremium(isTrialPlan(planCode)
+                        || !premiumActive
+                        || (premiumUntil != null && remaining.compareTo(Duration.ofDays(3)) < 0))
                 .createdAt(user.getCreatedAt())
                 .build();
     }
@@ -78,6 +82,7 @@ public class UserMapper {
         return switch (planCode.toUpperCase(Locale.ROOT)) {
             case "VIP_MONTHLY", "MONTHLY" -> "MONTHLY";
             case "VIP_YEARLY", "YEARLY" -> "YEARLY";
+            case "VIP_TRIAL" -> "VIP_TRIAL";
             default -> planCode;
         };
     }
@@ -87,6 +92,13 @@ public class UserMapper {
             return snapshot.getPremiumUntil();
         }
         return persistedSubscription == null ? null : persistedSubscription.getExpiresAt();
+    }
+
+    private Instant resolvePremiumStartedAt(User user, Subscription persistedSubscription) {
+        if (persistedSubscription != null && persistedSubscription.getStartedAt() != null) {
+            return persistedSubscription.getStartedAt();
+        }
+        return user.getCreatedAt();
     }
 
     private String resolvePlanCode(User.SubscriptionSnapshot snapshot, Subscription persistedSubscription) {
@@ -108,9 +120,13 @@ public class UserMapper {
             return false;
         }
         return switch (planCode.toUpperCase(Locale.ROOT)) {
-            case "VIP_MONTHLY", "VIP_YEARLY", "MONTHLY", "YEARLY" -> true;
+            case "VIP_MONTHLY", "VIP_YEARLY", "MONTHLY", "YEARLY", "VIP_TRIAL" -> true;
             default -> false;
         };
+    }
+
+    private boolean isTrialPlan(String planCode) {
+        return planCode != null && "VIP_TRIAL".equalsIgnoreCase(planCode.trim());
     }
 
     public BodyMetricResponse toBodyMetricResponse(User.BodyMetrics bodyMetrics) {

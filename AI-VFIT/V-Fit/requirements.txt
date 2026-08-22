@@ -1,0 +1,35 @@
+# Core dependencies
+numpy==1.26.4
+mediapipe==0.10.21
+opencv-contrib-python-headless==4.11.0.86
+opencv-python-headless==4.11.0.86
+
+# Web framework
+flask==3.0.0
+flask-cors==4.0.0
+
+# ML/AI
+ultralytics==8.3.10
+torch==2.4.1
+torchvision==0.19.1
+
+# Production server
+gunicorn==23.0.0
+
+# Environment configuration
+python-dotenv==1.0.1
+
+# Database (optional, but recommended for production)
+sqlalchemy==2.0.31
+psycopg2-binary==2.9.10
+alembic==1.14.0
+
+# Caching
+redis==5.0.6
+
+# Security
+cryptography==43.0.0
+
+# Utilities
+requests==2.32.3
+

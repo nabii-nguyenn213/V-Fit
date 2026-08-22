@@ -55,6 +55,11 @@ public class UserServiceImpl implements UserService {
                 .role(normalizeRole(role))
                 .onboardingStatus(role == RoleName.ADMIN ? OnboardingStatus.COMPLETED : OnboardingStatus.PENDING)
                 .active(role == RoleName.ADMIN)
+                .subscription(role == RoleName.ADMIN ? User.SubscriptionSnapshot.free() : User.SubscriptionSnapshot.builder()
+                        .status(com.vfit.common.enums.SubscriptionStatus.ACTIVE)
+                        .planCode("VIP_TRIAL")
+                        .premiumUntil(Instant.now().plus(java.time.Duration.ofDays(3)))
+                        .build())
                 .build();
         return userRepository.save(user);
     }
@@ -99,6 +104,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changeCurrentUserPassword(ChangePasswordRequest request) {
         User user = currentUser();
+        if (User.requiresPasswordSetup(user.getPasswordHash())) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Password setup is required before changing password");
+        }
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Current password is incorrect");
         }
@@ -114,6 +122,16 @@ public class UserServiceImpl implements UserService {
             session.setRevokedReason("PASSWORD_CHANGED");
         }
         userSessionRepository.saveAll(activeSessions);
+    }
+
+    @Override
+    public UserResponse setupCurrentUserPassword(String rawPassword) {
+        User user = currentUser();
+        if (!User.requiresPasswordSetup(user.getPasswordHash())) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Password has already been set");
+        }
+        user.setPasswordHash(passwordEncoder.encode(rawPassword));
+        return userMapper.toResponse(userRepository.save(user));
     }
 
     @Override

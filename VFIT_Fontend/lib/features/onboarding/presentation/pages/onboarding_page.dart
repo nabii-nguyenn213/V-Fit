@@ -7,6 +7,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../profile/data/repositories/profile_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
@@ -23,6 +24,26 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final _bodyFatController = TextEditingController();
   int _step = 0;
   bool _savingProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(profileRepositoryProvider).bodyMetrics().then((metrics) {
+      if (mounted) {
+        setState(() {
+          _heightController.text = metrics.heightCm != null
+              ? metrics.heightCm!.toStringAsFixed(0)
+              : '';
+          _weightController.text = metrics.weightKg != null
+              ? metrics.weightKg!.toStringAsFixed(1)
+              : '';
+          _bodyFatController.text = metrics.bodyFatPercent != null
+              ? metrics.bodyFatPercent!.toStringAsFixed(1)
+              : '';
+        });
+      }
+    }).catchError((_) {});
+  }
 
   @override
   void dispose() {
@@ -58,13 +79,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     }
   }
 
-
-
   void _showError(Object error) {
     if (!mounted) {
       return;
     }
-    AppFeedback.error(error.toString(), title: 'Không hoàn tất onboarding');
+    debugPrint('[OnboardingPage] Không thể lưu thông tin thể chất: $error');
+    AppFeedback.error(
+      'Không thể lưu thông tin thể chất. Vui lòng thử lại.',
+      title: 'Không thể hoàn tất thiết lập ban đầu',
+    );
   }
 
   @override
@@ -74,12 +97,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          title: const Text('Onboarding'),
+          title: const Text('Thiết lập ban đầu'),
           actions: [
             IconButton(
-              onPressed: _savingProfile
-                  ? null
-                  : () => context.go('/home'),
+              onPressed: _savingProfile ? null : () => context.go('/home'),
               icon: const Icon(Icons.close),
               tooltip: 'Thoát về trang chủ',
             ),
@@ -91,8 +112,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             controlsBuilder: (context, details) => const SizedBox.shrink(),
             steps: [
               Step(
-                title: const Text('Physical profile'),
-                subtitle: const Text('Height and weight are required'),
+                title: const Text('Thông tin thể chất'),
+                subtitle: const Text(
+                  'Chiều cao và cân nặng là thông tin bắt buộc',
+                ),
                 isActive: _step == 0,
                 state: _step > 0 ? StepState.complete : StepState.indexed,
                 content: Form(
@@ -101,46 +124,46 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     children: [
                       AppTextField(
                         controller: _heightController,
-                        label: 'Height (cm)',
+                        label: 'Chiều cao (cm)',
                         keyboardType: TextInputType.number,
                         validator: (value) =>
                             Validators.optionalNumber(
                               value,
                               min: 80,
                               max: 250,
-                              label: 'Height',
+                              label: 'Chiều cao',
                             ) ??
-                            Validators.required(value, label: 'Height'),
+                            Validators.required(value, label: 'Chiều cao'),
                       ),
                       const SizedBox(height: 12),
                       AppTextField(
                         controller: _weightController,
-                        label: 'Weight (kg)',
+                        label: 'Cân nặng (kg)',
                         keyboardType: TextInputType.number,
                         validator: (value) =>
                             Validators.optionalNumber(
                               value,
                               min: 20,
                               max: 300,
-                              label: 'Weight',
+                              label: 'Cân nặng',
                             ) ??
-                            Validators.required(value, label: 'Weight'),
+                            Validators.required(value, label: 'Cân nặng'),
                       ),
                       const SizedBox(height: 12),
                       AppTextField(
                         controller: _bodyFatController,
-                        label: 'Body fat (%) optional',
+                        label: 'Tỷ lệ mỡ cơ thể (%) (không bắt buộc)',
                         keyboardType: TextInputType.number,
                         validator: (value) => Validators.optionalNumber(
                           value,
                           min: 1,
                           max: 70,
-                          label: 'Body fat',
+                          label: 'Tỷ lệ mỡ cơ thể',
                         ),
                       ),
                       const SizedBox(height: 18),
                       AppButton.primary(
-                        label: 'Save and continue',
+                        label: 'Lưu và tiếp tục',
                         icon: Icons.arrow_forward,
                         loading: _savingProfile,
                         onPressed: _savingProfile ? null : _saveProfile,
@@ -151,7 +174,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               ),
               Step(
                 title: const Text('Quét cơ thể'),
-                subtitle: const Text('Bắt đầu phân tích hình thể realtime bằng AI'),
+                subtitle: const Text(
+                  'Bắt đầu phân tích hình thể theo thời gian thực bằng AI',
+                ),
                 isActive: _step == 1,
                 state: _step > 0 ? StepState.complete : StepState.indexed,
                 content: Column(
@@ -159,9 +184,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   children: [
                     const SizedBox(height: 8),
                     AppButton.primary(
-                      label: 'Bắt đầu quét cơ thể realtime',
+                      label: 'Bắt đầu quét cơ thể theo thời gian thực',
                       icon: Icons.accessibility_new_rounded,
-                      onPressed: () => context.push('/onboarding/body-scan-realtime'),
+                      onPressed: () =>
+                          context.push('/onboarding/body-scan-realtime'),
                     ),
                   ],
                 ),

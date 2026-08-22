@@ -13,6 +13,7 @@ import '../../../../presentation/theme/app_typography.dart';
 import '../../../ai/presentation/widgets/ai_realtime_camera_view.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../data/repositories/onboarding_repository.dart';
+import '../utils/body_analysis_text_localizer.dart';
 
 enum ScanState { scanning, reviewing, saving }
 
@@ -101,12 +102,13 @@ class _AiOnboardingBodyScanPageState
       ref.read(authControllerProvider.notifier).setUser(user);
 
       if (!mounted) return;
-      AppFeedback.success('Da quet co the thanh cong.');
+      AppFeedback.success('Đã quét cơ thể thành công.');
       context.go('/home');
     } catch (e) {
       if (!mounted) return;
       setState(() => _scanState = ScanState.reviewing);
-      AppFeedback.error('Luu ket qua that bai: $e. Vui long thu lai.');
+      debugPrint('[AiOnboardingBodyScanPage] Không thể lưu kết quả: $e');
+      AppFeedback.error('Không thể lưu kết quả. Vui lòng thử lại.');
     }
   }
 
@@ -118,12 +120,12 @@ class _AiOnboardingBodyScanPageState
           if (_scanState == ScanState.scanning)
             AiRealtimeCameraView(
               key: ValueKey(_retryCount),
-              title: 'AI Body Check',
+              title: 'Kiểm tra hình thể bằng AI',
               webSocketPath: '/ws/ai/body-analysis',
               queryParameters: const {},
-              readyText: 'Camera da san sang.',
-              streamingText: 'AI dang phan tich hinh the...',
-              stoppedText: 'Da dung phan tich body.',
+              readyText: 'Camera đã sẵn sàng.',
+              streamingText: 'AI đang phân tích hình thể...',
+              stoppedText: 'Đã dừng phân tích hình thể.',
               autoStartStreaming: false,
               showStartStopButton: true,
               onStreamingStarted: _startCountdown,
@@ -193,7 +195,7 @@ class _ScanningBanner extends StatelessWidget {
           const SizedBox(width: AppSpacing.x3),
           Expanded(
             child: Text(
-              'Dang phan tich dang nguoi... ${secondsLeft}s',
+              'Đang phân tích dáng người... ${secondsLeft}s',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -226,7 +228,7 @@ class _ReviewPanel extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
-        title: const Text('Ket qua phan tich dang nguoi'),
+        title: const Text('Kết quả phân tích dáng người'),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -252,8 +254,8 @@ class _ReviewPanel extends StatelessWidget {
                       const SizedBox(height: AppSpacing.x4),
                       Text(
                         result == null
-                            ? 'Chua nhan duoc du lieu'
-                            : 'Da quet thanh cong',
+                            ? 'Chưa nhận được dữ liệu'
+                            : 'Đã quét thành công',
                         textAlign: TextAlign.center,
                         style: AppTypography.headerLargeFor(context).copyWith(
                           color: result == null
@@ -265,8 +267,8 @@ class _ReviewPanel extends StatelessWidget {
                       const SizedBox(height: AppSpacing.x2),
                       Text(
                         result == null
-                            ? 'Hay scan lai voi toan than nam trong khung hinh.'
-                            : 'AI da ghi nhan thong tin hinh the. Hay kiem tra truoc khi tiep tuc.',
+                            ? 'Hãy quét lại với toàn thân nằm trong khung hình.'
+                            : 'AI đã ghi nhận thông tin hình thể. Hãy kiểm tra trước khi tiếp tục.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppColors.textSecondaryOf(context),
@@ -285,7 +287,7 @@ class _ReviewPanel extends StatelessWidget {
                         ),
                         child: result == null
                             ? Text(
-                                'Khong co body data de hien thi.',
+                                'Không có dữ liệu cơ thể để hiển thị.',
                                 style: AppTypography.bodyFor(context),
                               )
                             : _BodyAnalysisDetails(result: result),
@@ -299,7 +301,7 @@ class _ReviewPanel extends StatelessWidget {
                 children: [
                   Expanded(
                     child: AppButton.secondary(
-                      label: 'Scan lai',
+                      label: 'Quét lại',
                       icon: Icons.refresh_rounded,
                       onPressed: onRescan,
                     ),
@@ -307,7 +309,7 @@ class _ReviewPanel extends StatelessWidget {
                   const SizedBox(width: AppSpacing.x3),
                   Expanded(
                     child: AppButton.primary(
-                      label: 'Chap nhan',
+                      label: 'Chấp nhận',
                       icon: Icons.check_rounded,
                       onPressed: result == null ? null : onAccept,
                     ),
@@ -332,11 +334,11 @@ class _BodyAnalysisDetails extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _InfoRow(title: 'Tu the', value: result.posture),
+        _InfoRow(title: 'Tư thế', value: result.posture),
         const SizedBox(height: AppSpacing.x4),
-        _InfoRow(title: 'Lech co the', value: result.imbalance),
+        _InfoRow(title: 'Lệch cơ thể', value: result.imbalance),
         const SizedBox(height: AppSpacing.x4),
-        _InfoRow(title: 'Goi y', value: result.recommendation),
+        _InfoRow(title: 'Gợi ý', value: result.recommendation),
         const SizedBox(height: AppSpacing.x4),
         const Divider(),
         const SizedBox(height: AppSpacing.x4),
@@ -358,7 +360,7 @@ class _BodyAnalysisDetails extends StatelessWidget {
             const SizedBox(width: AppSpacing.x4),
             Expanded(
               child: _MetricBlock(
-                label: 'Do tin cay',
+                label: 'Độ tin cậy',
                 value: '${(result.confidence * 100).round()}%',
               ),
             ),
@@ -444,7 +446,7 @@ class _SavingOverlay extends StatelessWidget {
             ),
             SizedBox(height: AppSpacing.x4),
             Text(
-              'Dang luu ket qua...',
+              'Đang lưu kết quả...',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -488,7 +490,7 @@ class _BodyAnalysisPanel extends StatelessWidget {
               const SizedBox(width: AppSpacing.x2),
               Expanded(
                 child: Text(
-                  result == null ? 'Dang cho phan hoi AI' : result!.posture,
+                  result == null ? 'Đang chờ phản hồi AI' : result!.posture,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.headerMediumFor(context),
@@ -500,7 +502,7 @@ class _BodyAnalysisPanel extends StatelessWidget {
           Text(
             result?.imbalance ??
                 statusText ??
-                'Dung thang nguoi trong khung hinh de AI cap nhat chi so.',
+                'Đứng thẳng người trong khung hình để AI cập nhật chỉ số.',
             style: AppTypography.bodyFor(context),
           ),
           if (result != null) ...[
@@ -517,10 +519,10 @@ class _BodyAnalysisPanel extends StatelessWidget {
                 ),
                 _MetricChip(
                   label: 'AI',
-                  value: result!.fallback ? 'Fallback' : 'Live',
+                  value: result!.fallback ? 'Dự phòng' : 'Trực tiếp',
                 ),
                 _MetricChip(
-                  label: 'Confidence',
+                  label: 'Độ tin cậy',
                   value: '${(result!.confidence * 100).round()}%',
                 ),
               ],
@@ -588,11 +590,18 @@ class _BodyAnalysisFeedback {
     final estimate = _asMap(json['estimate']);
     final recommendation = _asMap(json['recommendation']);
     return _BodyAnalysisFeedback(
-      posture: posture['summary']?.toString() ?? 'Body analysis pending',
-      imbalance: imbalance['summary']?.toString() ??
-          'No imbalance estimate available.',
-      recommendation:
-          recommendation['focus']?.toString() ?? 'Continue current routine.',
+      posture: BodyAnalysisTextLocalizer.localize(
+        posture['summary'],
+        fallback: 'Đang phân tích...',
+      ),
+      imbalance: BodyAnalysisTextLocalizer.localize(
+        imbalance['summary'],
+        fallback: 'Không có dữ liệu lệch cơ thể.',
+      ),
+      recommendation: BodyAnalysisTextLocalizer.localize(
+        recommendation['focus'],
+        fallback: 'Duy trì lịch tập luyện hiện tại.',
+      ),
       confidence: (estimate['confidence'] as num?)?.toDouble() ?? 0,
       fallback: json['fallback'] == true,
       waistShoulderRatio: (estimate['waistShoulderRatio'] as num?)?.toDouble(),

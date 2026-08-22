@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Development service (Flask development server)
+  vfit-dev:
+    build: .
+    container_name: vfit-dev
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - ENVIRONMENT=development
+      - FLASK_APP=api_server.py
+      - FLASK_ENV=development
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_PROXY_URL=${GEMINI_PROXY_URL:-http://gemini-proxy:8082}
+      - WEB2API_URL=${WEB2API_URL:-http://web2api:8085/v1/chat/completions}
+      - LOG_LEVEL=DEBUG
+      - CORS_ORIGINS=*
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    command: python api_server.py
+    networks:
+      - vfit-network
+    depends_on:
+      - gemini-proxy
+      - web2api
+
+  # Gemini Proxy Service (if using web2api)
+  gemini-proxy:
+    image: ghcr.io/davisondevel/gemini-web2api:latest
+    container_name: gemini-proxy
+    ports:
+      - "8082:8082"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - vfit-network
+    profiles:
+      - dev
+    # Remove this for production setup
+
+  # Web2API Service (if needed)
+  web2api:
+    image: node:18-alpine
+    container_name: web2api
+    working_dir: /app
+    ports:
+      - "8085:8085"
+    networks:
+      - vfit-network
+    profiles:
+      - dev
+    command: npm start
+    # Remove this for production setup
+
+networks:
+  vfit-network:
+    driver: bridge

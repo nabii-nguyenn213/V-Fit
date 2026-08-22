@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://trungtranvfit.id.vn/sitemap.xml

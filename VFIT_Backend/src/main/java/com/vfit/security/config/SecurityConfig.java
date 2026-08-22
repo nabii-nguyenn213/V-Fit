@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/v1/auth/**",
                                 "/api/app/config",
+                                "/api/track/visit",
                                 "/api/payments/sepay/webhook",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -83,8 +84,14 @@ public class SecurityConfig {
                                 "/flutter.js",
                                 "/main.dart.js",
                                 "/version.json",
+                                "/google*.html",
+                                "/sitemap.xml",
+                                "/robots.txt",
+                                "/privacy.html",
+                                "/privacy-policy.html",
                                 "/assets/**",
-                                "/canvaskit/**")
+                                "/canvaskit/**",
+                                "/app-release.apk")
                         .permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,

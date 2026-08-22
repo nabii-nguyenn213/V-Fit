@@ -8,6 +8,7 @@ class UserModel {
     required this.role,
     required this.onboardingStatus,
     required this.active,
+    required this.requiresPasswordSetup,
     required this.xp,
     required this.level,
     required this.subscriptionStatus,
@@ -35,6 +36,7 @@ class UserModel {
   final RoleName role;
   final OnboardingStatus onboardingStatus;
   final bool active;
+  final bool requiresPasswordSetup;
   final int xp;
   final int level;
   final SubscriptionStatus subscriptionStatus;
@@ -50,12 +52,30 @@ class UserModel {
   bool get isAdmin => role == RoleName.admin;
   bool get isOnboardingCompleted =>
       onboardingStatus == OnboardingStatus.completed;
+
+  String? get _normalizedPremiumPlan {
+    final normalizedPremiumPlan = premiumPlan?.trim().toUpperCase();
+    if (normalizedPremiumPlan != null && normalizedPremiumPlan.isNotEmpty) {
+      return normalizedPremiumPlan;
+    }
+
+    final normalizedSubscriptionPlan =
+        subscriptionPlanCode?.trim().toUpperCase();
+    return normalizedSubscriptionPlan == null ||
+            normalizedSubscriptionPlan.isEmpty
+        ? null
+        : normalizedSubscriptionPlan;
+  }
+
+  bool get isVipTrial => _normalizedPremiumPlan == 'VIP_TRIAL';
+
   bool get hasVipPlan {
-    final plan = (premiumPlan ?? subscriptionPlanCode)?.toUpperCase();
+    final plan = _normalizedPremiumPlan;
     return plan == 'VIP_MONTHLY' ||
         plan == 'VIP_YEARLY' ||
         plan == 'MONTHLY' ||
-        plan == 'YEARLY';
+        plan == 'YEARLY' ||
+        plan == 'VIP_TRIAL';
   }
 
   bool get isVipActive {
@@ -83,6 +103,16 @@ class UserModel {
         expiredAt.difference(DateTime.now()) < const Duration(days: 3);
   }
 
+  bool get canPurchasePremium {
+    if (!isVipActive) {
+      return true;
+    }
+    if (isVipTrial) {
+      return true;
+    }
+    return canRenewVip;
+  }
+
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id']?.toString() ?? '',
@@ -97,6 +127,7 @@ class UserModel {
         json['onboardingStatus']?.toString(),
       ),
       active: json['active'] == true,
+      requiresPasswordSetup: json['requiresPasswordSetup'] == true,
       xp: (json['xp'] as num?)?.toInt() ?? 0,
       level: (json['level'] as num?)?.toInt() ?? 1,
       subscriptionStatus:
@@ -167,6 +198,8 @@ class BodyMetricModel {
   final double? bodyFatPercent;
   final double? bmi;
   final DateTime? measuredAt;
+
+  bool get hasRequiredOnboardingMetrics => heightCm != null && weightKg != null;
 
   factory BodyMetricModel.fromJson(Map<String, dynamic> json) {
     return BodyMetricModel(

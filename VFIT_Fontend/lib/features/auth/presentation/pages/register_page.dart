@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -90,23 +91,27 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 420),
                       child: Container(
-                        padding: const EdgeInsets.all(22),
-                        decoration: BoxDecoration(
-                          color: scheme.surface.withValues(alpha: 0.96),
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: scheme.outlineVariant.withValues(alpha: 0.6),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(
-                                alpha: isDark ? 0.30 : 0.08,
+                        padding: AppResponsive.isPhone(context)
+                            ? EdgeInsets.zero
+                            : const EdgeInsets.all(22),
+                        decoration: AppResponsive.isPhone(context)
+                            ? null
+                            : BoxDecoration(
+                                color: scheme.surface.withValues(alpha: 0.96),
+                                borderRadius: BorderRadius.circular(28),
+                                border: Border.all(
+                                  color: scheme.outlineVariant.withValues(alpha: 0.6),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(
+                                      alpha: isDark ? 0.30 : 0.08,
+                                    ),
+                                    blurRadius: 28,
+                                    offset: const Offset(0, 14),
+                                  ),
+                                ],
                               ),
-                              blurRadius: 28,
-                              offset: const Offset(0, 14),
-                            ),
-                          ],
-                        ),
                         child: Form(
                           key: _formKey,
                           child: Column(

@@ -1,0 +1,203 @@
+```json
+{
+  "thong_tin_nguoi_dung": {
+    "tuoi": 25,
+    "gioi_tinh": "MALE",
+    "can_nang_kg": 70,
+    "chieu_cao_cm": 170,
+    "muc_tieu": "GAIN_MUSCLE",
+    "muc_van_dong": "moderate",
+    "so_bua_ngay": 3,
+    "muc_tieu_dinh_duong_hang_ngay": {
+      "calo_kcal": 2700,
+      "protein_g": 150,
+      "carbs_g": 320,
+      "fat_g": 90
+    }
+  },
+  "ke_hoach_dinh_duong_tuan": {
+    "Thu_Hai": {
+      "bua_sang": {
+        "ten_bua": "Bữa sáng giàu năng lượng",
+        "mon_an": "Phở bò chín (1 tô lớn), 2 quả trứng chần",
+        "calo_kcal": 750,
+        "protein_g": 42,
+        "carbs_g": 85,
+        "fat_g": 25
+      },
+      "bua_trua": {
+        "ten_bua": "Bữa trưa tăng cơ",
+        "mon_an": "2 chén cơm trắng, 200g ức gà áp chảo, 150g bông cải xanh luộc, 1 muỗng canh dầu ô liu",
+        "calo_kcal": 950,
+        "protein_g": 58,
+        "carbs_g": 110,
+        "fat_g": 30
+      },
+      "bua_toi": {
+        "ten_bua": "Bữa tối phục hồi",
+        "mon_an": "2 chén cơm cá hồi nướng (150g), 1 đĩa rau muống xào tỏi, 1 quả chuối tiêu",
+        "calo_kcal": 1000,
+        "protein_g": 50,
+        "carbs_g": 125,
+        "fat_g": 35
+      }
+    },
+    "Thu_Ba": {
+      "bua_sang": {
+        "ten_bua": "Bữa sáng Tây Âu",
+        "mon_an": "3 lát bánh mì đen, 3 quả trứng ốp la, 1 quả bơ cỡ vừa",
+        "calo_kcal": 800,
+        "protein_g": 35,
+        "carbs_g": 65,
+        "fat_g": 44
+      },
+      "bua_trua": {
+        "ten_bua": "Bữa trưa truyền thống",
+        "mon_an": "2 chén cơm trắng, 200g thịt thăn lợn rim tiêù, 1 bát canh rau ngót thịt băm",
+        "calo_kcal": 950,
+        "protein_g": 55,
+        "carbs_g": 115,
+        "fat_g": 30
+      },
+      "bua_toi": {
+        "ten_bua": "Bữa tối đạm cao",
+        "mon_an": "2.5 chén cơm trắng, 200g thịt bò xào hành tây, 1 đĩa măng tây xào",
+        "calo_kcal": 950,
+        "protein_g": 60,
+        "carbs_g": 140,
+        "fat_g": 16
+      }
+    },
+    "Thu_Tu": {
+      "bua_sang": {
+        "ten_bua": "Bữa sáng tiện lợi",
+        "mon_an": "100g yến mạch nấu chín, 1 muỗng whey protein, 1 quả chuối, 20g hạt hạnh nhân",
+        "calo_kcal": 750,
+        "protein_g": 45,
+        "carbs_g": 95,
+        "fat_g": 20
+      },
+      "bua_trua": {
+        "ten_bua": "Bữa trưa đổi vị",
+        "mon_an": "300g bún tươi, 200g đậu hũ nhồi thịt băm sốt cà chua, Rau sống ăn kèm",
+        "calo_kcal": 950,
+        "protein_g": 48,
+        "carbs_g": 120,
+        "fat_g": 31
+      },
+      "bua_toi": {
+        "ten_bua": "Bữa tối Hải sản",
+        "mon_an": "2 chén cơm trắng, 250g tôm hấp sả, 1 đĩa cải thìa xào nấm dầu hào",
+        "calo_kcal": 1000,
+        "protein_g": 57,
+        "carbs_g": 105,
+        "fat_g": 39
+      }
+    },
+    "Thu_Nam": {
+      "bua_sang": {
+        "ten_bua": "Bữa sáng Bánh mì",
+        "mon_an": "1 cái bánh mì lớn, 150g thịt bò áp chảo, 1 quả trứng ốp la, dưa leo",
+        "calo_kcal": 800,
+        "protein_g": 48,
+        "carbs_g": 75,
+        "fat_g": 32
+      },
+      "bua_trua": {
+        "ten_bua": "Bữa trưa Lean & Clean",
+        "mon_an": "2.5 chén cơm trắng, 200g ức gà luộc xé phay, 1 đĩa nộm tai heo dưa chuột, 1 quả táo",
+        "calo_kcal": 950,
+        "protein_g": 55,
+        "carbs_g": 135,
+        "fat_g": 21
+      },
+      "bua_toi": {
+        "ten_bua": "Bữa tối đậm đà",
+        "mon_an": "2 chén cơm trắng, 200g cá thu sốt cà chua, 1 bát canh bí đao nấu tôm",
+        "calo_kcal": 950,
+        "protein_g": 47,
+        "carbs_g": 110,
+        "fat_g": 37
+      }
+    },
+    "Thu_Sau": {
+      "bua_sang": {
+        "ten_bua": "Bữa sáng xôi truyền thống",
+        "mon_an": "1 đĩa xôi xéo lớn, 100g thịt kho tàu, 1 quả trứng kho",
+        "calo_kcal": 850,
+        "protein_g": 38,
+        "carbs_g": 110,
+        "fat_g": 28
+      },
+      "bua_trua": {
+        "ten_bua": "Bữa trưa Beefsteak",
+        "mon_an": "250g khoai tây nghiền, 200g thăn bò áp chảo, 1 đĩa salad dầu giấm",
+        "calo_kcal": 950,
+        "protein_g": 52,
+        "carbs_g": 85,
+        "fat_g": 44
+      },
+      "bua_toi": {
+        "ten_bua": "Bữa tối đồng quê",
+        "mon_an": "2 chén cơm trắng, 200g ức vịt nướng bỏ da, 1 bát canh cua mồng tơi",
+        "calo_kcal": 900,
+        "protein_g": 60,
+        "carbs_g": 125,
+        "fat_g": 18
+      }
+    },
+    "Thu_Bay": {
+      "bua_sang": {
+        "ten_bua": "Bữa sáng năng lượng cao",
+        "mon_an": "1 tô hủ tiếu Nam Vang đặc biệt (nhiều tôm thịt), 1 hộp sữa tươi ít đường 180ml",
+        "calo_kcal": 800,
+        "protein_g": 40,
+        "carbs_g": 90,
+        "fat_g": 31
+      },
+      "bua_trua": {
+        "ten_bua": "Bữa trưa Spaghetti",
+        "mon_an": "150g mỳ Ý (trọng lượng khô), 150g thịt bò băm sốt cà chua, parmesan cheese",
+        "calo_kcal": 950,
+        "protein_g": 49,
+        "carbs_g": 115,
+        "fat_g": 32
+      },
+      "bua_toi": {
+        "ten_bua": "Bữa tối xả cơ nhẹ",
+        "mon_an": "2.5 chén cơm trắng, 200g mực xào khóm (dứa) và cần tỏi, 1 đĩa đậu bắp luộc",
+        "calo_kcal": 950,
+        "protein_g": 61,
+        "carbs_g": 115,
+        "fat_g": 27
+      }
+    },
+    "Chu_Nhat": {
+      "bua_sang": {
+        "ten_bua": "Bữa sáng Pancake Yến mạch",
+        "mon_an": "Bánh pancake tự làm (80g bột yến mạch + 2 quả trứng + 1 muỗng whey), mật ong và dâu tây",
+        "calo_kcal": 750,
+        "protein_g": 48,
+        "carbs_g": 80,
+        "fat_g": 26
+      },
+      "bua_trua": {
+        "ten_bua": "Bữa trưa gia đình",
+        "mon_an": "2 chén cơm trắng, 200g gà kho sả ớt, 1 bát canh mướp đắng nhồi thịt",
+        "calo_kcal": 950,
+        "protein_g": 54,
+        "carbs_g": 110,
+        "fat_g": 33
+      },
+      "bua_toi": {
+        "ten_bua": "Bữa tối tổng kết tuần",
+        "mon_an": "2 chén cơm trắng, 150g cá hồi áp chảo sốt chanh leo, 1 đĩa salad quả bơ và hạt dinh dưỡng",
+        "calo_kcal": 1000,
+        "protein_g": 48,
+        "carbs_g": 130,
+        "fat_g": 31
+      }
+    }
+  }
+}
+```

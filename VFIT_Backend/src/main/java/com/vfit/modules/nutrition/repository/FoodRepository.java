@@ -8,4 +8,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 public interface FoodRepository extends MongoRepository<Food, String> {
     List<Food> findTop10ByIsGymFriendlyTrueOrderByPopularityScoreDesc();
     List<Food> findByIsGymFriendlyTrueOrderByPopularityScoreDesc(Pageable pageable);
+    List<Food> findBySearchCountGreaterThanOrderBySearchCountDesc(int minSearchCount, Pageable pageable);
 }

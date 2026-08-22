@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/utils/enum_parsers.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -66,7 +69,13 @@ class HomePage extends ConsumerWidget {
                   onStart: () => context.go('/workouts'),
                   onProgress: () => context.go('/progress'),
                 ),
-                const SizedBox(height: AppSpacing.x4),
+                if (kIsWeb) ...[
+                  const _WebApkBanner(),
+                  const SizedBox(height: AppSpacing.x4),
+                ] else ...[
+                  const _SmallApkDownloadButton(),
+                  const SizedBox(height: AppSpacing.x4),
+                ],
                 _MetricGrid(
                   wide: wide,
                   level: user?.level ?? 1,
@@ -74,9 +83,10 @@ class HomePage extends ConsumerWidget {
                   subscription: subscription,
                 ),
                 const SizedBox(height: AppSpacing.x4),
-                const _CheckinVoucherCard(),
-                const SizedBox(height: AppSpacing.x4),
-                if (!auth.isAuthenticated) ...[
+                if (auth.isAuthenticated) ...[
+                  const _CheckinVoucherCard(),
+                  const SizedBox(height: AppSpacing.x4),
+                ] else ...[
                   _GuestUnlockCard(
                     onRegister: () => context.go('/register'),
                     onLogin: () => context.go('/login'),
@@ -311,17 +321,17 @@ class _GuestUnlockCard extends StatelessWidget {
         children: [
           _StatusPill(
             icon: Icons.lock_open_rounded,
-            label: 'VIP ACCESS',
+            label: 'ĐĂNG NHẬP / ĐĂNG KÝ',
             color: AppColors.energyMagenta,
           ),
           const SizedBox(height: AppSpacing.x4),
           Text(
-            'Mở khóa tập luyện cá nhân hóa',
+            'V-FIT - Huấn luyện hình thể & Tính calo AI',
             style: AppTypography.headerMediumFor(context),
           ),
           const SizedBox(height: AppSpacing.x2),
           Text(
-            'Đăng ký tài khoản để lưu tiến độ, dùng giáo án VIP và công cụ huấn luyện cá nhân.',
+            'V-FIT là nền tảng cá nhân hóa hỗ trợ tập luyện fitness, theo dõi chỉ số sức khỏe và dinh dưỡng thông minh sử dụng AI. Đăng ký tài khoản để quét ảnh phân tích calo món ăn, thiết kế lịch tập luyện và mở khóa toàn bộ giáo án VIP.',
             style: AppTypography.bodyFor(context),
           ),
           const SizedBox(height: AppSpacing.x4),
@@ -786,3 +796,186 @@ class _AwardedVoucherStrip extends StatelessWidget {
     );
   }
 }
+
+Future<void> _launchApkDownload(BuildContext context) async {
+  final url = Uri.parse('/app-release.apk');
+  try {
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không thể tải xuống file APK.')),
+        );
+      }
+    }
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Có lỗi xảy ra khi tải file APK.')),
+      );
+    }
+  }
+}
+
+class _WebApkBanner extends StatelessWidget {
+  const _WebApkBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final isPhone = AppResponsive.isPhone(context);
+
+    return AppCard(
+      child: isPhone
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.input),
+                        border: Border.all(
+                          color: AppColors.primaryOf(context).withValues(alpha: 0.24),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.android_rounded,
+                        color: AppColors.primaryOf(context),
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Tải V-FIT cho Android',
+                            style: AppTypography.headerMediumFor(context),
+                          ),
+                          const SizedBox(height: AppSpacing.x1),
+                          Text(
+                            'Trải nghiệm quét cơ thể AI và tập luyện mượt mà hơn trên ứng dụng di động.',
+                            style: AppTypography.bodySmallFor(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.x3),
+                AppButton(
+                  label: 'Tải APK',
+                  icon: Icons.download_rounded,
+                  variant: AppButtonVariant.primary,
+                  fullWidth: true,
+                  onPressed: () => _launchApkDownload(context),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryOf(context).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.input),
+                    border: Border.all(
+                      color: AppColors.primaryOf(context).withValues(alpha: 0.24),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.android_rounded,
+                    color: AppColors.primaryOf(context),
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.x3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Tải V-FIT cho Android',
+                        style: AppTypography.headerMediumFor(context),
+                      ),
+                      const SizedBox(height: AppSpacing.x1),
+                      Text(
+                        'Trải nghiệm quét cơ thể AI và tập luyện mượt mà hơn trên ứng dụng di động.',
+                        style: AppTypography.bodySmallFor(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.x3),
+                AppButton(
+                  label: 'Tải APK',
+                  icon: Icons.download_rounded,
+                  variant: AppButtonVariant.primary,
+                  fullWidth: false,
+                  onPressed: () => _launchApkDownload(context),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _SmallApkDownloadButton extends StatelessWidget {
+  const _SmallApkDownloadButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _launchApkDownload(context),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x3,
+              vertical: 6.0,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primaryOf(context).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(
+                color: AppColors.primaryOf(context).withValues(alpha: 0.20),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.android_rounded,
+                  color: AppColors.primaryOf(context),
+                  size: 16,
+                ),
+                const SizedBox(width: 6.0),
+                Text(
+                  'Tải bản APK',
+                  style: AppTypography.label(
+                    color: AppColors.primaryOf(context),
+                  ).copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+

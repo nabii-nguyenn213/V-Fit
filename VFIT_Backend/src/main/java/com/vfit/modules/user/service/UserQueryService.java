@@ -8,5 +8,5 @@ import org.springframework.data.domain.Pageable;
 public interface UserQueryService {
     UserResponse getCurrentUser();
 
-    Page<UserResponse> getUsers(RoleName role, Pageable pageable);
+    Page<UserResponse> getUsers(RoleName role, String filter, String search, String startDate, String endDate, Pageable pageable);
 }

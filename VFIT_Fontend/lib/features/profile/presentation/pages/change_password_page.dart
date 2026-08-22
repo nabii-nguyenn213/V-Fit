@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/responsive.dart';
@@ -73,7 +73,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
             AppTextField(
               controller: _currentController,
               label: 'Mật khẩu hiện tại',
-              validator: Validators.required,
+              validator: (value) => Validators.required(value, label: 'Mật khẩu hiện tại'),
               obscureText: true,
             ),
             const SizedBox(height: 14),

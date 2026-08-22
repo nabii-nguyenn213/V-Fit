@@ -105,6 +105,7 @@ String subscriptionLabel(SubscriptionStatus status, String? planCode) {
     return 'MIEN PHI';
   }
   return switch (planCode) {
+    'VIP_TRIAL' => 'Vip Trial',
     'VIP_MONTHLY' => 'VIP thang',
     'VIP_YEARLY' => 'VIP nam',
     _ => 'VIP',

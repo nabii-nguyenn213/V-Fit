@@ -14,4 +14,6 @@ public interface OnboardingService {
     OnboardingResponse completeRealtimeBodyScan(com.vfit.infrastructure.external.ai.dto.AiBodyAnalysisResult request);
 
     UserResponse updateOnboardingMetrics(OnboardingMetricsRequest request);
+
+    UserResponse resetOnboarding();
 }

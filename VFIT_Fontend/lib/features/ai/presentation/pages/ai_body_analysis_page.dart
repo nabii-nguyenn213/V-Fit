@@ -107,9 +107,9 @@ class _AiBodyAnalysisPageState extends State<AiBodyAnalysisPage> {
           title: 'AI Body Check',
           webSocketPath: '/ws/ai/body-analysis',
           queryParameters: const {},
-          readyText: 'Camera da san sang.',
-          streamingText: 'AI dang phan tich hinh the...',
-          stoppedText: 'Da dung phan tich body.',
+          readyText: 'Camera đã sẵn sàng.',
+          streamingText: 'AI đang phân tích hình thể...',
+          stoppedText: 'Đã dừng phân tích body.',
           autoStartStreaming: false,
           showStartStopButton: true,
           onStreamingStarted: _startScanTimer,
@@ -161,7 +161,7 @@ class _BodyAnalysisReviewScaffold extends StatelessWidget {
           padding: EdgeInsets.only(left: 8),
           child: AppBackButton(),
         ),
-        title: const Text('Ket qua phan tich dang nguoi'),
+        title: const Text('Kết quả phân tích dáng người'),
       ),
       body: SafeArea(
         child: Padding(
@@ -180,7 +180,7 @@ class _BodyAnalysisReviewScaffold extends StatelessWidget {
                     ),
                     child: result == null
                         ? Text(
-                            'Chua nhan duoc du lieu dang nguoi. Hay scan lai voi toan than nam trong khung hinh.',
+                            'Chưa nhận được dữ liệu dáng người. Hãy quét lại với toàn thân nằm trong khung hình.',
                             style: AppTypography.bodyFor(context),
                           )
                         : _BodyAnalysisDetails(result: result),
@@ -194,7 +194,7 @@ class _BodyAnalysisReviewScaffold extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: onRescan,
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Scan lai'),
+                      label: const Text('Quét lại'),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.x3),
@@ -202,7 +202,7 @@ class _BodyAnalysisReviewScaffold extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: result == null ? null : onAccept,
                       icon: const Icon(Icons.check_rounded),
-                      label: const Text('Chap nhan'),
+                      label: const Text('Chấp nhận'),
                     ),
                   ),
                 ],
@@ -250,7 +250,7 @@ class _ScanningBanner extends StatelessWidget {
             const SizedBox(width: AppSpacing.x3),
             Expanded(
               child: Text(
-                'Dang phan tich dang nguoi... ${secondsLeft}s',
+                'Đang phân tích dáng người... ${secondsLeft}s',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -290,9 +290,9 @@ class _BodyAnalysisDetails extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.x4),
-        _InfoBlock(title: 'Tinh trang lech co the', value: result.imbalance),
+        _InfoBlock(title: 'Tình trạng lệch cơ thể', value: result.imbalance),
         const SizedBox(height: AppSpacing.x3),
-        _InfoBlock(title: 'Goi y tap luyen', value: result.recommendation),
+        _InfoBlock(title: 'Gợi ý tập luyện', value: result.recommendation),
         const SizedBox(height: AppSpacing.x4),
         Wrap(
           spacing: AppSpacing.x2,
@@ -306,10 +306,10 @@ class _BodyAnalysisDetails extends StatelessWidget {
             ),
             _MetricChip(
               label: 'AI',
-              value: result.fallback ? 'Fallback' : 'Analyzed',
+              value: result.fallback ? 'Dự phòng' : 'Đã phân tích',
             ),
             _MetricChip(
-              label: 'Confidence',
+              label: 'Độ tin cậy',
               value: '${(result.confidence * 100).round()}%',
             ),
           ],
@@ -373,7 +373,7 @@ class _BodyAnalysisPanel extends StatelessWidget {
               const SizedBox(width: AppSpacing.x2),
               Expanded(
                 child: Text(
-                  result == null ? 'Dang cho phan hoi AI' : result!.posture,
+                  result == null ? 'Đang chờ phản hồi AI' : result!.posture,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.headerMediumFor(context),
@@ -385,7 +385,7 @@ class _BodyAnalysisPanel extends StatelessWidget {
           Text(
             result?.imbalance ??
                 statusText ??
-                'Dung thang nguoi trong khung hinh de AI phan tich.',
+                'Đứng thẳng người trong khung hình để AI phân tích.',
             style: AppTypography.bodyFor(context),
           ),
           if (result != null) ...[
@@ -402,10 +402,10 @@ class _BodyAnalysisPanel extends StatelessWidget {
                 ),
                 _MetricChip(
                   label: 'AI',
-                  value: result!.fallback ? 'Fallback' : 'Live',
+                  value: result!.fallback ? 'Dự phòng' : 'Trực tiếp',
                 ),
                 _MetricChip(
-                  label: 'Confidence',
+                  label: 'Độ tin cậy',
                   value: '${(result!.confidence * 100).round()}%',
                 ),
               ],
@@ -473,11 +473,11 @@ class _BodyAnalysisFeedback {
     final estimate = _asMap(json['estimate']);
     final recommendation = _asMap(json['recommendation']);
     return _BodyAnalysisFeedback(
-      posture: posture['summary']?.toString() ?? 'Body analysis pending',
+      posture: posture['summary']?.toString() ?? 'Đang phân tích...',
       imbalance: imbalance['summary']?.toString() ??
-          'No imbalance estimate available.',
+          'Không có dữ liệu lệch cơ thể.',
       recommendation:
-          recommendation['focus']?.toString() ?? 'Continue current routine.',
+          recommendation['focus']?.toString() ?? 'Duy trì lịch tập luyện hiện tại.',
       confidence: (estimate['confidence'] as num?)?.toDouble() ?? 0,
       fallback: json['fallback'] == true,
       waistShoulderRatio: (estimate['waistShoulderRatio'] as num?)?.toDouble(),
